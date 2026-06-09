@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Grupo Aspekto — Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0D1117; --surface: #161B24; --surface2: #1E2535;
+  --border: rgba(255,255,255,0.07); --border-strong: rgba(255,255,255,0.13);
+  --text: #E8F0FE; --text-2: #8B9BB4; --text-3: #4A5568;
+  --cyan: #00C8E0; --blue: #2196F3; --green: #00E676;
+  --amber: #FFB300; --purple: #B388FF; --r: 14px; --r-lg: 18px;
+}
+body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; padding:20px 24px; }
+#loading { position:fixed; inset:0; background:var(--bg); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; z-index:999; transition:opacity .4s; }
+#loading.hidden { opacity:0; pointer-events:none; }
+.spinner { width:32px; height:32px; border:2px solid var(--border-strong); border-top-color:var(--cyan); border-radius:50%; animation:spin .7s linear infinite; }
+@keyframes spin { to{transform:rotate(360deg)} }
+.loading-txt { font-size:13px; color:var(--text-3); }
+.header { display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; flex-wrap:wrap; gap:10px; }
+.logo-area { display:flex; align-items:center; gap:12px; }
+.logo-icon { width:44px; height:44px; border-radius:10px; background:#0E2A5E; display:flex; align-items:center; justify-content:center; overflow:hidden; }
+.logo-svg { width:28px; height:28px; }
+.logo-text h1 { font-size:17px; font-weight:700; letter-spacing:-.02em; }
+.logo-text p { font-size:11px; color:var(--text-3); margin-top:1px; }
+.live-pill { display:flex; align-items:center; gap:6px; background:rgba(0,230,118,0.10); border:.5px solid rgba(0,230,118,.2); border-radius:99px; padding:5px 12px; font-size:11px; font-weight:600; color:var(--green); letter-spacing:.04em; }
+.live-dot { width:6px; height:6px; border-radius:50%; background:var(--green); animation:blink 2s ease-in-out infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+.update-time { font-size:11px; color:var(--text-3); }
+.section-title { font-size:10px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--text-3); margin-bottom:10px; margin-top:18px; display:flex; align-items:center; gap:8px; }
+.section-title::after { content:''; flex:1; height:.5px; background:var(--border); }
+.grid-4 { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+.grid-2 { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; }
+.span2 { grid-column:span 2; }
+.card { background:var(--surface); border:.5px solid var(--border-strong); border-radius:var(--r-lg); padding:16px 18px; position:relative; overflow:hidden; }
+.card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:var(--ac,transparent); border-radius:2px 2px 0 0; }
+.card-label { font-size:10px; font-weight:600; letter-spacing:.07em; text-transform:uppercase; color:var(--text-3); margin-bottom:8px; }
+.card-value { font-family:'DM Mono',monospace; font-size:36px; font-weight:700; letter-spacing:-.03em; line-height:1; }
+.card-value.lg { font-size:46px; }
+.card-value.md { font-size:26px; }
+.card-sub { font-size:11px; color:var(--text-3); margin-top:6px; }
+.card-hero { background:linear-gradient(135deg,#0D1F3C,#0D1117); border-color:rgba(0,200,224,.2); }
+.bar-track { height:3px; background:var(--border); border-radius:2px; margin-top:8px; overflow:hidden; }
+.bar-fill { height:100%; border-radius:2px; transition:width .8s ease; }
+.meta-block { background:var(--surface); border:.5px solid var(--border-strong); border-radius:var(--r-lg); overflow:hidden; }
+.meta-hero { padding:16px 18px; background:linear-gradient(135deg,#0D1F3C,#0D1117); border-bottom:.5px solid var(--border-strong); display:flex; align-items:center; justify-content:space-between; }
+.meta-hero-label { font-size:10px; color:rgba(0,200,224,.45); font-weight:600; letter-spacing:.06em; text-transform:uppercase; margin-bottom:4px; }
+.meta-hero-val { font-family:'DM Mono',monospace; font-size:40px; font-weight:700; color:var(--cyan); letter-spacing:-.03em; }
+.meta-row { display:grid; grid-template-columns:1fr auto auto; align-items:center; gap:10px; padding:12px 18px; border-bottom:.5px solid var(--border); transition:background .15s; }
+.meta-row:last-child { border-bottom:none; }
+.meta-row:hover { background:var(--surface2); }
+.meta-name { font-size:13px; color:var(--text-2); font-weight:500; }
+.meta-val { font-family:'DM Mono',monospace; font-size:19px; font-weight:700; color:var(--cyan); }
+.meta-pct { font-family:'DM Mono',monospace; font-size:11px; color:var(--text-3); min-width:48px; text-align:right; }
+@keyframes flash { 0%{opacity:.2} 100%{opacity:1} }
+.flash { animation:flash .5s ease; }
+@media(max-width:1100px){ .grid-4{grid-template-columns:repeat(2,1fr)} }
+@media(max-width:700px){ .grid-4,.grid-2{grid-template-columns:repeat(2,1fr)} body{padding:12px} }
+</style>
+</head>
+<body>
+<div id="loading">
+  <div class="spinner"></div>
+  <p class="loading-txt">Carregando dados...</p>
+</div>
+
+<div class="header">
+  <div class="logo-area">
+    <div class="logo-icon">
+      <svg class="logo-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <polygon points="50,5 95,90 5,90" fill="#1A4A9E"/>
+        <path d="M50,5 C50,5 30,50 20,90 Q35,70 50,55 Q65,70 80,90 C70,50 50,5 50,5Z" fill="#00C8E0" opacity="0.85"/>
+      </svg>
+    </div>
+    <div class="logo-text">
+      <h1>Grupo Aspekto</h1>
+      <p>Dashboard Comercial — Visão Geral</p>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px">
+    <span class="update-time" id="update-time">—</span>
+    <div class="live-pill"><div class="live-dot"></div>AO VIVO</div>
+  </div>
+</div>
+
+<p class="section-title">Mensal</p>
+<div class="grid-4">
+  <div class="card card-hero span2" style="--ac:var(--cyan)">
+    <p class="card-label" style="color:rgba(0,200,224,.45)">Total Leads Mês</p>
+    <p class="card-value lg" id="v-leads-mes" style="color:var(--cyan)">—</p>
+    <p class="card-sub">leads captados no mês</p>
+  </div>
+  <div class="card" style="--ac:var(--cyan)">
+    <p class="card-label">Agendados Mês</p>
+    <p class="card-value" id="v-agendados-mes" style="color:var(--cyan)">—</p>
+    <p class="card-sub">avaliações agendadas</p>
+  </div>
+  <div class="card" style="--ac:var(--purple)">
+    <p class="card-label">Disparo Mês</p>
+    <p class="card-value" id="v-disparo-mes" style="color:var(--purple)">—</p>
+    <p class="card-sub">disparos realizados</p>
+  </div>
+</div>
+
+<p class="section-title">Conversão — Mensal</p>
+<div class="grid-2">
+  <div class="card" style="--ac:var(--cyan)">
+    <p class="card-label">Conversão Meta BH</p>
+    <p class="card-value md" id="v-conv-bh" style="color:var(--cyan)">—</p>
+    <p class="card-sub">taxa de conversão BH</p>
+  </div>
+  <div class="card" style="--ac:var(--blue)">
+    <p class="card-label">Conversão Interior MG</p>
+    <p class="card-value md" id="v-conv-interior" style="color:var(--blue)">—</p>
+    <p class="card-sub">taxa de conversão interior</p>
+  </div>
+</div>
+
+<p class="section-title">Criação de Demanda — Hoje</p>
+<div class="grid-4">
+  <div class="card card-hero span2" style="--ac:var(--cyan)">
+    <p class="card-label" style="color:rgba(0,200,224,.45)">Total Leads Hoje</p>
+    <p class="card-value lg" id="v-leads-hoje" style="color:var(--cyan)">—</p>
+    <p class="card-sub">leads captados hoje</p>
+  </div>
+  <div class="card" style="--ac:var(--green)">
+    <p class="card-label">Orgânico Hoje</p>
+    <p class="card-value" id="v-organico-hoje" style="color:var(--green)">—</p>
+    <div class="bar-track"><div class="bar-fill" id="bar-org" style="background:var(--green)"></div></div>
+  </div>
+  <div class="card" style="--ac:var(--amber)">
+    <p class="card-label">Remarketing Hoje</p>
+    <p class="card-value" id="v-remarketing-hoje" style="color:var(--amber)">—</p>
+    <div class="bar-track"><div class="bar-fill" id="bar-rem" style="background:var(--amber)"></div></div>
+  </div>
+</div>
+
+<p class="section-title">Meta Ads — Hoje</p>
+<div class="grid-2">
+  <div class="meta-block">
+    <div class="meta-hero">
+      <div>
+        <p class="meta-hero-label">Total Meta Ads Hoje</p>
+        <p class="meta-hero-val" id="v-meta-total">—</p>
+      </div>
+      <div style="text-align:right">
+        <p style="font-size:10px;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Meta Diário</p>
+        <p style="font-family:'DM Mono',monospace;font-size:26px;font-weight:700;color:var(--cyan)" id="v-meta-diario">—</p>
+      </div>
+    </div>
+    <div class="meta-row">
+      <span class="meta-name">Meta ADS BH</span>
+      <span class="meta-val" id="v-meta-bh">—</span>
+      <span class="meta-pct" id="pct-bh">—</span>
+    </div>
+    <div class="meta-row">
+      <span class="meta-name">Meta ADS Interior</span>
+      <span class="meta-val" id="v-meta-interior">—</span>
+      <span class="meta-pct" id="pct-interior">—</span>
+    </div>
+    <div class="meta-row">
+      <span class="meta-name">Meta ADS Fora de MG</span>
+      <span class="meta-val" id="v-meta-fora">—</span>
+      <span class="meta-pct" id="pct-fora">—</span>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-rows:1fr 1fr;gap:10px">
+    <div class="card" style="--ac:var(--purple)">
+      <p class="card-label">Disparo Hoje</p>
+      <p class="card-value md" id="v-disparo-hj" style="color:var(--purple)">—</p>
+      <div class="bar-track"><div class="bar-fill" id="bar-disp" style="background:var(--purple)"></div></div>
+    </div>
+    <div class="card card-hero" style="--ac:var(--cyan)">
+      <p class="card-label" style="color:rgba(0,200,224,.45)">Métricas Funil</p>
+      <p class="card-value md" id="v-metrica-funil" style="color:var(--cyan)">—</p>
+    </div>
+  </div>
+</div>
+
+<script>
+var CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTw10EmgmtOafZtcvklaJBPIShxJe-3GgEYvPcDN_qpgiGgozUdJn3qo07tA4j51dIGjfKvQFRV4TK0/pub?gid=868682954&single=true&output=csv';
+
+// Parser CSV correto — lida com campos entre aspas (ex: "4,28%")
+function parseCSV(txt) {
+  var lines = txt.trim().split('\n');
+  if (lines.length < 2) return null;
+
+  function parseLine(line) {
+    var result = [], cur = '', inQ = false;
+    line = line.replace(/\r/g, '');
+    for (var i = 0; i < line.length; i++) {
+      var c = line[i];
+      if (c === '"') { inQ = !inQ; }
+      else if (c === ',' && !inQ) { result.push(cur.trim()); cur = ''; }
+      else { cur += c; }
+    }
+    result.push(cur.trim());
+    return result;
+  }
+
+  var headers = parseLine(lines[0]).map(function(h){ return h.toLowerCase().replace(/\r/g,''); });
+  var values  = parseLine(lines[1]);
+  var d = {};
+  headers.forEach(function(h, i){ d[h] = values[i] || ''; });
+  return d;
+}
+
+function num(v){ return parseInt((v||'').replace(/[^0-9]/g,'')) || 0; }
+function fmt(n){ return Number(n).toLocaleString('pt-BR'); }
+function pct(a,t){ return t > 0 ? (a/t*100).toFixed(1)+'%' : '—'; }
+
+function set(id, val){
+  var el = document.getElementById(id); if (!el) return;
+  var s = (typeof val === 'number') ? fmt(val) : String(val || '—');
+  if (el.textContent !== s){ el.textContent = s; el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash'); }
+}
+function setBar(id, p){ var el = document.getElementById(id); if (el) el.style.width = Math.min(p, 100) + '%'; }
+
+function render(d) {
+  // Nomes exatos conforme CSV validado:
+  var disparoMes  = num(d['disparo mes']);
+  var metaDiario  = num(d['meta diario']);
+  var disparoHj   = num(d['disparo hj']);
+  var orgHoje     = num(d['organico hoje']);
+  var remHoje     = num(d['remarketing hoje']);
+  var leadsHoje   = num(d['leads hoje']);
+  var convBH      = d['conversão bh']       || d['conversao bh']       || '—';
+  var convInt     = d['conversão interior'] || d['conversao interior'] || '—';
+  var agendMes    = num(d['agendados mes']);
+  var leadsMes    = num(d['total leads mes']);
+  var metaBH      = num(d['metaads bh']);
+  var metaInt     = num(d['metaads interior']);
+  var metaFora    = num(d['metaads fora de mg']);
+  var metaTot     = metaBH + metaInt + metaFora;
+
+  set('v-leads-mes',        leadsMes);
+  set('v-agendados-mes',    agendMes);
+  set('v-disparo-mes',      disparoMes);
+  set('v-conv-bh',          convBH);
+  set('v-conv-interior',    convInt);
+  set('v-leads-hoje',       leadsHoje);
+  set('v-organico-hoje',    orgHoje);
+  set('v-remarketing-hoje', remHoje);
+  set('v-meta-total',       metaTot);
+  set('v-meta-diario',      metaDiario);
+  set('v-meta-bh',          metaBH);
+  set('v-meta-interior',    metaInt);
+  set('v-meta-fora',        metaFora);
+  set('v-disparo-hj',       disparoHj);
+  set('v-metrica-funil',    leadsMes);
+
+  document.getElementById('pct-bh').textContent       = pct(metaBH, metaTot);
+  document.getElementById('pct-interior').textContent = pct(metaInt, metaTot);
+  document.getElementById('pct-fora').textContent     = pct(metaFora, metaTot);
+
+  if (leadsHoje > 0){
+    setBar('bar-org',  orgHoje  / leadsHoje * 100);
+    setBar('bar-rem',  remHoje  / leadsHoje * 100);
+    setBar('bar-disp', disparoHj/ leadsHoje * 100);
+  }
+
+  document.getElementById('update-time').textContent =
+    'Atualizado às ' + new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  document.getElementById('loading').classList.add('hidden');
+}
+
+function load(){
+  fetch(CSV, {cache:'no-store'})
+    .then(function(r){ if(!r.ok) throw new Error(); return r.text(); })
+    .then(function(t){
+      if(t.trim().startsWith('<')) throw new Error();
+      var d = parseCSV(t);
+      if(d) render(d);
+    })
+    .catch(function(){ setTimeout(load, 5000); });
+}
+
+load();
+setInterval(load, 60000);
+</script>
+</body>
+</html>
