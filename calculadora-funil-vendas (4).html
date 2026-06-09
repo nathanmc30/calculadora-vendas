@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calculadoras de Vendas</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #F7F6F2; --surface: #FFFFFF; --surface2: #F0EEE8;
+    --border: rgba(0,0,0,0.08); --border-strong: rgba(0,0,0,0.14);
+    --text: #1A1916; --text-2: #6B6860; --text-3: #9E9C96;
+    --green-bg: #E6F4E0; --green-text: #2C6B1A;
+    --amber-bg: #FEF3DC; --amber-text: #7A4A08;
+    --red-bg: #FEECEC; --red-text: #A02020;
+    --blue-bg: #EBF3FF; --blue-text: #1A5FAD;
+    --radius: 10px; --radius-lg: 16px;
+  }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding: 2rem 1rem; }
+  .wrapper { max-width: 760px; margin: 0 auto; }
+
+  .page-header { margin-bottom: 2rem; }
+  .page-header h1 { font-size: 22px; font-weight: 600; letter-spacing: -0.02em; margin-bottom: 4px; }
+  .page-header p { font-size: 14px; color: var(--text-2); }
+
+  /* TABS */
+  .tabs { display: flex; gap: 6px; margin-bottom: 1.5rem; background: var(--surface2); border-radius: var(--radius-lg); padding: 5px; }
+  .tab-btn { flex: 1; padding: 10px 14px; border: none; background: transparent; border-radius: var(--radius); font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; color: var(--text-2); cursor: pointer; transition: all .15s; text-align: center; line-height: 1.3; }
+  .tab-btn.active { background: var(--surface); color: var(--text); box-shadow: 0 1px 4px rgba(0,0,0,0.10); }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* CARDS */
+  .card { background: var(--surface); border: 0.5px solid var(--border-strong); border-radius: var(--radius-lg); padding: 1.25rem 1.5rem; margin-bottom: 1rem; }
+  .section-label { font-size: 10px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--text-3); margin-bottom: 14px; }
+
+  /* FIELDS */
+  .field-row { display: flex; align-items: center; gap: 12px; padding: 9px 0; border-bottom: 0.5px solid var(--border); }
+  .field-row:last-child { border-bottom: none; }
+  .field-label { font-size: 13px; color: var(--text-2); flex: 1; }
+  .field-input-wrap { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+  .prefix { font-size: 13px; color: var(--text-3); font-family: 'DM Mono', monospace; }
+
+  input[type=number], select {
+    font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500;
+    color: var(--text); background: var(--surface2);
+    border: 0.5px solid var(--border-strong); border-radius: 7px;
+    padding: 6px 10px; outline: none; transition: border-color .15s;
+  }
+  input[type=number] { width: 110px; text-align: right; font-family: 'DM Mono', monospace; }
+  input[type=number]:focus, select:focus { border-color: #378ADD; }
+  input[type=number].narrow { width: 80px; }
+  select { width: 100%; cursor: pointer; appearance: none; padding-right: 28px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239E9C96' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 10px center; }
+
+  /* VENDEDOR CARD */
+  .vendedor-card { background: var(--surface); border: 0.5px solid var(--border-strong); border-radius: var(--radius-lg); padding: 1.25rem 1.5rem; margin-bottom: 1rem; }
+  .vendedor-select-wrap { margin-bottom: 14px; }
+  .vendedor-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 14px; }
+  .vstat { background: var(--surface2); border-radius: var(--radius); padding: .75rem; text-align: center; }
+  .vstat-label { font-size: 10px; color: var(--text-3); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 4px; }
+  .vstat-value { font-size: 16px; font-weight: 600; color: var(--text); font-family: 'DM Mono', monospace; }
+
+  /* CENÁRIOS */
+  .cenario-row { display: flex; gap: 8px; margin-bottom: 1rem; }
+  .cenario-btn { flex: 1; padding: 10px 8px; border: 0.5px solid var(--border-strong); background: var(--surface); border-radius: var(--radius); font-family: 'DM Sans', sans-serif; font-size: 12px; color: var(--text-2); cursor: pointer; text-align: center; transition: all .15s; }
+  .cenario-btn:hover { border-color: var(--text); color: var(--text); }
+  .cenario-btn.active { background: var(--text); color: #fff; border-color: var(--text); }
+  .cenario-btn .c-label { font-size: 10px; opacity: .6; margin-bottom: 3px; }
+  .cenario-btn .c-desc { font-size: 11px; margin-top: 2px; opacity: .7; }
+
+  /* METRICS */
+  .metric-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 1rem; }
+  .metric { background: var(--surface); border: 0.5px solid var(--border-strong); border-radius: var(--radius); padding: 1rem; text-align: center; }
+  .metric-label { font-size: 10px; color: var(--text-3); margin-bottom: 6px; text-transform: uppercase; letter-spacing: .05em; }
+  .metric-value { font-size: 22px; font-weight: 600; color: var(--text); letter-spacing: -.02em; font-family: 'DM Mono', monospace; }
+  .metric-value.md { font-size: 17px; }
+  .metric-sub { font-size: 11px; color: var(--text-3); margin-top: 4px; }
+  .metric.hero { background: var(--text); border-color: var(--text); }
+  .metric.hero .metric-label { color: rgba(255,255,255,.45); }
+  .metric.hero .metric-value { color: #fff; }
+  .metric.hero .metric-sub { color: rgba(255,255,255,.4); }
+
+  /* FUNNEL */
+  .funnel-step { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 0.5px solid var(--border); }
+  .funnel-step:last-child { border-bottom: none; }
+  .step-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .step-info { flex: 1; min-width: 0; }
+  .step-name { font-size: 12px; color: var(--text-2); margin-bottom: 2px; }
+  .step-num { font-size: 15px; font-weight: 600; color: var(--text); font-family: 'DM Mono', monospace; }
+  .step-detail { font-size: 11px; color: var(--text-3); margin-top: 1px; }
+  .badge { display: inline-block; font-size: 11px; font-weight: 500; padding: 3px 9px; border-radius: 99px; }
+  .badge-ok   { background: var(--green-bg); color: var(--green-text); }
+  .badge-warn { background: var(--amber-bg); color: var(--amber-text); }
+  .badge-bad  { background: var(--red-bg);   color: var(--red-text);   }
+
+  /* ALERT */
+  .alert { border-radius: var(--radius); padding: .8rem 1rem; font-size: 13px; margin-bottom: 1rem; display: none; }
+  .alert-warn { background: var(--amber-bg); color: var(--amber-text); display: block; }
+  .alert-bad  { background: var(--red-bg);   color: var(--red-text);   display: block; }
+
+  /* BARS */
+  .bar-wrap { display: flex; align-items: center; gap: 10px; margin-bottom: 7px; }
+  .bar-label { font-size: 12px; color: var(--text-3); width: 44px; flex-shrink: 0; }
+  .bar-track { flex: 1; background: var(--surface2); border-radius: 5px; height: 20px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 5px; display: flex; align-items: center; padding-left: 8px; transition: width .3s ease; }
+  .bar-fill-val { font-size: 11px; font-weight: 600; font-family: 'DM Mono', monospace; white-space: nowrap; }
+  .bar-blue .bar-fill { background: #B5D4F4; } .bar-blue .bar-fill-val { color: #0C447C; }
+
+  .bars-footer { font-size: 12px; color: var(--text-3); margin-top: 10px; line-height: 1.6; }
+
+  /* LOADING / EMPTY STATES */
+  .state-box { background: var(--surface); border: 0.5px solid var(--border-strong); border-radius: var(--radius-lg); padding: 2rem; text-align: center; margin-bottom: 1rem; color: var(--text-3); font-size: 13px; }
+  .spinner { display: inline-block; width: 18px; height: 18px; border: 2px solid var(--border-strong); border-top-color: var(--text-2); border-radius: 50%; animation: spin .7s linear infinite; margin-bottom: 10px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* SHEETS CONFIG */
+  .sheets-bar { background: var(--surface); border: 0.5px solid var(--border-strong); border-radius: var(--radius-lg); padding: 1rem 1.25rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .sheets-bar input[type=text] { flex: 1; min-width: 200px; font-family: 'DM Sans', sans-serif; font-size: 12px; color: var(--text); background: var(--surface2); border: 0.5px solid var(--border-strong); border-radius: 7px; padding: 7px 10px; outline: none; }
+  .sheets-bar input[type=text]:focus { border-color: #378ADD; }
+  .btn { padding: 7px 14px; border: none; border-radius: 7px; font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 500; cursor: pointer; transition: opacity .15s; }
+  .btn-primary { background: var(--text); color: #fff; }
+  .btn-primary:hover { opacity: .85; }
+  .btn-sm { padding: 5px 10px; font-size: 11px; }
+  .sheets-status { font-size: 11px; color: var(--text-3); }
+  .sheets-status.ok { color: var(--green-text); }
+  .sheets-status.err { color: var(--red-text); }
+
+  /* PROJ TAB (inalterada) */
+  .proj-hero { background: var(--text); border-radius: var(--radius-lg); padding: 1.75rem 1.5rem; margin-bottom: 1rem; text-align: center; }
+  .proj-hero-label { font-size: 11px; color: rgba(255,255,255,0.45); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 8px; }
+  .proj-hero-value { font-size: 42px; font-weight: 600; color: #fff; font-family: 'DM Mono', monospace; letter-spacing: -.03em; margin-bottom: 4px; }
+  .proj-hero-sub { font-size: 13px; color: rgba(255,255,255,0.45); }
+  .proj-range { display: flex; gap: 10px; margin-bottom: 1rem; }
+  .proj-range .metric { flex: 1; }
+  .p-cenario-row { display: flex; gap: 8px; margin-bottom: 1rem; flex-wrap: wrap; }
+  .p-cenario-btn { flex: 1; min-width: 80px; padding: 8px 10px; border: 0.5px solid var(--border-strong); background: var(--surface); border-radius: var(--radius); font-family: 'DM Sans', sans-serif; font-size: 12px; color: var(--text-2); cursor: pointer; text-align: center; transition: all .15s; }
+  .p-cenario-btn.active { background: var(--text); color: #fff; border-color: var(--text); }
+  input[type=range] { -webkit-appearance: none; width: 110px; height: 4px; background: var(--surface2); border-radius: 2px; outline: none; cursor: pointer; }
+  input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: var(--text); border: 2px solid var(--surface); box-shadow: 0 0 0 1px var(--border-strong); cursor: pointer; }
+
+  footer { text-align: center; font-size: 12px; color: var(--text-3); margin-top: 2rem; padding-top: 1rem; border-top: 0.5px solid var(--border); }
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+  <div class="page-header">
+    <h1>Calculadoras de vendas</h1>
+    <p>Planeje sua meta ou projete o faturamento da sua agenda atual</p>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('meta', this)">🎯 Meta → Agendamentos</button>
+    <button class="tab-btn" onclick="switchTab('proj', this)">📅 Agenda → Projeção</button>
+  </div>
+
+  <!-- ===================== ABA 1: META ===================== -->
+  <div class="tab-content active" id="tab-meta">
+
+    <!-- CONFIGURAÇÃO DO SHEETS -->
+    <div class="card">
+      <p class="section-label">Fonte de dados — Google Sheets</p>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <input type="text" id="sheets-url" value="https://docs.google.com/spreadsheets/d/e/2PACX-1vT6xwEvJWNomqiIwZegAgUpM9InKXuMezqqELAPuA2LVJk6ZA42gu2m49ItJyHGEhS6lH6Gflwb0ZZp/pub?gid=0&single=true&output=csv" placeholder="Cole aqui a URL CSV da planilha..." style="flex:1;min-width:200px;font-family:'DM Sans',sans-serif;font-size:12px;color:var(--text);background:var(--surface2);border:0.5px solid var(--border-strong);border-radius:7px;padding:7px 10px;outline:none;">
+        <button class="btn btn-primary btn-sm" onclick="loadSheets()">Carregar</button>
+        <span id="sheets-status" class="sheets-status"></span>
+      </div>
+      <p style="font-size:11px;color:var(--text-3);margin-top:10px">
+        No Sheets: <strong>Arquivo → Compartilhar → Publicar na web → CSV</strong> e cole a URL aqui.
+        Colunas esperadas: <code>nome</code>, <code>ticket</code>, <code>comparecimento</code>, <code>conversao</code>
+      </p>
+    </div>
+
+    <!-- SELETOR DE VENDEDOR -->
+    <div class="card" id="vendedor-section" style="display:none">
+      <p class="section-label">Vendedor</p>
+      <div class="vendedor-select-wrap">
+        <select id="vendedor-select" onchange="onVendedorChange()">
+          <option value="">Selecione um vendedor...</option>
+        </select>
+      </div>
+      <div class="vendedor-stats" id="vendedor-stats" style="display:none">
+        <div class="vstat">
+          <div class="vstat-label">Ticket médio</div>
+          <div class="vstat-value" id="vs-ticket">—</div>
+        </div>
+        <div class="vstat">
+          <div class="vstat-label">Comparecimento</div>
+          <div class="vstat-value" id="vs-show">—</div>
+        </div>
+        <div class="vstat">
+          <div class="vstat-label">Conversão</div>
+          <div class="vstat-value" id="vs-conv">—</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ESTADO VAZIO ANTES DE CARREGAR -->
+    <div id="empty-state" class="state-box">
+      Configure a planilha acima para carregar os vendedores e calcular automaticamente.
+    </div>
+
+    <!-- CONTEÚDO PRINCIPAL (aparece após carregar) -->
+    <div id="meta-content" style="display:none">
+
+      <!-- META E DIAS -->
+      <div class="card">
+        <p class="section-label">Sua meta</p>
+        <div class="field-row">
+          <span class="field-label">Receita desejada</span>
+          <div class="field-input-wrap"><span class="prefix">R$</span><input type="number" id="meta" value="50000" min="1000" step="1000" oninput="calcMeta()"></div>
+        </div>
+        <div class="field-row">
+          <span class="field-label">Dias disponíveis</span>
+          <div class="field-input-wrap"><input type="number" id="dias" value="5" min="1" max="90" class="narrow" oninput="calcMeta()"></div>
+        </div>
+      </div>
+
+      <!-- CENÁRIOS -->
+      <div class="cenario-row" id="cenario-row">
+        <button class="cenario-btn" id="cb-pessimista" onclick="setCenario('pessimista')">
+          <div class="c-label">Pessimista</div>
+          <div id="cdesc-pessimista" class="c-desc">—</div>
+        </button>
+        <button class="cenario-btn active" id="cb-realista" onclick="setCenario('realista')">
+          <div class="c-label">Realista</div>
+          <div id="cdesc-realista" class="c-desc">—</div>
+        </button>
+        <button class="cenario-btn" id="cb-otimista" onclick="setCenario('otimista')">
+          <div class="c-label">Otimista</div>
+          <div id="cdesc-otimista" class="c-desc">—</div>
+        </button>
+      </div>
+
+      <div id="m_alert" class="alert"></div>
+      <div class="metric-grid" id="m_metrics"></div>
+
+      <div class="card">
+        <p class="section-label">Funil completo</p>
+        <div id="m_funnel"></div>
+      </div>
+
+      <div class="card">
+        <p class="section-label">Ritmo diário</p>
+        <div id="m_bars"></div>
+        <p class="bars-footer" id="m_bars_footer"></p>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ===================== ABA 2: PROJEÇÃO ===================== -->
+  <div class="tab-content" id="tab-proj">
+
+    <div class="card">
+      <p class="section-label">Parâmetros do funil</p>
+      <div class="field-row">
+        <span class="field-label">Ticket médio</span>
+        <div class="field-input-wrap"><span class="prefix">R$</span><input type="number" id="p_ticket" value="6000" min="100" step="100" oninput="calcProj()"></div>
+      </div>
+      <div class="field-row">
+        <span class="field-label">Comparecimento</span>
+        <div class="field-input-wrap">
+          <input type="range" id="p_show_range" min="5" max="100" step="1" value="50">
+          <input type="number" id="p_show_num" value="50" min="5" max="100" class="narrow">
+          <span class="prefix">%</span>
+        </div>
+      </div>
+      <div class="field-row">
+        <span class="field-label">Conversão em vendas</span>
+        <div class="field-input-wrap">
+          <input type="range" id="p_conv_range" min="5" max="100" step="1" value="70">
+          <input type="number" id="p_conv_num" value="70" min="5" max="100" class="narrow">
+          <span class="prefix">%</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <p class="section-label">Sua agenda</p>
+      <div class="field-row">
+        <span class="field-label">Avaliações agendadas</span>
+        <div class="field-input-wrap"><input type="number" id="p_agend" value="20" min="1" step="1" class="narrow" oninput="calcProj()"></div>
+      </div>
+    </div>
+
+    <div id="p_hero"></div>
+    <div class="proj-range" id="p_range"></div>
+
+    <div class="card">
+      <p class="section-label">Cenários</p>
+      <div id="p_cenarios" class="p-cenario-row"></div>
+      <div id="p_funnel"></div>
+    </div>
+
+    <div class="card">
+      <p class="section-label">Detalhamento</p>
+      <div id="p_bars"></div>
+    </div>
+
+  </div>
+
+  <footer>Calculadoras de vendas — geradas com Claude</footer>
+</div>
+
+<script>
+// ===================== ESTADO GLOBAL =====================
+var vendedores = [];
+var vendedorAtivo = null;
+var cenarioAtivo = 'realista';
+var pCenarioAtivo = 'real';
+
+// Multiplicadores de cenário
+var CENARIOS = {
+  pessimista: { show: 0.85, conv: 0.85, label: 'Show ×0.85 · Conv ×0.85' },
+  realista:   { show: 1.00, conv: 1.00, label: 'Taxas reais da planilha' },
+  otimista:   { show: 1.15, conv: 1.10, label: 'Show ×1.15 · Conv ×1.10' }
+};
+
+// ===================== TABS =====================
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-content').forEach(function(el){ el.classList.remove('active'); });
+  document.querySelectorAll('.tab-btn').forEach(function(el){ el.classList.remove('active'); });
+  document.getElementById('tab-' + name).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ===================== SHEETS =====================
+function loadSheets() {
+  var url = document.getElementById('sheets-url').value.trim();
+  if (!url) { setStatus('Cole a URL primeiro', 'err'); return; }
+  setStatus('Carregando...', '');
+
+  var csvUrl = toCSVUrl(url);
+
+  var proxies = [
+    'https://corsproxy.io/?' + encodeURIComponent(csvUrl),
+    'https://api.allorigins.win/raw?url=' + encodeURIComponent(csvUrl),
+    'https://thingproxy.freeboard.io/fetch/' + csvUrl,
+    csvUrl
+  ];
+
+  tryFetch(proxies, 0);
+}
+
+function tryFetch(urls, idx) {
+  if (idx >= urls.length) {
+    setStatus('Erro ao carregar. Tente recarregar a página e tentar novamente.', 'err');
+    return;
+  }
+  fetch(urls[idx], { mode: idx === urls.length - 1 ? 'no-cors' : 'cors' })
+    .then(function(r) {
+      if (r.type === 'opaque') throw new Error('opaque');
+      if (!r.ok) throw new Error('Erro ' + r.status);
+      return r.text();
+    })
+    .then(function(text) {
+      if (text.trim().startsWith('<')) throw new Error('HTML retornado');
+      parseCSV(text);
+    })
+    .catch(function() {
+      tryFetch(urls, idx + 1);
+    });
+}
+
+function toCSVUrl(url) {
+  if (url.includes('output=csv')) return url;
+  var m = url.match(/\/d\/e\/([a-zA-Z0-9_-]+)/);
+  if (m) return 'https://docs.google.com/spreadsheets/d/e/' + m[1] + '/pub?output=csv';
+  m = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+  if (m) return 'https://docs.google.com/spreadsheets/d/' + m[1] + '/export?format=csv&gid=0';
+  return url;
+}
+
+function parseCSV(text) {
+  var lines = text.trim().split('\n').map(function(l){ return l.trim(); });
+  if (lines.length < 2) { setStatus('Planilha vazia ou formato inválido', 'err'); return; }
+
+  var headers = lines[0].split(',').map(function(h){ return h.trim().toLowerCase().replace(/["\r]/g,''); });
+  var iNome  = findCol(headers, ['nome','name','vendedor']);
+  var iTicket= findCol(headers, ['ticket','ticket medio','ticket_medio','ticketmedio']);
+  var iShow  = findCol(headers, ['comparecimento','show','show_rate','showrate','taxa comparecimento']);
+  var iConv  = findCol(headers, ['conversao','conversão','conv','taxa conversao','taxa_conversao']);
+
+  if (iNome < 0 || iTicket < 0 || iShow < 0 || iConv < 0) {
+    setStatus('Colunas não encontradas. Esperado: nome, ticket, comparecimento, conversao', 'err'); return;
+  }
+
+  vendedores = [];
+  for (var i = 1; i < lines.length; i++) {
+    var cols = parseCSVLine(lines[i]);
+    if (!cols[iNome]) continue;
+    vendedores.push({
+      nome:          cols[iNome].trim(),
+      ticket:        parseFloat(cols[iTicket]) || 0,
+      comparecimento:parseFloat(cols[iShow])   || 0,
+      conversao:     parseFloat(cols[iConv])   || 0
+    });
+  }
+
+  if (vendedores.length === 0) { setStatus('Nenhum vendedor encontrado', 'err'); return; }
+
+  setStatus('✓ ' + vendedores.length + ' vendedor(es) carregado(s)', 'ok');
+  populateSelect();
+  document.getElementById('vendedor-section').style.display = 'block';
+  document.getElementById('empty-state').style.display = 'none';
+}
+
+function findCol(headers, candidates) {
+  for (var i = 0; i < candidates.length; i++) {
+    var idx = headers.indexOf(candidates[i]);
+    if (idx >= 0) return idx;
+  }
+  return -1;
+}
+
+function parseCSVLine(line) {
+  var result = [], cur = '', inQ = false;
+  line = line.replace(/\r/g,'');
+  for (var i = 0; i < line.length; i++) {
+    var c = line[i];
+    if (c === '"') { inQ = !inQ; }
+    else if (c === ',' && !inQ) { result.push(cur); cur = ''; }
+    else { cur += c; }
+  }
+  result.push(cur);
+  return result;
+}
+
+function populateSelect() {
+  var sel = document.getElementById('vendedor-select');
+  sel.innerHTML = '<option value="">Selecione um vendedor...</option>';
+  vendedores.forEach(function(v, i){
+    sel.innerHTML += '<option value="' + i + '">' + v.nome + '</option>';
+  });
+}
+
+function setStatus(msg, type) {
+  var el = document.getElementById('sheets-status');
+  el.textContent = msg;
+  el.className = 'sheets-status' + (type ? ' ' + type : '');
+}
+
+// ===================== SELETOR VENDEDOR =====================
+function onVendedorChange() {
+  var idx = document.getElementById('vendedor-select').value;
+  if (idx === '') {
+    vendedorAtivo = null;
+    document.getElementById('vendedor-stats').style.display = 'none';
+    document.getElementById('meta-content').style.display = 'none';
+    document.getElementById('empty-state').style.display = 'block';
+    document.getElementById('empty-state').textContent = 'Selecione um vendedor para ver o cálculo.';
+    return;
+  }
+  vendedorAtivo = vendedores[parseInt(idx)];
+  document.getElementById('vs-ticket').textContent = fmtRk(vendedorAtivo.ticket);
+  document.getElementById('vs-show').textContent   = vendedorAtivo.comparecimento + '%';
+  document.getElementById('vs-conv').textContent   = vendedorAtivo.conversao + '%';
+  document.getElementById('vendedor-stats').style.display = 'grid';
+  document.getElementById('empty-state').style.display = 'none';
+  document.getElementById('meta-content').style.display = 'block';
+  updateCenarioLabels();
+  calcMeta();
+}
+
+// ===================== CENÁRIOS =====================
+function updateCenarioLabels() {
+  if (!vendedorAtivo) return;
+  var v = vendedorAtivo;
+  ['pessimista','realista','otimista'].forEach(function(c){
+    var mult = CENARIOS[c];
+    var show = Math.min(Math.round(v.comparecimento * mult.show), 100);
+    var conv = Math.min(Math.round(v.conversao * mult.conv), 100);
+    document.getElementById('cdesc-' + c).textContent = show + '% show · ' + conv + '% conv';
+  });
+}
+
+function setCenario(c) {
+  cenarioAtivo = c;
+  document.querySelectorAll('.cenario-btn').forEach(function(el){ el.classList.remove('active'); });
+  document.getElementById('cb-' + c).classList.add('active');
+  calcMeta();
+}
+
+// ===================== CALC META =====================
+function calcMeta() {
+  if (!vendedorAtivo) return;
+
+  var meta   = parseFloat(document.getElementById('meta').value) || 50000;
+  var dias   = parseInt(document.getElementById('dias').value)   || 5;
+  var mult   = CENARIOS[cenarioAtivo];
+  var ticket = vendedorAtivo.ticket;
+  var showPct= Math.min(Math.round(vendedorAtivo.comparecimento * mult.show), 100);
+  var convPct= Math.min(Math.round(vendedorAtivo.conversao * mult.conv), 100);
+  var showR  = showPct / 100;
+  var convR  = convPct / 100;
+
+  var vendasNec   = Math.ceil(meta / ticket);
+  var receitaReal = vendasNec * ticket;
+  var reunioesNec = Math.ceil(vendasNec / convR);
+  var agendNec    = Math.ceil(reunioesNec / showR);
+  var agendPorDia = Math.ceil(agendNec / dias);
+  var fatDiario   = meta / dias;
+
+  // Métricas destaque
+  document.getElementById('m_metrics').innerHTML =
+    mHero('Agend./dia', agendPorDia, 'para bater a meta') +
+    mCard('Fat. diário necessário', fmtRk(fatDiario), 'por dia durante ' + dias + ' dias') +
+    mCard('Agend. totais', agendNec, 'em ' + dias + ' dia' + (dias>1?'s':'')) +
+    mCard('Fechamentos', vendasNec, 'ticket ' + fmtRk(ticket));
+
+  // Funil
+  document.getElementById('m_funnel').innerHTML =
+    fStep('#B5D4F4', 'Agendamentos necessários', agendNec + ' agendamentos', agendPorDia + ' por dia · ' + dias + ' dias', showPct + '% comparecem', bdg(showPct)) +
+    fStep('#C5BBF8', 'Reuniões realizadas',       reunioesNec + ' reuniões',  (reunioesNec/dias).toFixed(1) + ' por dia', convPct + '% convertem', bdg(convPct)) +
+    fStep('#B6E0AA', 'Vendas fechadas',            vendasNec + ' vendas',     (vendasNec/dias).toFixed(1) + ' por dia · ' + fmtRk(ticket) + ' ticket', fmtR(receitaReal), 'badge-ok');
+
+  // Barras diárias
+  var bHtml = '', sobrando = agendNec;
+  for (var i = 1; i <= dias; i++) {
+    var v = Math.ceil(sobrando / (dias - i + 1));
+    sobrando -= v;
+    var w = Math.min(100, Math.round((v / Math.ceil(agendNec/dias)) * 100));
+    bHtml += barRow('Dia ' + i, v, w, 'agend.', 'bar-blue');
+  }
+  document.getElementById('m_bars').innerHTML = bHtml;
+  document.getElementById('m_bars_footer').textContent =
+    'Total: ' + agendNec + ' agendamentos → ' + reunioesNec + ' reuniões → ' + vendasNec + ' vendas → ' + fmtR(receitaReal);
+
+  // Alerta
+  var alertBox = document.getElementById('m_alert');
+  if (agendPorDia > 15) {
+    alertBox.className = 'alert alert-bad';
+    alertBox.textContent = '⚠ Ritmo muito alto: ' + agendPorDia + ' agendamentos/dia. Considere revisar a meta ou os dias disponíveis.';
+  } else if (agendPorDia > 8) {
+    alertBox.className = 'alert alert-warn';
+    alertBox.textContent = '↗ Ritmo exigente: ' + agendPorDia + ' agendamentos/dia. Garanta a fonte de leads aquecida.';
+  } else {
+    alertBox.className = 'alert'; alertBox.textContent = '';
+  }
+}
+
+// ===================== CALC PROJEÇÃO =====================
+function projCalc(showR, convR, agend, ticket) {
+  var comparece = Math.round(agend * showR);
+  var vendas    = Math.round(comparece * convR);
+  return { comparece: comparece, vendas: vendas, receita: vendas * ticket };
+}
+
+function calcProj() {
+  var ticket  = parseFloat(document.getElementById('p_ticket').value)   || 6000;
+  var showPct = parseFloat(document.getElementById('p_show_num').value) || 50;
+  var convPct = parseFloat(document.getElementById('p_conv_num').value) || 70;
+  var agend   = parseInt(document.getElementById('p_agend').value)       || 20;
+  var showR = showPct / 100, convR = convPct / 100;
+
+  var real       = projCalc(showR,             convR,             agend, ticket);
+  var otimista   = projCalc(Math.min(showR*1.2,1), Math.min(convR*1.1,1), agend, ticket);
+  var pessimista = projCalc(showR*0.8,         convR*0.9,         agend, ticket);
+
+  var c = pCenarioAtivo === 'real' ? real : pCenarioAtivo === 'otimista' ? otimista : pessimista;
+
+  document.getElementById('p_hero').innerHTML =
+    '<div class="proj-hero">' +
+      '<p class="proj-hero-label">Projeção · ' + (pCenarioAtivo==='real'?'Realista':pCenarioAtivo==='otimista'?'Otimista':'Pessimista') + '</p>' +
+      '<p class="proj-hero-value">' + fmtRk(c.receita) + '</p>' +
+      '<p class="proj-hero-sub">' + agend + ' agend. → ' + c.comparece + ' comparecem → ' + c.vendas + ' vendas</p>' +
+    '</div>';
+
+  document.getElementById('p_range').innerHTML =
+    mCard2('Pessimista', fmtRk(pessimista.receita), pessimista.vendas + ' vendas') +
+    mCard2('Realista',   fmtRk(real.receita),       real.vendas + ' vendas') +
+    mCard2('Otimista',   fmtRk(otimista.receita),   otimista.vendas + ' vendas');
+
+  var cens = [
+    { key:'pessimista', label:'Pessimista', show:Math.round(showR*80), conv:Math.round(convR*90), val:fmtRk(pessimista.receita) },
+    { key:'real',       label:'Realista',   show:showPct,              conv:convPct,              val:fmtRk(real.receita) },
+    { key:'otimista',   label:'Otimista',   show:Math.min(Math.round(showR*120),100), conv:Math.min(Math.round(convR*110),100), val:fmtRk(otimista.receita) }
+  ];
+  document.getElementById('p_cenarios').innerHTML = cens.map(function(cn){
+    return '<button class="p-cenario-btn' + (pCenarioAtivo===cn.key?' active':'') + '" onclick="setPCenario(\'' + cn.key + '\')">' +
+      '<div style="font-size:10px;opacity:.6;margin-bottom:2px">' + cn.label + '</div>' +
+      '<div style="font-size:13px;font-weight:600;font-family:\'DM Mono\',monospace">' + cn.val + '</div>' +
+      '<div style="font-size:10px;opacity:.6;margin-top:2px">' + cn.show + '% show · ' + cn.conv + '% conv</div>' +
+    '</button>';
+  }).join('');
+
+  document.getElementById('p_funnel').innerHTML =
+    fStep('#B5D4F4', 'Agendamentos na agenda', agend + ' avaliações', 'ponto de partida', showPct + '% comparecem', bdg(showPct)) +
+    fStep('#C5BBF8', 'Comparecem à reunião',   c.comparece + ' pessoas', Math.round(c.comparece/agend*100) + '% do total agendado', convPct + '% convertem', bdg(convPct)) +
+    fStep('#B6E0AA', 'Fechamentos esperados',  c.vendas + ' vendas', 'ticket ' + fmtR(ticket), fmtR(c.receita), 'badge-ok');
+
+  var maxR = Math.max(pessimista.receita, real.receita, otimista.receita);
+  document.getElementById('p_bars').innerHTML =
+    barRow('Pessim.', fmtRk(pessimista.receita), Math.round(pessimista.receita/maxR*100), '', 'bar-blue') +
+    barRow('Realista',fmtRk(real.receita),        Math.round(real.receita/maxR*100),       '', 'bar-blue') +
+    barRow('Otimista',fmtRk(otimista.receita),    100,                                     '', 'bar-blue') +
+    '<p class="bars-footer">Baseado em ' + agend + ' agendamentos · show rate ' + showPct + '% · conversão ' + convPct + '%</p>';
+}
+
+function setPCenario(k) { pCenarioAtivo = k; calcProj(); }
+
+// ===================== HELPERS =====================
+function fmtR(n)  { return 'R$ ' + Math.round(n).toLocaleString('pt-BR'); }
+function fmtRk(n) { return n >= 10000 ? 'R$ ' + (n/1000).toFixed(0) + 'k' : fmtR(n); }
+function bdg(pct) { return pct >= 60 ? 'badge-ok' : pct >= 40 ? 'badge-warn' : 'badge-bad'; }
+
+function mHero(label, value, sub) {
+  return '<div class="metric hero"><p class="metric-label">' + label + '</p><p class="metric-value">' + value + '</p><p class="metric-sub">' + sub + '</p></div>';
+}
+function mCard(label, value, sub) {
+  return '<div class="metric"><p class="metric-label">' + label + '</p><p class="metric-value md">' + value + '</p><p class="metric-sub">' + sub + '</p></div>';
+}
+function mCard2(label, value, sub) {
+  return '<div class="metric"><p class="metric-label">' + label + '</p><p class="metric-value md">' + value + '</p><p class="metric-sub">' + sub + '</p></div>';
+}
+function fStep(dot, name, num, detail, badgeText, badgeClass) {
+  return '<div class="funnel-step">' +
+    '<div class="step-dot" style="background:' + dot + '"></div>' +
+    '<div class="step-info"><p class="step-name">' + name + '</p><p class="step-num">' + num + '</p><p class="step-detail">' + detail + '</p></div>' +
+    '<div style="text-align:right;flex-shrink:0"><span class="badge ' + badgeClass + '">' + badgeText + '</span></div>' +
+    '</div>';
+}
+function barRow(label, val, w, suffix, cls) {
+  return '<div class="bar-wrap ' + cls + '">' +
+    '<span class="bar-label" style="width:54px;font-size:11px">' + label + '</span>' +
+    '<div class="bar-track"><div class="bar-fill" style="width:' + Math.max(w,8) + '%"><span class="bar-fill-val">' + val + (suffix?' '+suffix:'') + '</span></div></div>' +
+    '</div>';
+}
+
+// ===================== PROJ SLIDERS =====================
+document.getElementById('p_show_range').addEventListener('input', function(){ document.getElementById('p_show_num').value = this.value; calcProj(); });
+document.getElementById('p_show_num').addEventListener('input',   function(){ document.getElementById('p_show_range').value = this.value; calcProj(); });
+document.getElementById('p_conv_range').addEventListener('input', function(){ document.getElementById('p_conv_num').value = this.value; calcProj(); });
+document.getElementById('p_conv_num').addEventListener('input',   function(){ document.getElementById('p_conv_range').value = this.value; calcProj(); });
+
+// ===================== INIT =====================
+calcProj();
+loadSheets();
+</script>
+</body>
+</html>
