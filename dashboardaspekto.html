@@ -81,7 +81,7 @@
 
 <div class="tv">
 
-  <!-- COLUNA ESQUERDA -->
+  <!-- COLUNA ESQUERDA — Planilha 1: métricas de leads -->
   <div class="col-left">
     <div class="topbar">
       <div>
@@ -165,7 +165,7 @@
     </div>
   </div>
 
-  <!-- COLUNA DIREITA -->
+  <!-- COLUNA DIREITA — Planilha 2: termômetro de pipe -->
   <div class="col-right">
     <div class="topbar-right">
       <div>
@@ -178,11 +178,11 @@
 </div>
 
 <script>
-  var CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTw10EmgmtOafZtcvklaJBPIShxJe-3GgEYvPcDN_qpgiGgozUdJn3qo07tA4j51dIGjfKvQFRV4TK0/pub?gid=868682954&single=true&output=csv';
+  // ─── URLs das planilhas ───
+  var CSV_LEADS = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTw10EmgmtOafZtcvklaJBPIShxJe-3GgEYvPcDN_qpgiGgozUdJn3qo07tA4j51dIGjfKvQFRV4TK0/pub?gid=868682954&single=true&output=csv';
+  var CSV_PIPE  = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRcT6SwMdVerLpMfLzY0Fg2uuZ7OeNbE7XGVW3M4j9Y_YmYUl7_Ao64DW-OGM2p7E43DCCPdtPUXtlG/pub?gid=837929221&single=true&output=csv';
 
-  // Nomes dos vendedores — edite aqui quando souber os nomes reais
-  var VENDEDORES = ['Nathan', 'Rafael', 'Camila', 'Lucas', 'Fernanda'];
-
+  // ─── Parser CSV (suporta campos com aspas e vírgulas) ───
   function parseCSV(txt) {
     var lines = txt.trim().split('\n');
     if (lines.length < 2) return null;
@@ -205,6 +205,34 @@
     return d;
   }
 
+  // Parser para múltiplas linhas (termômetro tem 1 linha por vendedor)
+  function parseCSVRows(txt) {
+    var lines = txt.trim().split('\n');
+    if (lines.length < 2) return [];
+    function parseLine(line) {
+      var result = [], cur = '', inQ = false;
+      line = line.replace(/\r/g, '');
+      for (var i = 0; i < line.length; i++) {
+        var c = line[i];
+        if (c === '"') { inQ = !inQ; }
+        else if (c === ',' && !inQ) { result.push(cur.trim()); cur = ''; }
+        else { cur += c; }
+      }
+      result.push(cur.trim());
+      return result;
+    }
+    var headers = parseLine(lines[0]).map(function(h){ return h.toLowerCase().replace(/\r/g,''); });
+    var rows = [];
+    for (var i = 1; i < lines.length; i++) {
+      if (!lines[i].trim()) continue;
+      var vals = parseLine(lines[i]);
+      var row = {};
+      headers.forEach(function(h, j){ row[h] = vals[j] || ''; });
+      rows.push(row);
+    }
+    return rows;
+  }
+
   function num(v) { return parseInt((v||'').replace(/[^0-9]/g,'')) || 0; }
   function fmt(n) { return Number(n).toLocaleString('pt-BR'); }
   function pct(a, t) { return t > 0 ? (a/t*100).toFixed(1)+'%' : '—'; }
@@ -222,28 +250,39 @@
     return 'há ' + min + ' min';
   }
 
-  function renderVendedores(d) {
+  // ─── Render termômetro de pipe ───
+  // Lê colunas: vendedor, negocios, minutos_parado, status
+  function renderVendedores(rows) {
     var container = document.getElementById('vendedores-container');
     container.innerHTML = '';
 
-    VENDEDORES.forEach(function(nome) {
-      var key = nome.toLowerCase();
+    rows.forEach(function(row) {
+      var nome     = row['vendedor']       || '—';
+      var negocios = num(row['negocios']);
+      var minutos  = num(row['minutos_parado']);
+      var status   = (row['status'] || '').toLowerCase().trim();
 
-      // Campos esperados na planilha: "negocios_nathan", "minutos_nathan", etc.
-      var negocios = num(d['negocios_' + key] || d['negocios ' + key]);
-      var minutos  = num(d['minutos_' + key]  || d['minutos ' + key]);
+      // Status vem da planilha; minutos serve como fallback
+      var estado;
+      if (status === 'alerta' || minutos >= 180) {
+        estado = 'alerta';
+      } else if (status === 'atencao' || status === 'atenção' || minutos >= 60) {
+        estado = 'atencao';
+      } else {
+        estado = 'ok';
+      }
 
-      var estado, badgeClass, badgeIcon, badgeTexto, iconColor, descTexto, tempoColor, subtexto;
-      if (minutos >= 180) {
-        estado = 'alerta'; badgeClass = 'badge-alerta'; badgeIcon = 'ti-alert-circle';
+      var badgeClass, badgeIcon, badgeTexto, iconColor, descTexto, tempoColor, subtexto;
+      if (estado === 'alerta') {
+        badgeClass = 'badge-alerta'; badgeIcon = 'ti-alert-circle';
         badgeTexto = 'Crítico — +3h sem atualizar'; iconColor = 'color-danger';
         descTexto = 'urgente'; tempoColor = 'color-danger'; subtexto = 'crítico';
-      } else if (minutos >= 60) {
-        estado = 'atencao'; badgeClass = 'badge-atencao'; badgeIcon = 'ti-alert-triangle';
+      } else if (estado === 'atencao') {
+        badgeClass = 'badge-atencao'; badgeIcon = 'ti-alert-triangle';
         badgeTexto = 'Atenção — ' + tempoStr(minutos) + ' sem atualizar'; iconColor = 'color-warn';
         descTexto = 'requer atenção'; tempoColor = 'color-warn'; subtexto = 'passou do limite';
       } else {
-        estado = 'ok'; badgeClass = 'badge-ok'; badgeIcon = 'ti-check';
+        badgeClass = 'badge-ok'; badgeIcon = 'ti-check';
         badgeTexto = 'Atualizado'; iconColor = 'color-ok';
         descTexto = 'no pipe agora'; tempoColor = 'color-ok'; subtexto = 'dentro do prazo';
       }
@@ -284,7 +323,8 @@
     });
   }
 
-  function render(d) {
+  // ─── Render métricas de leads ───
+  function renderLeads(d) {
     var metaBH   = num(d['metaads bh']);
     var metaInt  = num(d['metaads interior']);
     var metaFora = num(d['metaads fora de mg']);
@@ -308,24 +348,45 @@
 
     document.getElementById('update-time').textContent =
       'atualizado às ' + new Date().toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
-
-    renderVendedores(d);
-    document.getElementById('loading').classList.add('hidden');
   }
 
-  function load() {
-    fetch(CSV + '&t=' + Date.now(), { cache: 'no-store' })
+  // ─── Fetch das duas planilhas ───
+  var leadsCarregado = false;
+  var pipeCarregado  = false;
+
+  function checkLoading() {
+    if (leadsCarregado && pipeCarregado) {
+      document.getElementById('loading').classList.add('hidden');
+    }
+  }
+
+  function loadLeads() {
+    fetch(CSV_LEADS + '&t=' + Date.now(), { cache: 'no-store' })
       .then(function(r) { if (!r.ok) throw new Error(); return r.text(); })
       .then(function(t) {
         if (t.trim().startsWith('<')) throw new Error();
         var d = parseCSV(t);
-        if (d) render(d);
+        if (d) { renderLeads(d); leadsCarregado = true; checkLoading(); }
       })
-      .catch(function() { setTimeout(load, 5000); });
+      .catch(function() { setTimeout(loadLeads, 5000); });
   }
 
-  load();
-  setInterval(load, 30000);
+  function loadPipe() {
+    fetch(CSV_PIPE + '&t=' + Date.now(), { cache: 'no-store' })
+      .then(function(r) { if (!r.ok) throw new Error(); return r.text(); })
+      .then(function(t) {
+        if (t.trim().startsWith('<')) throw new Error();
+        var rows = parseCSVRows(t);
+        if (rows.length) { renderVendedores(rows); pipeCarregado = true; checkLoading(); }
+      })
+      .catch(function() { setTimeout(loadPipe, 5000); });
+  }
+
+  // Carrega tudo e repete a cada 30s
+  loadLeads();
+  loadPipe();
+  setInterval(loadLeads, 30000);
+  setInterval(loadPipe,  30000);
 </script>
 </body>
 </html>
