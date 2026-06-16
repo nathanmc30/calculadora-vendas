@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Grupo Aspekto — Dashboard</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0d1117; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; overflow: hidden; }
+    #loading { position: fixed; inset: 0; background: #0d1117; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; z-index: 999; transition: opacity .4s; }
+    #loading.hidden { opacity: 0; pointer-events: none; }
+    .spinner { width: 32px; height: 32px; border: 2px solid rgba(255,255,255,0.1); border-top-color: #4fc3f7; border-radius: 50%; animation: spin .7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-txt { font-size: 13px; color: #4a5568; }
+    .tv { display: grid; grid-template-columns: 1fr 1fr; height: 100vh; padding: 28px 32px; gap: 24px; }
+    .col-left { display: flex; flex-direction: column; height: 100%; }
+    .topbar { display: flex; align-items: center; justify-content: space-between; padding-bottom: 20px; border-bottom: 0.5px solid #1e2d3d; margin-bottom: 22px; flex-shrink: 0; }
+    .brand-name { font-size: 22px; font-weight: 500; color: #e6edf3; letter-spacing: -0.4px; }
+    .brand-sub { font-size: 13px; color: #8b9aaa; margin-top: 4px; }
+    .live { display: flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 500; color: #4fc3f7; background: #0d2233; padding: 6px 14px; border-radius: 20px; border: 0.5px solid #1a3a52; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: #4fc3f7; animation: pulse 1.6s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.25} }
+    .sec-label { font-size: 11px; font-weight: 500; letter-spacing: 1px; text-transform: uppercase; color: #6e8394; margin-bottom: 12px; flex-shrink: 0; }
+    .badge-hoje { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 500; color: #4fc3f7; background: #0d2233; border: 0.5px solid #1a3a52; padding: 4px 12px; border-radius: 20px; margin-bottom: 12px; flex-shrink: 0; }
+    .div { border: none; border-top: 0.5px solid #1e2d3d; margin: 18px 0; flex-shrink: 0; }
+    .row1 { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 14px; flex-shrink: 0; }
+    .row2 { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; flex-shrink: 0; }
+    .card-hero { background: #0d1f2d; border: 0.5px solid #1a3a52; border-radius: 14px; padding: 24px 26px; }
+    .card { background: #161b22; border: 0.5px solid #1e2d3d; border-radius: 14px; padding: 24px 22px; }
+    .lbl { font-size: 11px; font-weight: 500; letter-spacing: 0.7px; text-transform: uppercase; color: #8b9aaa; margin-bottom: 10px; }
+    .sub { font-size: 12px; color: #5ba3c9; margin-top: 8px; }
+    .hero-num { font-size: 86px; font-weight: 500; color: #e6edf3; line-height: 1; letter-spacing: -2px; }
+    .val-pct { font-size: 54px; font-weight: 500; color: #e6edf3; line-height: 1; letter-spacing: -1px; }
+    .val-md { font-size: 48px; font-weight: 500; color: #e6edf3; line-height: 1; letter-spacing: -1px; }
+    .ads-card { background: #161b22; border: 0.5px solid #1e2d3d; border-radius: 14px; padding: 22px; flex: 1; }
+    .ads-total-block { background: #0d1f2d; border: 0.5px solid #1a3a52; border-radius: 10px; padding: 18px 20px; margin-bottom: 16px; }
+    .ads-total-lbl { font-size: 11px; font-weight: 500; letter-spacing: 0.7px; text-transform: uppercase; color: #8b9aaa; margin-bottom: 8px; }
+    .ads-total-val { font-size: 54px; font-weight: 500; color: #e6edf3; letter-spacing: -1px; line-height: 1; }
+    .ads-total-desc { font-size: 12px; color: #5ba3c9; margin-top: 6px; }
+    .ads-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; }
+    .ads-region { background: #0d1117; border: 0.5px solid #1e2d3d; border-radius: 10px; padding: 18px; }
+    .ads-rlbl { font-size: 10px; font-weight: 500; letter-spacing: 0.7px; text-transform: uppercase; color: #8b9aaa; margin-bottom: 8px; }
+    .ads-rval { font-size: 38px; font-weight: 500; color: #e6edf3; letter-spacing: -0.5px; line-height: 1; }
+    .ads-rpct { font-size: 12px; color: #5ba3c9; margin-top: 6px; }
+    .col-right { display: flex; flex-direction: column; height: 100%; }
+    .topbar-right { display: flex; align-items: center; justify-content: space-between; padding-bottom: 20px; border-bottom: 0.5px solid #1e2d3d; margin-bottom: 22px; flex-shrink: 0; }
+    .vendedores { display: flex; flex-direction: column; gap: 12px; flex: 1; }
+    .vendedor { border-radius: 14px; padding: 20px 22px; border: 0.5px solid transparent; flex: 1; display: flex; flex-direction: column; justify-content: center; }
+    .ok      { background: #0d1a0f; border-color: #1a3d20; }
+    .atencao { background: #1a1500; border-color: #3d2e00; }
+    .alerta  { background: #1a0d0d; border-color: #3d1010; }
+    .v-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+    .v-nome-wrap { display: flex; align-items: center; gap: 8px; }
+    .v-nome { font-size: 17px; font-weight: 500; color: #e6edf3; }
+    .v-badge { display: flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 500; padding: 4px 12px; border-radius: 20px; }
+    .badge-ok      { background: #0d2a12; color: #4ade80; border: 0.5px solid #1a5c28; }
+    .badge-atencao { background: #2a1f00; color: #f5c542; border: 0.5px solid #5a4000; }
+    .badge-alerta  { background: #2a0d0d; color: #f56b6b; border: 0.5px solid #5a1010; }
+    .v-info { display: flex; align-items: center; gap: 28px; }
+    .v-stat { display: flex; flex-direction: column; gap: 3px; }
+    .v-stat-lbl { font-size: 10px; letter-spacing: 0.5px; text-transform: uppercase; color: #8b9aaa; }
+    .v-stat-val { font-size: 30px; font-weight: 500; color: #e6edf3; line-height: 1; letter-spacing: -0.5px; }
+    .v-stat-desc { font-size: 12px; color: #5ba3c9; margin-top: 2px; }
+    .sep { width: 0.5px; height: 44px; background: #1e2d3d; }
+    .barra-wrap { height: 3px; background: #1e2d3d; border-radius: 2px; overflow: hidden; margin-top: 16px; }
+    .barra-atencao { height: 3px; background: #f5c542; border-radius: 2px; }
+    .barra-alerta { height: 3px; background: #f56b6b; border-radius: 2px; animation: pisca 1.2s infinite; }
+    @keyframes pisca { 0%,100%{opacity:1} 50%{opacity:0.4} }
+    .color-warn   { color: #f5c542 !important; }
+    .color-danger { color: #f56b6b !important; }
+    .color-ok     { color: #4ade80 !important; }
+  </style>
+</head>
+<body>
+
+<div id="loading">
+  <div class="spinner"></div>
+  <p class="loading-txt">Carregando dados...</p>
+</div>
+
+<div class="tv">
+
+  <!-- COLUNA ESQUERDA -->
+  <div class="col-left">
+    <div class="topbar">
+      <div>
+        <div class="brand-name">Grupo Aspekto</div>
+        <div class="brand-sub">Dashboard Comercial &mdash; <span id="update-time">carregando...</span></div>
+      </div>
+      <div class="live"><span class="dot"></span>Ao vivo</div>
+    </div>
+
+    <div class="sec-label">Visão mensal</div>
+    <div class="row1" style="margin-bottom:18px;">
+      <div class="card-hero">
+        <div class="lbl">Total Leads mês</div>
+        <div class="hero-num" id="v-leads-mes">—</div>
+        <div class="sub">leads captados neste mês</div>
+      </div>
+      <div class="card">
+        <div class="lbl">Conversão BH</div>
+        <div class="val-pct" id="v-conv-bh">—</div>
+        <div class="sub">meta de conversão</div>
+      </div>
+      <div class="card">
+        <div class="lbl">Conversão Interior</div>
+        <div class="val-pct" id="v-conv-interior">—</div>
+        <div class="sub">meta de conversão</div>
+      </div>
+    </div>
+
+    <hr class="div" style="margin:0 0 18px;" />
+
+    <div class="badge-hoje"><i class="ti ti-calendar"></i>Hoje</div>
+    <div class="row2" style="margin-bottom:18px;">
+      <div class="card">
+        <div class="lbl">Total Leads</div>
+        <div class="val-md" id="v-leads-hoje">—</div>
+        <div class="sub">leads hoje</div>
+      </div>
+      <div class="card">
+        <div class="lbl">Disparos</div>
+        <div class="val-md" id="v-disparo-hj">—</div>
+        <div class="sub">realizados hoje</div>
+      </div>
+      <div class="card">
+        <div class="lbl">Orgânico</div>
+        <div class="val-md" id="v-organico-hoje">—</div>
+        <div class="sub">leads orgânicos</div>
+      </div>
+      <div class="card">
+        <div class="lbl">Remarketing</div>
+        <div class="val-md" id="v-remarketing-hoje">—</div>
+        <div class="sub">leads remarketing</div>
+      </div>
+    </div>
+
+    <hr class="div" style="margin:0 0 18px;" />
+
+    <div class="sec-label">Meta Ads — distribuição hoje</div>
+    <div class="ads-card">
+      <div class="ads-total-block">
+        <div class="ads-total-lbl">Total Meta Ads</div>
+        <div class="ads-total-val" id="v-meta-total">—</div>
+        <div class="ads-total-desc">leads via Meta Ads hoje</div>
+      </div>
+      <div class="ads-grid">
+        <div class="ads-region">
+          <div class="ads-rlbl">BH</div>
+          <div class="ads-rval" id="v-meta-bh">—</div>
+          <div class="ads-rpct" id="pct-bh">—</div>
+        </div>
+        <div class="ads-region">
+          <div class="ads-rlbl">Interior MG</div>
+          <div class="ads-rval" id="v-meta-interior">—</div>
+          <div class="ads-rpct" id="pct-interior">—</div>
+        </div>
+        <div class="ads-region">
+          <div class="ads-rlbl">Fora de MG</div>
+          <div class="ads-rval" id="v-meta-fora">—</div>
+          <div class="ads-rpct" id="pct-fora">—</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- COLUNA DIREITA -->
+  <div class="col-right">
+    <div class="topbar-right">
+      <div>
+        <div class="brand-name">Termômetro de pipe</div>
+        <div class="brand-sub">Atualização em tempo real</div>
+      </div>
+    </div>
+    <div class="vendedores" id="vendedores-container"></div>
+  </div>
+</div>
+
+<script>
+  var CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTw10EmgmtOafZtcvklaJBPIShxJe-3GgEYvPcDN_qpgiGgozUdJn3qo07tA4j51dIGjfKvQFRV4TK0/pub?gid=868682954&single=true&output=csv';
+
+  // Nomes dos vendedores — edite aqui quando souber os nomes reais
+  var VENDEDORES = ['Nathan', 'Rafael', 'Camila', 'Lucas', 'Fernanda'];
+
+  function parseCSV(txt) {
+    var lines = txt.trim().split('\n');
+    if (lines.length < 2) return null;
+    function parseLine(line) {
+      var result = [], cur = '', inQ = false;
+      line = line.replace(/\r/g, '');
+      for (var i = 0; i < line.length; i++) {
+        var c = line[i];
+        if (c === '"') { inQ = !inQ; }
+        else if (c === ',' && !inQ) { result.push(cur.trim()); cur = ''; }
+        else { cur += c; }
+      }
+      result.push(cur.trim());
+      return result;
+    }
+    var headers = parseLine(lines[0]).map(function(h){ return h.toLowerCase().replace(/\r/g,''); });
+    var values  = parseLine(lines[1]);
+    var d = {};
+    headers.forEach(function(h, i){ d[h] = values[i] || ''; });
+    return d;
+  }
+
+  function num(v) { return parseInt((v||'').replace(/[^0-9]/g,'')) || 0; }
+  function fmt(n) { return Number(n).toLocaleString('pt-BR'); }
+  function pct(a, t) { return t > 0 ? (a/t*100).toFixed(1)+'%' : '—'; }
+
+  function set(id, val) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = (typeof val === 'number') ? fmt(val) : String(val || '—');
+  }
+
+  function tempoStr(min) {
+    if (min <= 0) return 'agora mesmo';
+    var h = Math.floor(min / 60), m = min % 60;
+    if (h > 0) return 'há ' + h + 'h' + (m > 0 ? ' ' + m + 'min' : '');
+    return 'há ' + min + ' min';
+  }
+
+  function renderVendedores(d) {
+    var container = document.getElementById('vendedores-container');
+    container.innerHTML = '';
+
+    VENDEDORES.forEach(function(nome) {
+      var key = nome.toLowerCase();
+
+      // Campos esperados na planilha: "negocios_nathan", "minutos_nathan", etc.
+      var negocios = num(d['negocios_' + key] || d['negocios ' + key]);
+      var minutos  = num(d['minutos_' + key]  || d['minutos ' + key]);
+
+      var estado, badgeClass, badgeIcon, badgeTexto, iconColor, descTexto, tempoColor, subtexto;
+      if (minutos >= 180) {
+        estado = 'alerta'; badgeClass = 'badge-alerta'; badgeIcon = 'ti-alert-circle';
+        badgeTexto = 'Crítico — +3h sem atualizar'; iconColor = 'color-danger';
+        descTexto = 'urgente'; tempoColor = 'color-danger'; subtexto = 'crítico';
+      } else if (minutos >= 60) {
+        estado = 'atencao'; badgeClass = 'badge-atencao'; badgeIcon = 'ti-alert-triangle';
+        badgeTexto = 'Atenção — ' + tempoStr(minutos) + ' sem atualizar'; iconColor = 'color-warn';
+        descTexto = 'requer atenção'; tempoColor = 'color-warn'; subtexto = 'passou do limite';
+      } else {
+        estado = 'ok'; badgeClass = 'badge-ok'; badgeIcon = 'ti-check';
+        badgeTexto = 'Atualizado'; iconColor = 'color-ok';
+        descTexto = 'no pipe agora'; tempoColor = 'color-ok'; subtexto = 'dentro do prazo';
+      }
+
+      var barraHTML = '';
+      if (estado === 'atencao') {
+        barraHTML = '<div class="barra-wrap"><div class="barra-atencao" style="width:' + Math.min((minutos/180)*100, 99) + '%"></div></div>';
+      } else if (estado === 'alerta') {
+        barraHTML = '<div class="barra-wrap"><div class="barra-alerta" style="width:100%"></div></div>';
+      }
+
+      var card = document.createElement('div');
+      card.className = 'vendedor ' + estado;
+      card.innerHTML =
+        '<div class="v-top">' +
+          '<div class="v-nome-wrap">' +
+            '<i class="ti ti-user ' + iconColor + '" style="font-size:18px;"></i>' +
+            '<span class="v-nome">' + nome + '</span>' +
+          '</div>' +
+          '<div class="v-badge ' + badgeClass + '"><i class="ti ' + badgeIcon + '"></i>' + badgeTexto + '</div>' +
+        '</div>' +
+        '<div class="v-info">' +
+          '<div class="v-stat">' +
+            '<div class="v-stat-lbl">Negócios p/ ganhar</div>' +
+            '<div class="v-stat-val">' + (negocios > 0 ? negocios : '—') + '</div>' +
+            '<div class="v-stat-desc ' + (estado === 'ok' ? 'color-ok' : tempoColor) + '">' + descTexto + '</div>' +
+          '</div>' +
+          '<div class="sep"></div>' +
+          '<div class="v-stat">' +
+            '<div class="v-stat-lbl">Última atualização</div>' +
+            '<div class="v-stat-val ' + (estado !== 'ok' ? tempoColor : '') + '" style="font-size:20px;">' + tempoStr(minutos) + '</div>' +
+            '<div class="v-stat-desc ' + tempoColor + '">' + subtexto + '</div>' +
+          '</div>' +
+        '</div>' +
+        barraHTML;
+
+      container.appendChild(card);
+    });
+  }
+
+  function render(d) {
+    var metaBH   = num(d['metaads bh']);
+    var metaInt  = num(d['metaads interior']);
+    var metaFora = num(d['metaads fora de mg']);
+    var metaTot  = metaBH + metaInt + metaFora;
+
+    set('v-leads-mes',        num(d['total leads mes']));
+    set('v-conv-bh',          d['conversão bh']       || d['conversao bh']       || '—');
+    set('v-conv-interior',    d['conversão interior'] || d['conversao interior'] || '—');
+    set('v-leads-hoje',       num(d['leads hoje']));
+    set('v-disparo-hj',       num(d['disparo hj']));
+    set('v-organico-hoje',    num(d['organico hoje']));
+    set('v-remarketing-hoje', num(d['remarketing hoje']));
+    set('v-meta-total',       metaTot);
+    set('v-meta-bh',          metaBH);
+    set('v-meta-interior',    metaInt);
+    set('v-meta-fora',        metaFora);
+
+    document.getElementById('pct-bh').textContent       = pct(metaBH,  metaTot);
+    document.getElementById('pct-interior').textContent = pct(metaInt, metaTot);
+    document.getElementById('pct-fora').textContent     = pct(metaFora,metaTot);
+
+    document.getElementById('update-time').textContent =
+      'atualizado às ' + new Date().toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+
+    renderVendedores(d);
+    document.getElementById('loading').classList.add('hidden');
+  }
+
+  function load() {
+    fetch(CSV + '&t=' + Date.now(), { cache: 'no-store' })
+      .then(function(r) { if (!r.ok) throw new Error(); return r.text(); })
+      .then(function(t) {
+        if (t.trim().startsWith('<')) throw new Error();
+        var d = parseCSV(t);
+        if (d) render(d);
+      })
+      .catch(function() { setTimeout(load, 5000); });
+  }
+
+  load();
+  setInterval(load, 30000);
+</script>
+</body>
+</html>
