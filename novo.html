@@ -308,6 +308,9 @@
     window._lastRows = rows;
     checarAlmocos();
     var container = document.getElementById('vendedores-container');
+    var novoHash = JSON.stringify(rows) + JSON.stringify(almocoState);
+    if (container._lastHash === novoHash) return;
+    container._lastHash = novoHash;
     container.innerHTML = '';
 
     rows.forEach(function(row) {
