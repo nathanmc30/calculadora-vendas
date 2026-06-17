@@ -320,26 +320,33 @@
       var minutos  = num(row['minutos_parado']);
       var status   = (row['status'] || '').toLowerCase().trim();
 
-      carregarAlmoco(nome);
-      var almoco = almocoState[nome] || {};
-      var almocoAte = row['almoco_ate'] || '';
-      var emAlmoco = false;
-      var jaAcionou = almoco.acionadoHoje === true;
+    carregarAlmoco(nome);
+var almoco = almocoState[nome] || {};
+var almocoAte = row['almoco_ate'] || '';
+var emAlmoco = false;
+var jaAcionou = almoco.acionadoHoje === true;
 
-      // Lê almoco_ate da planilha (fonte de verdade para todos os dispositivos)
-      if (almocoAte) {
-        var partes = almocoAte.replace('h',':').split(':');
-        var voltaHoje = new Date();
-        voltaHoje.setHours(parseInt(partes[0]), parseInt(partes[1] || 0), 0, 0);
-        if (new Date() < voltaHoje) {
-          emAlmoco = true;
-          almocoState[nome] = { ativo: true, volta: almocoAte, fim: voltaHoje.getTime(), acionadoHoje: true };
-          salvarAlmoco(nome, almocoState[nome]);
-          jaAcionou = true;
-        }
-      } else if (almoco.ativo === true) {
-        emAlmoco = true;
-      }
+if (almocoAte) {
+  var partes = almocoAte.replace('h',':').split(':');
+  var voltaHoje = new Date();
+  voltaHoje.setHours(parseInt(partes[0]), parseInt(partes[1] || 0), 0, 0);
+  if (new Date() < voltaHoje) {
+    emAlmoco = true;
+    almocoState[nome] = { ativo: true, volta: almocoAte, fim: voltaHoje.getTime(), acionadoHoje: true };
+    salvarAlmoco(nome, almocoState[nome]);
+    jaAcionou = true;
+  } else {
+    // Horário de volta já passou — limpa tudo
+    almocoState[nome] = {};
+    try { localStorage.removeItem(almocoKey(nome)); } catch(e) {}
+    jaAcionou = false;
+  }
+} else {
+  // Planilha vazia — limpa localStorage para voltar ao normal
+  almocoState[nome] = {};
+  try { localStorage.removeItem(almocoKey(nome)); } catch(e) {}
+  jaAcionou = false;
+}
 
       // Se em almoço, força status atualizado
       if (emAlmoco) status = 'atualizado';
