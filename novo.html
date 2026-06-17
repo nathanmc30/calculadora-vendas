@@ -178,11 +178,9 @@
 </div>
 
 <script>
-  // ─── URLs das planilhas ───
   var CSV_LEADS = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTw10EmgmtOafZtcvklaJBPIShxJe-3GgEYvPcDN_qpgiGgozUdJn3qo07tA4j51dIGjfKvQFRV4TK0/pub?gid=868682954&single=true&output=csv';
   var CSV_PIPE  = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRcT6SwMdVerLpMfLzY0Fg2uuZ7OeNbE7XGVW3M4j9Y_YmYUl7_Ao64DW-OGM2p7E43DCCPdtPUXtlG/pub?gid=837929221&single=true&output=csv';
 
-  // ─── Parser CSV (suporta campos com aspas e vírgulas) ───
   function parseCSV(txt) {
     var lines = txt.trim().split('\n');
     if (lines.length < 2) return null;
@@ -205,7 +203,6 @@
     return d;
   }
 
-  // Parser para múltiplas linhas (termômetro tem 1 linha por vendedor)
   function parseCSVRows(txt) {
     var lines = txt.trim().split('\n');
     if (lines.length < 2) return [];
@@ -250,9 +247,45 @@
     return 'há ' + min + ' min';
   }
 
-  // ─── Render termômetro de pipe ───
-  // Lê colunas: vendedor, negocios, minutos_parado, status
+  var almocoState = {};
+
+  function almocoKey(nome) { return 'almoco_' + nome + '_' + new Date().toLocaleDateString('pt-BR'); }
+
+  function carregarAlmoco(nome) {
+    try {
+      var raw = localStorage.getItem(almocoKey(nome));
+      if (raw) almocoState[nome] = JSON.parse(raw);
+    } catch(e) {}
+  }
+
+  function salvarAlmoco(nome, obj) {
+    almocoState[nome] = obj;
+    try { localStorage.setItem(almocoKey(nome), JSON.stringify(obj)); } catch(e) {}
+  }
+
+  function acionarAlmoco(nome) {
+    var agora = new Date();
+    var volta = new Date(agora.getTime() + 60 * 60 * 1000);
+    var voltaStr = volta.getHours() + 'h' + String(volta.getMinutes()).padStart(2,'0');
+    salvarAlmoco(nome, { ativo: true, volta: voltaStr, fim: volta.getTime(), acionadoHoje: true });
+    renderVendedores(window._lastRows || []);
+  }
+
+  function checarAlmocos() {
+    var agora = Date.now();
+    Object.keys(almocoState).forEach(function(nome) {
+      if (almocoState[nome].ativo && agora >= almocoState[nome].fim) {
+        almocoState[nome].ativo = false;
+        try { localStorage.setItem(almocoKey(nome), JSON.stringify(almocoState[nome])); } catch(e) {}
+      }
+    });
+  }
+
+  setInterval(function() { checarAlmocos(); renderVendedores(window._lastRows || []); }, 10000);
+
   function renderVendedores(rows) {
+    window._lastRows = rows;
+    checarAlmocos();
     var container = document.getElementById('vendedores-container');
     container.innerHTML = '';
 
@@ -262,16 +295,18 @@
       var minutos  = num(row['minutos_parado']);
       var status   = (row['status'] || '').toLowerCase().trim();
 
-      // Status da planilha tem prioridade absoluta
+      carregarAlmoco(nome);
+      var almoco = almocoState[nome] || {};
+      var emAlmoco = almoco.ativo === true;
+      var jaAcionou = almoco.acionadoHoje === true;
+
+      if (emAlmoco) status = 'atualizado';
+
       var estado;
-      if (status === 'alerta') {
-        estado = 'alerta';
-      } else if (status === 'atencao' || status === 'atenção') {
-        estado = 'atencao';
-      } else if (status === 'atualizado') {
-        estado = 'ok';
-      } else {
-        // fallback por minutos caso status não venha preenchido
+      if (status === 'alerta') { estado = 'alerta'; }
+      else if (status === 'atencao' || status === 'atenção') { estado = 'atencao'; }
+      else if (status === 'atualizado') { estado = 'ok'; }
+      else {
         if (minutos >= 180) { estado = 'alerta'; }
         else if (minutos >= 60) { estado = 'atencao'; }
         else { estado = 'ok'; }
@@ -292,6 +327,13 @@
         descTexto = 'no pipe agora'; tempoColor = 'color-ok'; subtexto = 'dentro do prazo';
       }
 
+      var btnAlmoco;
+      if (jaAcionou) {
+        btnAlmoco = '<div style="font-size:12px;font-weight:500;padding:6px 14px;border-radius:20px;border:0.5px solid #1e2d3d;background:#161b22;color:#3a4a5a;cursor:not-allowed;white-space:nowrap;flex-shrink:0;">☕ Almoço</div>';
+      } else {
+        btnAlmoco = '<button onclick="acionarAlmoco(\'' + nome.replace(/'/g,"\\'") + '\')" style="font-size:12px;font-weight:500;padding:6px 14px;border-radius:20px;border:1px solid #c97a00;background:#7a4500;color:#ffb84d;cursor:pointer;white-space:nowrap;flex-shrink:0;">☕ Almoço</button>';
+      }
+
       var barraHTML = '';
       if (estado === 'atencao') {
         barraHTML = '<div class="barra-wrap"><div class="barra-atencao" style="width:' + Math.min((minutos/180)*100, 99) + '%"></div></div>';
@@ -299,36 +341,54 @@
         barraHTML = '<div class="barra-wrap"><div class="barra-alerta" style="width:100%"></div></div>';
       }
 
+      var centroHTML;
+      if (emAlmoco) {
+        centroHTML =
+          '<div style="display:flex;align-items:center;gap:14px;padding:4px 0;">' +
+            '<div style="font-size:32px;">☕</div>' +
+            '<div>' +
+              '<div style="font-size:22px;font-weight:500;color:#4fc3f7;letter-spacing:-0.5px;">Almoço</div>' +
+              '<div style="font-size:12px;color:#5ba3c9;margin-top:3px;">volta às ' + almoco.volta + '</div>' +
+            '</div>' +
+          '</div>';
+      } else {
+        centroHTML =
+          '<div class="v-info">' +
+            '<div class="v-stat">' +
+              '<div class="v-stat-lbl">Negócios p/ ganhar</div>' +
+              '<div class="v-stat-val">' + (negocios > 0 ? negocios : '—') + '</div>' +
+              '<div class="v-stat-desc ' + (estado === 'ok' ? 'color-ok' : tempoColor) + '">' + descTexto + '</div>' +
+            '</div>' +
+            '<div class="sep"></div>' +
+            '<div class="v-stat">' +
+              '<div class="v-stat-lbl">Última atualização</div>' +
+              '<div class="v-stat-val ' + (estado !== 'ok' ? tempoColor : '') + '" style="font-size:20px;">' + tempoStr(minutos) + '</div>' +
+              '<div class="v-stat-desc ' + tempoColor + '">' + subtexto + '</div>' +
+            '</div>' +
+          '</div>' +
+          barraHTML;
+      }
+
       var card = document.createElement('div');
-      card.className = 'vendedor ' + estado;
+      card.className = 'vendedor ' + (emAlmoco ? 'almoco-estado' : estado);
+      if (emAlmoco) { card.style.background = '#0d1a2d'; card.style.borderColor = '#1a3a52'; }
       card.innerHTML =
         '<div class="v-top">' +
           '<div class="v-nome-wrap">' +
-            '<i class="ti ti-user ' + iconColor + '" style="font-size:18px;"></i>' +
-            '<span class="v-nome">' + nome + '</span>' +
+            '<i class="ti ti-user ' + (emAlmoco ? '' : iconColor) + '" style="font-size:18px;' + (emAlmoco ? 'color:#4fc3f7;' : '') + '"></i>' +
+            '<span class="v-nome"' + (emAlmoco ? ' style="color:#4fc3f7;"' : '') + '>' + nome + '</span>' +
           '</div>' +
-          '<div class="v-badge ' + badgeClass + '"><i class="ti ' + badgeIcon + '"></i>' + badgeTexto + '</div>' +
-        '</div>' +
-        '<div class="v-info">' +
-          '<div class="v-stat">' +
-            '<div class="v-stat-lbl">Negócios p/ ganhar</div>' +
-            '<div class="v-stat-val">' + (negocios > 0 ? negocios : '—') + '</div>' +
-            '<div class="v-stat-desc ' + (estado === 'ok' ? 'color-ok' : tempoColor) + '">' + descTexto + '</div>' +
-          '</div>' +
-          '<div class="sep"></div>' +
-          '<div class="v-stat">' +
-            '<div class="v-stat-lbl">Última atualização</div>' +
-            '<div class="v-stat-val ' + (estado !== 'ok' ? tempoColor : '') + '" style="font-size:20px;">' + tempoStr(minutos) + '</div>' +
-            '<div class="v-stat-desc ' + tempoColor + '">' + subtexto + '</div>' +
+          '<div style="display:flex;align-items:center;gap:8px;">' +
+            btnAlmoco +
+            '<div class="v-badge ' + (emAlmoco ? 'badge-ok' : badgeClass) + '"><i class="ti ' + (emAlmoco ? 'ti-check' : badgeIcon) + '"></i>' + (emAlmoco ? 'Atualizado' : badgeTexto) + '</div>' +
           '</div>' +
         '</div>' +
-        barraHTML;
+        centroHTML;
 
       container.appendChild(card);
     });
   }
 
-  // ─── Render métricas de leads ───
   function renderLeads(d) {
     var metaBH   = num(d['metaads bh']);
     var metaInt  = num(d['metaads interior']);
@@ -355,7 +415,6 @@
       'atualizado às ' + new Date().toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
   }
 
-  // ─── Fetch das duas planilhas ───
   var leadsCarregado = false;
   var pipeCarregado  = false;
 
@@ -387,11 +446,10 @@
       .catch(function() { setTimeout(loadPipe, 5000); });
   }
 
-  // Carrega tudo e repete a cada 30s
   loadLeads();
   loadPipe();
-  setInterval(loadLeads, 30000);
-  setInterval(loadPipe,  30000);
+  setInterval(loadLeads, 10000);
+  setInterval(loadPipe,  10000);
 </script>
 </body>
 </html>
