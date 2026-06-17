@@ -178,9 +178,11 @@
 </div>
 
 <script>
+  // ─── URLs das planilhas ───
   var CSV_LEADS = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTw10EmgmtOafZtcvklaJBPIShxJe-3GgEYvPcDN_qpgiGgozUdJn3qo07tA4j51dIGjfKvQFRV4TK0/pub?gid=868682954&single=true&output=csv';
   var CSV_PIPE  = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRcT6SwMdVerLpMfLzY0Fg2uuZ7OeNbE7XGVW3M4j9Y_YmYUl7_Ao64DW-OGM2p7E43DCCPdtPUXtlG/pub?gid=837929221&single=true&output=csv';
 
+  // ─── Parser CSV (suporta campos com aspas e vírgulas) ───
   function parseCSV(txt) {
     var lines = txt.trim().split('\n');
     if (lines.length < 2) return null;
@@ -203,6 +205,7 @@
     return d;
   }
 
+  // Parser para múltiplas linhas (termômetro tem 1 linha por vendedor)
   function parseCSVRows(txt) {
     var lines = txt.trim().split('\n');
     if (lines.length < 2) return [];
@@ -247,7 +250,8 @@
     return 'há ' + min + ' min';
   }
 
-  var almocoState = {};
+  // ─── Almoço: estado por vendedor (persiste na sessão) ───
+  var almocoState = {}; // { 'Nome Vendedor': { ativo: true, volta: '13h30', acionadoHoje: true } }
 
   function almocoKey(nome) { return 'almoco_' + nome + '_' + new Date().toLocaleDateString('pt-BR'); }
 
@@ -263,12 +267,21 @@
     try { localStorage.setItem(almocoKey(nome), JSON.stringify(obj)); } catch(e) {}
   }
 
+  var WEBHOOK_ALMOCO = 'https://n8n-ai.grupoaspekto.com/webhook/666eb501-2044-47e7-91cc-c9f1fe48f11a';
+
   function acionarAlmoco(nome) {
     var agora = new Date();
     var volta = new Date(agora.getTime() + 60 * 60 * 1000);
     var voltaStr = volta.getHours() + 'h' + String(volta.getMinutes()).padStart(2,'0');
+    // Marca localmente para feedback imediato
     salvarAlmoco(nome, { ativo: true, volta: voltaStr, fim: volta.getTime(), acionadoHoje: true });
     renderVendedores(window._lastRows || []);
+    // Envia para o webhook — grava na planilha para todos verem
+    fetch(WEBHOOK_ALMOCO, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ vendedor: nome, almoco_ate: voltaStr })
+    }).catch(function(e) { console.error('Erro webhook almoço:', e); });
   }
 
   function checarAlmocos() {
@@ -277,12 +290,20 @@
       if (almocoState[nome].ativo && agora >= almocoState[nome].fim) {
         almocoState[nome].ativo = false;
         try { localStorage.setItem(almocoKey(nome), JSON.stringify(almocoState[nome])); } catch(e) {}
+        // Limpa na planilha para todos os dispositivos
+        fetch(WEBHOOK_ALMOCO, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ vendedor: nome, almoco_ate: '' })
+        }).catch(function(e) {});
       }
     });
   }
 
   setInterval(function() { checarAlmocos(); renderVendedores(window._lastRows || []); }, 10000);
 
+  // ─── Render termômetro de pipe ───
+  // Lê colunas: vendedor, negocios, minutos_parado, status
   function renderVendedores(rows) {
     window._lastRows = rows;
     checarAlmocos();
@@ -297,16 +318,37 @@
 
       carregarAlmoco(nome);
       var almoco = almocoState[nome] || {};
-      var emAlmoco = almoco.ativo === true;
+      var almocoAte = row['almoco_ate'] || '';
+      var emAlmoco = false;
       var jaAcionou = almoco.acionadoHoje === true;
 
+      // Lê almoco_ate da planilha (fonte de verdade para todos os dispositivos)
+      if (almocoAte) {
+        var partes = almocoAte.replace('h',':').split(':');
+        var voltaHoje = new Date();
+        voltaHoje.setHours(parseInt(partes[0]), parseInt(partes[1] || 0), 0, 0);
+        if (new Date() < voltaHoje) {
+          emAlmoco = true;
+          almocoState[nome] = { ativo: true, volta: almocoAte, fim: voltaHoje.getTime(), acionadoHoje: true };
+          salvarAlmoco(nome, almocoState[nome]);
+          jaAcionou = true;
+        }
+      } else if (almoco.ativo === true) {
+        emAlmoco = true;
+      }
+
+      // Se em almoço, força status atualizado
       if (emAlmoco) status = 'atualizado';
 
+      // Status da planilha tem prioridade absoluta
       var estado;
-      if (status === 'alerta') { estado = 'alerta'; }
-      else if (status === 'atencao' || status === 'atenção') { estado = 'atencao'; }
-      else if (status === 'atualizado') { estado = 'ok'; }
-      else {
+      if (status === 'alerta') {
+        estado = 'alerta';
+      } else if (status === 'atencao' || status === 'atenção') {
+        estado = 'atencao';
+      } else if (status === 'atualizado') {
+        estado = 'ok';
+      } else {
         if (minutos >= 180) { estado = 'alerta'; }
         else if (minutos >= 60) { estado = 'atencao'; }
         else { estado = 'ok'; }
@@ -327,6 +369,7 @@
         descTexto = 'no pipe agora'; tempoColor = 'color-ok'; subtexto = 'dentro do prazo';
       }
 
+      // Botão almoço
       var btnAlmoco;
       if (jaAcionou) {
         btnAlmoco = '<div style="font-size:12px;font-weight:500;padding:6px 14px;border-radius:20px;border:0.5px solid #1e2d3d;background:#161b22;color:#3a4a5a;cursor:not-allowed;white-space:nowrap;flex-shrink:0;">☕ Almoço</div>';
@@ -341,6 +384,7 @@
         barraHTML = '<div class="barra-wrap"><div class="barra-alerta" style="width:100%"></div></div>';
       }
 
+      // Conteúdo central: almoço ativo ou stats normais
       var centroHTML;
       if (emAlmoco) {
         centroHTML =
@@ -348,7 +392,7 @@
             '<div style="font-size:32px;">☕</div>' +
             '<div>' +
               '<div style="font-size:22px;font-weight:500;color:#4fc3f7;letter-spacing:-0.5px;">Almoço</div>' +
-              '<div style="font-size:12px;color:#5ba3c9;margin-top:3px;">volta às ' + almoco.volta + '</div>' +
+              '<div style="font-size:12px;color:#5ba3c9;margin-top:3px;">volta às ' + almocoAte + '</div>' +
             '</div>' +
           '</div>';
       } else {
@@ -371,7 +415,10 @@
 
       var card = document.createElement('div');
       card.className = 'vendedor ' + (emAlmoco ? 'almoco-estado' : estado);
-      if (emAlmoco) { card.style.background = '#0d1a2d'; card.style.borderColor = '#1a3a52'; }
+      if (emAlmoco) {
+        card.style.background = '#0d1a2d';
+        card.style.borderColor = '#1a3a52';
+      }
       card.innerHTML =
         '<div class="v-top">' +
           '<div class="v-nome-wrap">' +
@@ -389,6 +436,7 @@
     });
   }
 
+  // ─── Render métricas de leads ───
   function renderLeads(d) {
     var metaBH   = num(d['metaads bh']);
     var metaInt  = num(d['metaads interior']);
@@ -415,6 +463,7 @@
       'atualizado às ' + new Date().toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
   }
 
+  // ─── Fetch das duas planilhas ───
   var leadsCarregado = false;
   var pipeCarregado  = false;
 
@@ -446,6 +495,7 @@
       .catch(function() { setTimeout(loadPipe, 5000); });
   }
 
+  // Carrega tudo e repete a cada 10s
   loadLeads();
   loadPipe();
   setInterval(loadLeads, 10000);
