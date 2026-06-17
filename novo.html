@@ -274,8 +274,12 @@
     var agora = new Date();
     var volta = new Date(agora.getTime() + 60 * 60 * 1000);
     var voltaStr = volta.getHours() + 'h' + String(volta.getMinutes()).padStart(2,'0');
-    // Marca localmente para feedback imediato
-    salvarAlmoco(nome, { ativo: true, volta: voltaStr, fim: volta.getTime(), acionadoHoje: true });
+    // Marca localmente e atualiza almocoState imediatamente
+    almocoState[nome] = { ativo: true, volta: voltaStr, fim: volta.getTime(), acionadoHoje: true };
+    salvarAlmoco(nome, almocoState[nome]);
+    // Força redesenho ignorando o hash
+    var container = document.getElementById('vendedores-container');
+    container._lastHash = '';
     renderVendedores(window._lastRows || []);
     // Envia para o webhook — grava na planilha para todos verem
     fetch(WEBHOOK_ALMOCO, {
