@@ -330,6 +330,11 @@ var almocoAte = row['almoco_ate'] || '';
 var emAlmoco = false;
 var jaAcionou = almoco.acionadoHoje === true;
 
+// Se planilha ainda não atualizou mas clicou agora, usa o estado local
+if (!almocoAte && almocoState[nome] && almocoState[nome].ativo) {
+  almocoAte = almocoState[nome].volta;
+}
+
 if (almocoAte) {
   var partes = almocoAte.replace('h',':').split(':');
   var voltaHoje = new Date();
