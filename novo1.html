@@ -489,6 +489,10 @@ if (almocoAte) {
   var leadsCarregado = false;
   var pipeCarregado  = false;
 
+  // Timestamps para ignorar respostas fora de ordem
+  var leadsTs = 0;
+  var pipeTs  = 0;
+
   function checkLoading() {
     if (leadsCarregado && pipeCarregado) {
       document.getElementById('loading').classList.add('hidden');
@@ -496,9 +500,12 @@ if (almocoAte) {
   }
 
   function loadLeads() {
+    var ts = Date.now();
     fetch(API_LEADS, { cache: 'no-store' })
       .then(function(r) { if (!r.ok) throw new Error(); return r.json(); })
       .then(function(json) {
+        if (ts < leadsTs) return; // resposta chegou fora de ordem, ignora
+        leadsTs = ts;
         var d = json.dados;
         if (d) { renderLeads(d); leadsCarregado = true; checkLoading(); }
       })
@@ -506,9 +513,12 @@ if (almocoAte) {
   }
 
   function loadPipe() {
+    var ts = Date.now();
     fetch(API_PIPE, { cache: 'no-store' })
       .then(function(r) { if (!r.ok) throw new Error(); return r.json(); })
       .then(function(json) {
+        if (ts < pipeTs) return; // resposta chegou fora de ordem, ignora
+        pipeTs = ts;
         var rows = json.dados;
         if (rows && rows.length) { renderVendedores(rows); pipeCarregado = true; checkLoading(); }
       })
@@ -518,8 +528,8 @@ if (almocoAte) {
   // Carrega tudo e repete a cada 10s
   loadLeads();
   loadPipe();
-  setInterval(loadLeads, 5000);
-  setInterval(loadPipe,  5000);
+  setInterval(loadLeads, 10000);
+  setInterval(loadPipe,  10000);
 </script>
 </body>
 </html>
