@@ -397,6 +397,18 @@
   }
 
   // ─── Render métricas de leads ────────────────────────────────────────────────
+  // Formata porcentagem — aceita decimal (0.0425), texto (4,25%) ou número (4.25)
+  function formatPct(v) {
+    if (!v && v !== 0) return '—';
+    var s = String(v).trim();
+    if (s === '' || s === '—') return '—';
+    if (s.indexOf('%') !== -1) return s;
+    var n = parseFloat(s.replace(',', '.'));
+    if (isNaN(n)) return s;
+    if (n > 0 && n < 1) return (n * 100).toFixed(2).replace('.', ',') + '%';
+    return n.toFixed(2).replace('.', ',') + '%';
+  }
+
   function renderLeads(d) {
     // Normaliza as chaves para lowercase sem acentos para comparação segura
     var dn = {};
@@ -410,8 +422,8 @@
     var metaTot  = metaBH + metaInt + metaFora;
 
     set('v-leads-mes',        num(dn['total leads mes']    || dn['total_leads_mes']    || 0));
-    set('v-conv-bh',          dn['conversão bh']           || dn['conversao bh']       || dn['conversão_bh'] || '—');
-    set('v-conv-interior',    dn['conversão interior']     || dn['conversao interior'] || dn['conversão_interior'] || '—');
+    set('v-conv-bh',          formatPct(dn['conversão bh']      || dn['conversao bh']      || dn['conversão_bh']      || ''));
+    set('v-conv-interior',    formatPct(dn['conversão interior'] || dn['conversao interior'] || dn['conversão_interior'] || ''));
     set('v-leads-hoje',       num(dn['leads hoje']         || dn['leads_hoje']         || 0));
     set('v-disparo-hj',       num(dn['disparo hj']         || dn['disparo_hj']         || 0));
     set('v-organico-hoje',    num(dn['organico hoje']      || dn['organico_hoje']      || 0));
@@ -487,7 +499,7 @@
   loadLeads();
   loadPipe();
   setInterval(loadLeads, 120000); // 2 minutos
-  setInterval(loadPipe,    30000); // 30 segundos
+  setInterval(loadPipe,   30000); // 30 segundos
 </script>
 </body>
 </html>
