@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/png" href="favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Grupo Aspekto — Dashboard</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0d1117; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; overflow: hidden; }
+    #loading { position: fixed; inset: 0; background: #0d1117; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; z-index: 999; transition: opacity .4s; }
+    #loading.hidden { opacity: 0; pointer-events: none; }
+    .spinner { width: 32px; height: 32px; border: 2px solid rgba(255,255,255,0.1); border-top-color: #4fc3f7; border-radius: 50%; animation: spin .7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-txt { font-size: 13px; color: #4a5568; }
+    .tv { display: grid; grid-template-columns: 1fr 1fr; height: 100vh; padding: 20px 24px; gap: 20px; }
+    .col-left { display: flex; flex-direction: column; height: 100%; }
+    .topbar { display: flex; align-items: center; justify-content: space-between; padding-bottom: 14px; border-bottom: 0.5px solid #1e2d3d; margin-bottom: 16px; flex-shrink: 0; }
+    .brand-name { font-size: 18px; font-weight: 500; color: #e6edf3; letter-spacing: -0.4px; }
+    .brand-sub { font-size: 13px; color: #8b9aaa; margin-top: 4px; }
+    .live { display: flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 500; color: #4fc3f7; background: #0d2233; padding: 6px 14px; border-radius: 20px; border: 0.5px solid #1a3a52; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: #4fc3f7; animation: pulse 1.6s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.25} }
+    .sec-label { font-size: 10px; font-weight: 500; letter-spacing: 1px; text-transform: uppercase; color: #6e8394; margin-bottom: 8px; flex-shrink: 0; }
+    .badge-hoje { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 500; color: #4fc3f7; background: #0d2233; border: 0.5px solid #1a3a52; padding: 3px 10px; border-radius: 20px; margin-bottom: 8px; flex-shrink: 0; }
+    .div { border: none; border-top: 0.5px solid #1e2d3d; margin: 12px 0; flex-shrink: 0; }
+    .row1 { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 10px; flex-shrink: 0; }
+    .row2 { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; flex-shrink: 0; }
+    .card-hero { background: #0d1f2d; border: 0.5px solid #1a3a52; border-radius: 12px; padding: 16px 20px; }
+    .card { background: #161b22; border: 0.5px solid #1e2d3d; border-radius: 12px; padding: 16px 18px; }
+    .lbl { font-size: 11px; font-weight: 500; letter-spacing: 0.7px; text-transform: uppercase; color: #8b9aaa; margin-bottom: 10px; }
+    .sub { font-size: 12px; color: #5ba3c9; margin-top: 8px; }
+    .hero-num { font-size: 64px; font-weight: 500; color: #e6edf3; line-height: 1; letter-spacing: -2px; }
+    .val-pct { font-size: 42px; font-weight: 500; color: #e6edf3; line-height: 1; letter-spacing: -1px; }
+    .val-md { font-size: 36px; font-weight: 500; color: #e6edf3; line-height: 1; letter-spacing: -1px; }
+    .ads-card { background: #161b22; border: 0.5px solid #1e2d3d; border-radius: 12px; padding: 14px 16px; flex: 1; }
+    .ads-total-block { background: #0d1f2d; border: 0.5px solid #1a3a52; border-radius: 10px; padding: 12px 16px; margin-bottom: 10px; }
+    .ads-total-lbl { font-size: 11px; font-weight: 500; letter-spacing: 0.7px; text-transform: uppercase; color: #8b9aaa; margin-bottom: 8px; }
+    .ads-total-val { font-size: 40px; font-weight: 500; color: #e6edf3; letter-spacing: -1px; line-height: 1; }
+    .ads-total-desc { font-size: 12px; color: #5ba3c9; margin-top: 6px; }
+    .ads-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; }
+    .ads-region { background: #0d1117; border: 0.5px solid #1e2d3d; border-radius: 10px; padding: 12px 14px; }
+    .ads-rlbl { font-size: 10px; font-weight: 500; letter-spacing: 0.7px; text-transform: uppercase; color: #8b9aaa; margin-bottom: 8px; }
+    .ads-rval { font-size: 28px; font-weight: 500; color: #e6edf3; letter-spacing: -0.5px; line-height: 1; }
+    .ads-rpct { font-size: 12px; color: #5ba3c9; margin-top: 6px; }
+    .col-right { display: flex; flex-direction: column; height: 100%; overflow: hidden; }
+    .topbar-right { display: flex; align-items: center; justify-content: space-between; padding-bottom: 16px; border-bottom: 0.5px solid #1e2d3d; margin-bottom: 16px; flex-shrink: 0; }
+    .vendedores { display: flex; flex-direction: column; gap: 8px; flex: 1; min-height: 0; }
+    .vendedor { border-radius: 12px; padding: 14px 16px; border: 0.5px solid transparent; flex: 1; display: flex; flex-direction: column; justify-content: center; min-height: 0; overflow: hidden; }
+    .ok      { background: #0d1a0f; border-color: #1a3d20; }
+    .atencao { background: #1a1500; border-color: #3d2e00; }
+    .alerta  { background: #1a0d0d; border-color: #3d1010; }
+    .v-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; gap: 8px; }
+    .v-nome-wrap { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+    .v-nome { font-size: 15px; font-weight: 500; color: #e6edf3; white-space: nowrap; }
+    .v-badge { display: flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 500; padding: 3px 9px; border-radius: 20px; white-space: nowrap; flex-shrink: 0; }
+    .badge-ok      { background: #0d2a12; color: #4ade80; border: 0.5px solid #1a5c28; }
+    .badge-atencao { background: #2a1f00; color: #f5c542; border: 0.5px solid #5a4000; }
+    .badge-alerta  { background: #2a0d0d; color: #f56b6b; border: 0.5px solid #5a1010; }
+    .v-info { display: flex; align-items: center; gap: 20px; }
+    .v-stat { display: flex; flex-direction: column; gap: 2px; }
+    .v-stat-lbl { font-size: 9px; letter-spacing: 0.5px; text-transform: uppercase; color: #8b9aaa; }
+    .v-stat-val { font-size: 26px; font-weight: 500; color: #e6edf3; line-height: 1; letter-spacing: -0.5px; }
+    .v-stat-desc { font-size: 11px; color: #5ba3c9; margin-top: 2px; }
+    .sep { width: 0.5px; height: 36px; background: #1e2d3d; flex-shrink: 0; }
+    .barra-wrap { height: 2px; background: #1e2d3d; border-radius: 2px; overflow: hidden; margin-top: 10px; flex-shrink: 0; }
+    .barra-atencao { height: 2px; background: #f5c542; border-radius: 2px; }
+    .barra-alerta { height: 2px; background: #f56b6b; border-radius: 2px; animation: pisca 1.2s infinite; }
+    @keyframes pisca { 0%,100%{opacity:1} 50%{opacity:0.4} }
+    .color-warn   { color: #f5c542 !important; }
+    .color-danger { color: #f56b6b !important; }
+    .color-ok     { color: #4ade80 !important; }
+  </style>
+</head>
+<body>
+
+<div id="loading">
+  <div class="spinner"></div>
+  <p class="loading-txt">Carregando dados...</p>
+</div>
+
+<div class="tv">
+
+  <!-- COLUNA ESQUERDA — Planilha 1: métricas de leads -->
+  <div class="col-left">
+    <div class="topbar">
+      <div>
+        <div class="brand-name">Grupo Aspekto</div>
+        <div class="brand-sub">Dashboard Comercial &mdash; <span id="update-time">carregando...</span></div>
+      </div>
+      <div class="live"><span class="dot"></span>Ao vivo</div>
+    </div>
+
+    <div class="sec-label">Visão mensal</div>
+    <div class="row1" style="margin-bottom:10px;">
+      <div class="card-hero">
+        <div class="lbl">Total Leads mês</div>
+        <div class="hero-num" id="v-leads-mes">—</div>
+        <div class="sub">leads captados neste mês</div>
+      </div>
+      <div class="card">
+        <div class="lbl">Conversão BH</div>
+        <div class="val-pct" id="v-conv-bh">—</div>
+        <div class="sub">meta de conversão</div>
+      </div>
+      <div class="card">
+        <div class="lbl">Conversão Interior</div>
+        <div class="val-pct" id="v-conv-interior">—</div>
+        <div class="sub">meta de conversão</div>
+      </div>
+    </div>
+
+    <hr class="div" style="margin:0 0 10px;" />
+
+    <div class="badge-hoje"><i class="ti ti-calendar"></i>Hoje</div>
+    <div class="row2" style="margin-bottom:10px;">
+      <div class="card">
+        <div class="lbl">Total Leads</div>
+        <div class="val-md" id="v-leads-hoje">—</div>
+        <div class="sub">leads hoje</div>
+      </div>
+      <div class="card">
+        <div class="lbl">Disparos</div>
+        <div class="val-md" id="v-disparo-hj">—</div>
+        <div class="sub">realizados hoje</div>
+      </div>
+      <div class="card">
+        <div class="lbl">Orgânico</div>
+        <div class="val-md" id="v-organico-hoje">—</div>
+        <div class="sub">leads orgânicos</div>
+      </div>
+      <div class="card">
+        <div class="lbl">Remarketing</div>
+        <div class="val-md" id="v-remarketing-hoje">—</div>
+        <div class="sub">leads remarketing</div>
+      </div>
+    </div>
+
+    <hr class="div" style="margin:0 0 10px;" />
+
+    <div class="sec-label">Meta Ads — distribuição hoje</div>
+    <div class="ads-card">
+      <div class="ads-total-block">
+        <div class="ads-total-lbl">Total Meta Ads</div>
+        <div class="ads-total-val" id="v-meta-total">—</div>
+        <div class="ads-total-desc">leads via Meta Ads hoje</div>
+      </div>
+      <div class="ads-grid">
+        <div class="ads-region">
+          <div class="ads-rlbl">BH</div>
+          <div class="ads-rval" id="v-meta-bh">—</div>
+          <div class="ads-rpct" id="pct-bh">—</div>
+        </div>
+        <div class="ads-region">
+          <div class="ads-rlbl">Interior MG</div>
+          <div class="ads-rval" id="v-meta-interior">—</div>
+          <div class="ads-rpct" id="pct-interior">—</div>
+        </div>
+        <div class="ads-region">
+          <div class="ads-rlbl">Fora de MG</div>
+          <div class="ads-rval" id="v-meta-fora">—</div>
+          <div class="ads-rpct" id="pct-fora">—</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- COLUNA DIREITA — Planilha 2: termômetro de pipe -->
+  <div class="col-right">
+    <div class="topbar-right">
+      <div>
+        <div class="brand-name">Termômetro de pipe</div>
+        <div class="brand-sub">Atualização em tempo real</div>
+      </div>
+    </div>
+    <div class="vendedores" id="vendedores-container"></div>
+  </div>
+</div>
+
+<script>
+  // ─── URLs dos endpoints n8n (sem cache do Sheets) ───
+  // ⚠️ Substitua pelo domínio do seu n8n self-hosted
+  var N8N_BASE  = 'https://n8n-ai.grupoaspekto.com';
+  var API_LEADS = N8N_BASE + '/webhook/dashboard-leads';
+  var API_PIPE  = N8N_BASE + '/webhook/dashboard-pipe';
+
+  // ─── Parser CSV (suporta campos com aspas e vírgulas) ───
+  function parseCSV(txt) {
+    var lines = txt.trim().split('\n');
+    if (lines.length < 2) return null;
+    function parseLine(line) {
+      var result = [], cur = '', inQ = false;
+      line = line.replace(/\r/g, '');
+      for (var i = 0; i < line.length; i++) {
+        var c = line[i];
+        if (c === '"') { inQ = !inQ; }
+        else if (c === ',' && !inQ) { result.push(cur.trim()); cur = ''; }
+        else { cur += c; }
+      }
+      result.push(cur.trim());
+      return result;
+    }
+    var headers = parseLine(lines[0]).map(function(h){ return h.toLowerCase().replace(/\r/g,''); });
+    var values  = parseLine(lines[1]);
+    var d = {};
+    headers.forEach(function(h, i){ d[h] = values[i] || ''; });
+    return d;
+  }
+
+  // Parser para múltiplas linhas (termômetro tem 1 linha por vendedor)
+  function parseCSVRows(txt) {
+    var lines = txt.trim().split('\n');
+    if (lines.length < 2) return [];
+    function parseLine(line) {
+      var result = [], cur = '', inQ = false;
+      line = line.replace(/\r/g, '');
+      for (var i = 0; i < line.length; i++) {
+        var c = line[i];
+        if (c === '"') { inQ = !inQ; }
+        else if (c === ',' && !inQ) { result.push(cur.trim()); cur = ''; }
+        else { cur += c; }
+      }
+      result.push(cur.trim());
+      return result;
+    }
+    var headers = parseLine(lines[0]).map(function(h){ return h.toLowerCase().replace(/\r/g,''); });
+    var rows = [];
+    for (var i = 1; i < lines.length; i++) {
+      if (!lines[i].trim()) continue;
+      var vals = parseLine(lines[i]);
+      var row = {};
+      headers.forEach(function(h, j){ row[h] = vals[j] || ''; });
+      rows.push(row);
+    }
+    return rows;
+  }
+
+  function num(v) { return parseInt((v||'').replace(/[^0-9]/g,'')) || 0; }
+  function fmt(n) { return Number(n).toLocaleString('pt-BR'); }
+  function pct(a, t) { return t > 0 ? (a/t*100).toFixed(1)+'%' : '—'; }
+
+  function set(id, val) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = (typeof val === 'number') ? fmt(val) : String(val || '—');
+  }
+
+  function tempoStr(min) {
+    if (min <= 0) return 'agora mesmo';
+    var h = Math.floor(min / 60), m = min % 60;
+    if (h > 0) return 'há ' + h + 'h' + (m > 0 ? ' ' + m + 'min' : '');
+    return 'há ' + min + ' min';
+  }
+
+  // ─── Almoço: estado por vendedor (persiste na sessão) ───
+  var almocoState = {}; // { 'Nome Vendedor': { ativo: true, volta: '13h30', acionadoHoje: true } }
+
+  function almocoKey(nome) { return 'almoco_' + nome + '_' + new Date().toLocaleDateString('pt-BR'); }
+
+  function carregarAlmoco(nome) {
+    try {
+      var raw = localStorage.getItem(almocoKey(nome));
+      if (raw) almocoState[nome] = JSON.parse(raw);
+    } catch(e) {}
+  }
+
+  function salvarAlmoco(nome, obj) {
+    almocoState[nome] = obj;
+    try { localStorage.setItem(almocoKey(nome), JSON.stringify(obj)); } catch(e) {}
+  }
+
+  var WEBHOOK_ALMOCO = 'https://n8n-ai.grupoaspekto.com/webhook/666eb501-2044-47e7-91cc-c9f1fe48f11a';
+
+  function acionarAlmoco(nome) {
+    var agora = new Date();
+    var volta = new Date(agora.getTime() + 60 * 60 * 1000);
+    var voltaStr = volta.getHours() + 'h' + String(volta.getMinutes()).padStart(2,'0');
+    // Marca localmente e atualiza almocoState imediatamente
+    almocoState[nome] = { ativo: true, volta: voltaStr, fim: volta.getTime(), acionadoHoje: true };
+    salvarAlmoco(nome, almocoState[nome]);
+    // Força redesenho ignorando o hash
+    var container = document.getElementById('vendedores-container');
+    container._lastHash = '';
+    renderVendedores(window._lastRows || []);
+    // Envia para o webhook — grava na planilha para todos verem
+    fetch(WEBHOOK_ALMOCO, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ vendedor: nome, almoco_ate: voltaStr })
+    }).catch(function(e) { console.error('Erro webhook almoço:', e); });
+  }
+
+  function checarAlmocos() {
+    var agora = Date.now();
+    Object.keys(almocoState).forEach(function(nome) {
+      if (almocoState[nome].ativo && agora >= almocoState[nome].fim) {
+        almocoState[nome].ativo = false;
+        try { localStorage.setItem(almocoKey(nome), JSON.stringify(almocoState[nome])); } catch(e) {}
+        // Limpa na planilha para todos os dispositivos
+        fetch(WEBHOOK_ALMOCO, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ vendedor: nome, almoco_ate: '' })
+        }).catch(function(e) {});
+      }
+    });
+  }
+
+  setInterval(function() { checarAlmocos(); renderVendedores(window._lastRows || []); }, 5000);
+
+  // ─── Render termômetro de pipe ───
+  // Lê colunas: vendedor, negocios, minutos_parado, status
+  function renderVendedores(rows) {
+    window._lastRows = rows;
+    checarAlmocos();
+    var container = document.getElementById('vendedores-container');
+    var novoHash = JSON.stringify(rows);
+    if (container._lastHash === novoHash) return;
+    container._lastHash = novoHash;
+    container.innerHTML = '';
+
+    rows.forEach(function(row) {
+      var nome     = row['vendedor']       || '—';
+      var negocios = num(row['negocios']);
+      var minutos  = num(row['minutos_parado']);
+      var status   = (row['status'] || '').toLowerCase().trim();
+
+    carregarAlmoco(nome);
+var almoco = almocoState[nome] || {};
+var almocoAte = row['almoco_ate'] || '';
+var emAlmoco = false;
+var jaAcionou = almoco.acionadoHoje === true;
+
+// Se planilha ainda não atualizou mas clicou agora, usa o estado local
+if (!almocoAte && almocoState[nome] && almocoState[nome].ativo) {
+  almocoAte = almocoState[nome].volta;
+}
+
+if (almocoAte) {
+  var partes = almocoAte.replace('h',':').split(':');
+  var voltaHoje = new Date();
+  voltaHoje.setHours(parseInt(partes[0]), parseInt(partes[1] || 0), 0, 0);
+  if (new Date() < voltaHoje) {
+    emAlmoco = true;
+    almocoState[nome] = { ativo: true, volta: almocoAte, fim: voltaHoje.getTime(), acionadoHoje: true };
+    salvarAlmoco(nome, almocoState[nome]);
+    jaAcionou = true;
+  } else {
+    // Horário de volta já passou — limpa tudo
+    almocoState[nome] = {};
+    try { localStorage.removeItem(almocoKey(nome)); } catch(e) {}
+    jaAcionou = false;
+  }
+} else {
+  // Planilha vazia — limpa localStorage para voltar ao normal
+  almocoState[nome] = {};
+  try { localStorage.removeItem(almocoKey(nome)); } catch(e) {}
+  jaAcionou = false;
+}
+
+      // Se em almoço, força status atualizado
+      if (emAlmoco) status = 'atualizado';
+
+      // Status da planilha tem prioridade absoluta
+      var estado;
+      if (status === 'alerta') {
+        estado = 'alerta';
+      } else if (status === 'atencao' || status === 'atenção') {
+        estado = 'atencao';
+      } else if (status === 'atualizado') {
+        estado = 'ok';
+      } else {
+        if (minutos >= 180) { estado = 'alerta'; }
+        else if (minutos >= 60) { estado = 'atencao'; }
+        else { estado = 'ok'; }
+      }
+
+      var badgeClass, badgeIcon, badgeTexto, iconColor, descTexto, tempoColor, subtexto;
+      if (estado === 'alerta') {
+        badgeClass = 'badge-alerta'; badgeIcon = 'ti-alert-circle';
+        badgeTexto = 'Crítico — +3h sem atualizar'; iconColor = 'color-danger';
+        descTexto = 'urgente'; tempoColor = 'color-danger'; subtexto = 'crítico';
+      } else if (estado === 'atencao') {
+        badgeClass = 'badge-atencao'; badgeIcon = 'ti-alert-triangle';
+        badgeTexto = 'Atenção — ' + tempoStr(minutos) + ' sem atualizar'; iconColor = 'color-warn';
+        descTexto = 'requer atenção'; tempoColor = 'color-warn'; subtexto = 'passou do limite';
+      } else {
+        badgeClass = 'badge-ok'; badgeIcon = 'ti-check';
+        badgeTexto = 'Atualizado'; iconColor = 'color-ok';
+        descTexto = 'no pipe agora'; tempoColor = 'color-ok'; subtexto = 'dentro do prazo';
+      }
+
+      // Botão almoço
+      var btnAlmoco;
+      if (jaAcionou) {
+        btnAlmoco = '<div style="font-size:12px;font-weight:500;padding:6px 14px;border-radius:20px;border:0.5px solid #1e2d3d;background:#161b22;color:#3a4a5a;cursor:not-allowed;white-space:nowrap;flex-shrink:0;">☕ Almoço</div>';
+      } else {
+        btnAlmoco = '<button onclick="acionarAlmoco(\'' + nome.replace(/'/g,"\\'") + '\')" style="font-size:12px;font-weight:500;padding:6px 14px;border-radius:20px;border:1px solid #c97a00;background:#7a4500;color:#ffb84d;cursor:pointer;white-space:nowrap;flex-shrink:0;">☕ Almoço</button>';
+      }
+
+      var barraHTML = '';
+      if (estado === 'atencao') {
+        barraHTML = '<div class="barra-wrap"><div class="barra-atencao" style="width:' + Math.min((minutos/180)*100, 99) + '%"></div></div>';
+      } else if (estado === 'alerta') {
+        barraHTML = '<div class="barra-wrap"><div class="barra-alerta" style="width:100%"></div></div>';
+      }
+
+      // Conteúdo central: almoço ativo ou stats normais
+      var centroHTML;
+      if (emAlmoco) {
+        centroHTML =
+          '<div style="display:flex;align-items:center;gap:14px;padding:4px 0;">' +
+            '<div style="font-size:32px;">☕</div>' +
+            '<div>' +
+              '<div style="font-size:22px;font-weight:500;color:#4fc3f7;letter-spacing:-0.5px;">Almoço</div>' +
+              '<div style="font-size:12px;color:#5ba3c9;margin-top:3px;">volta às ' + almocoAte + '</div>' +
+            '</div>' +
+          '</div>';
+      } else {
+        centroHTML =
+          '<div class="v-info">' +
+            '<div class="v-stat">' +
+              '<div class="v-stat-lbl">Negócios p/ ganhar</div>' +
+              '<div class="v-stat-val">' + (negocios > 0 ? negocios : '—') + '</div>' +
+              '<div class="v-stat-desc ' + (estado === 'ok' ? 'color-ok' : tempoColor) + '">' + descTexto + '</div>' +
+            '</div>' +
+            '<div class="sep"></div>' +
+            '<div class="v-stat">' +
+              '<div class="v-stat-lbl">Última atualização</div>' +
+              '<div class="v-stat-val ' + (estado !== 'ok' ? tempoColor : '') + '" style="font-size:20px;">' + tempoStr(minutos) + '</div>' +
+              '<div class="v-stat-desc ' + tempoColor + '">' + subtexto + '</div>' +
+            '</div>' +
+          '</div>' +
+          barraHTML;
+      }
+
+      var card = document.createElement('div');
+      card.className = 'vendedor ' + (emAlmoco ? 'almoco-estado' : estado);
+      if (emAlmoco) {
+        card.style.background = '#0d1a2d';
+        card.style.borderColor = '#1a3a52';
+      }
+      card.innerHTML =
+        '<div class="v-top">' +
+          '<div class="v-nome-wrap">' +
+            '<i class="ti ti-user ' + (emAlmoco ? '' : iconColor) + '" style="font-size:18px;' + (emAlmoco ? 'color:#4fc3f7;' : '') + '"></i>' +
+            '<span class="v-nome"' + (emAlmoco ? ' style="color:#4fc3f7;"' : '') + '>' + nome + '</span>' +
+          '</div>' +
+          '<div style="display:flex;align-items:center;gap:8px;">' +
+            btnAlmoco +
+            '<div class="v-badge ' + (emAlmoco ? 'badge-ok' : badgeClass) + '"><i class="ti ' + (emAlmoco ? 'ti-check' : badgeIcon) + '"></i>' + (emAlmoco ? 'Atualizado' : badgeTexto) + '</div>' +
+          '</div>' +
+        '</div>' +
+        centroHTML;
+
+      container.appendChild(card);
+    });
+  }
+
+  // ─── Render métricas de leads ───
+  function renderLeads(d) {
+    var metaBH   = num(d['metaads bh']);
+    var metaInt  = num(d['metaads interior']);
+    var metaFora = num(d['metaads fora de mg']);
+    var metaTot  = metaBH + metaInt + metaFora;
+
+    set('v-leads-mes',        num(d['total leads mes']));
+    set('v-conv-bh',          d['conversão bh']       || d['conversao bh']       || '—');
+    set('v-conv-interior',    d['conversão interior'] || d['conversao interior'] || '—');
+    set('v-leads-hoje',       num(d['leads hoje']));
+    set('v-disparo-hj',       num(d['disparo hj']));
+    set('v-organico-hoje',    num(d['organico hoje']));
+    set('v-remarketing-hoje', num(d['remarketing hoje']));
+    set('v-meta-total',       metaTot);
+    set('v-meta-bh',          metaBH);
+    set('v-meta-interior',    metaInt);
+    set('v-meta-fora',        metaFora);
+
+    document.getElementById('pct-bh').textContent       = pct(metaBH,  metaTot);
+    document.getElementById('pct-interior').textContent = pct(metaInt, metaTot);
+    document.getElementById('pct-fora').textContent     = pct(metaFora,metaTot);
+
+    document.getElementById('update-time').textContent =
+      'atualizado às ' + new Date().toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+  }
+
+  // ─── Fetch das duas planilhas ───
+  var leadsCarregado = false;
+  var pipeCarregado  = false;
+
+  function checkLoading() {
+    if (leadsCarregado && pipeCarregado) {
+      document.getElementById('loading').classList.add('hidden');
+    }
+  }
+
+  function loadLeads() {
+    fetch(API_LEADS, { cache: 'no-store' })
+      .then(function(r) { if (!r.ok) throw new Error(); return r.json(); })
+      .then(function(json) {
+        var d = json.dados;
+        if (d) { renderLeads(d); leadsCarregado = true; checkLoading(); }
+      })
+      .catch(function() { setTimeout(loadLeads, 5000); });
+  }
+
+  function loadPipe() {
+    fetch(API_PIPE, { cache: 'no-store' })
+      .then(function(r) { if (!r.ok) throw new Error(); return r.json(); })
+      .then(function(json) {
+        var rows = json.dados;
+        if (rows && rows.length) { renderVendedores(rows); pipeCarregado = true; checkLoading(); }
+      })
+      .catch(function() { setTimeout(loadPipe, 5000); });
+  }
+
+  // Carrega tudo e repete a cada 10s
+  loadLeads();
+  loadPipe();
+  setInterval(loadLeads, 5000);
+  setInterval(loadPipe,  5000);
+</script>
+</body>
+</html>
