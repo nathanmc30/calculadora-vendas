@@ -82,7 +82,7 @@
 
 <div class="tv">
 
-  <!-- COLUNA ESQUERDA — Planilha 1: métricas de leads -->
+  <!-- COLUNA ESQUERDA — métricas de leads -->
   <div class="col-left">
     <div class="topbar">
       <div>
@@ -166,7 +166,7 @@
     </div>
   </div>
 
-  <!-- COLUNA DIREITA — Planilha 2: termômetro de pipe -->
+  <!-- COLUNA DIREITA — termômetro de pipe -->
   <div class="col-right">
     <div class="topbar-right">
       <div>
@@ -179,66 +179,18 @@
 </div>
 
 <script>
-  // ─── URLs dos endpoints n8n (sem cache do Sheets) ───
-  // ⚠️ Substitua pelo domínio do seu n8n self-hosted
-  var N8N_BASE  = 'https://n8n-ai.grupoaspekto.com';
-  var API_LEADS = N8N_BASE + '/webhook/dashboard-leads';
-  var API_PIPE  = N8N_BASE + '/webhook/dashboard-pipe';
+  // ─── Endpoints n8n ───────────────────────────────────────────────────────────
+  var N8N_LEADS = 'https://n8n-ai.grupoaspekto.com/webhook/dashboard-leads';
+  var N8N_PIPE  = 'https://n8n-ai.grupoaspekto.com/webhook/dashboard-pipe';
+  var WEBHOOK_ALMOCO = 'https://n8n-ai.grupoaspekto.com/webhook/666eb501-2044-47e7-91cc-c9f1fe48f11a';
 
-  // ─── Parser CSV (suporta campos com aspas e vírgulas) ───
-  function parseCSV(txt) {
-    var lines = txt.trim().split('\n');
-    if (lines.length < 2) return null;
-    function parseLine(line) {
-      var result = [], cur = '', inQ = false;
-      line = line.replace(/\r/g, '');
-      for (var i = 0; i < line.length; i++) {
-        var c = line[i];
-        if (c === '"') { inQ = !inQ; }
-        else if (c === ',' && !inQ) { result.push(cur.trim()); cur = ''; }
-        else { cur += c; }
-      }
-      result.push(cur.trim());
-      return result;
-    }
-    var headers = parseLine(lines[0]).map(function(h){ return h.toLowerCase().replace(/\r/g,''); });
-    var values  = parseLine(lines[1]);
-    var d = {};
-    headers.forEach(function(h, i){ d[h] = values[i] || ''; });
-    return d;
+  // ─── Helpers ─────────────────────────────────────────────────────────────────
+  function num(v) {
+    if (typeof v === 'number') return v;
+    return parseInt((v || '').toString().replace(/[^0-9]/g, '')) || 0;
   }
-
-  // Parser para múltiplas linhas (termômetro tem 1 linha por vendedor)
-  function parseCSVRows(txt) {
-    var lines = txt.trim().split('\n');
-    if (lines.length < 2) return [];
-    function parseLine(line) {
-      var result = [], cur = '', inQ = false;
-      line = line.replace(/\r/g, '');
-      for (var i = 0; i < line.length; i++) {
-        var c = line[i];
-        if (c === '"') { inQ = !inQ; }
-        else if (c === ',' && !inQ) { result.push(cur.trim()); cur = ''; }
-        else { cur += c; }
-      }
-      result.push(cur.trim());
-      return result;
-    }
-    var headers = parseLine(lines[0]).map(function(h){ return h.toLowerCase().replace(/\r/g,''); });
-    var rows = [];
-    for (var i = 1; i < lines.length; i++) {
-      if (!lines[i].trim()) continue;
-      var vals = parseLine(lines[i]);
-      var row = {};
-      headers.forEach(function(h, j){ row[h] = vals[j] || ''; });
-      rows.push(row);
-    }
-    return rows;
-  }
-
-  function num(v) { if (typeof v === 'number') return v; return parseInt((v||'').toString().replace(/[^0-9]/g,'')) || 0; }
   function fmt(n) { return Number(n).toLocaleString('pt-BR'); }
-  function pct(a, t) { return t > 0 ? (a/t*100).toFixed(1)+'%' : '—'; }
+  function pct(a, t) { return t > 0 ? (a / t * 100).toFixed(1) + '%' : '—'; }
 
   function set(id, val) {
     var el = document.getElementById(id);
@@ -253,8 +205,8 @@
     return 'há ' + min + ' min';
   }
 
-  // ─── Almoço: estado por vendedor (persiste na sessão) ───
-  var almocoState = {}; // { 'Nome Vendedor': { ativo: true, volta: '13h30', acionadoHoje: true } }
+  // ─── Almoço ──────────────────────────────────────────────────────────────────
+  var almocoState = {};
 
   function almocoKey(nome) { return 'almoco_' + nome + '_' + new Date().toLocaleDateString('pt-BR'); }
 
@@ -270,20 +222,15 @@
     try { localStorage.setItem(almocoKey(nome), JSON.stringify(obj)); } catch(e) {}
   }
 
-  var WEBHOOK_ALMOCO = 'https://n8n-ai.grupoaspekto.com/webhook/666eb501-2044-47e7-91cc-c9f1fe48f11a';
-
   function acionarAlmoco(nome) {
     var agora = new Date();
     var volta = new Date(agora.getTime() + 60 * 60 * 1000);
-    var voltaStr = volta.getHours() + 'h' + String(volta.getMinutes()).padStart(2,'0');
-    // Marca localmente e atualiza almocoState imediatamente
+    var voltaStr = volta.getHours() + 'h' + String(volta.getMinutes()).padStart(2, '0');
     almocoState[nome] = { ativo: true, volta: voltaStr, fim: volta.getTime(), acionadoHoje: true };
     salvarAlmoco(nome, almocoState[nome]);
-    // Força redesenho ignorando o hash
     var container = document.getElementById('vendedores-container');
     container._lastHash = '';
     renderVendedores(window._lastRows || []);
-    // Envia para o webhook — grava na planilha para todos verem
     fetch(WEBHOOK_ALMOCO, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -297,7 +244,6 @@
       if (almocoState[nome].ativo && agora >= almocoState[nome].fim) {
         almocoState[nome].ativo = false;
         try { localStorage.setItem(almocoKey(nome), JSON.stringify(almocoState[nome])); } catch(e) {}
-        // Limpa na planilha para todos os dispositivos
         fetch(WEBHOOK_ALMOCO, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -309,13 +255,12 @@
 
   setInterval(function() { checarAlmocos(); renderVendedores(window._lastRows || []); }, 5000);
 
-  // ─── Render termômetro de pipe ───
-  // Lê colunas: vendedor, negocios, minutos_parado, status
+  // ─── Render termômetro ───────────────────────────────────────────────────────
   function renderVendedores(rows) {
     window._lastRows = rows;
     checarAlmocos();
     var container = document.getElementById('vendedores-container');
-    var novoHash = JSON.stringify(rows);
+    var novoHash = JSON.stringify(rows) + JSON.stringify(almocoState);
     if (container._lastHash === novoHash) return;
     container._lastHash = novoHash;
     container.innerHTML = '';
@@ -326,43 +271,38 @@
       var minutos  = num(row['minutos_parado']);
       var status   = (row['status'] || '').toLowerCase().trim();
 
-    carregarAlmoco(nome);
-var almoco = almocoState[nome] || {};
-var almocoAte = row['almoco_ate'] || '';
-var emAlmoco = false;
-var jaAcionou = almoco.acionadoHoje === true;
+      carregarAlmoco(nome);
+      var almoco    = almocoState[nome] || {};
+      var almocoAte = row['almoco_ate'] || '';
+      var emAlmoco  = false;
+      var jaAcionou = almoco.acionadoHoje === true;
 
-// Se planilha ainda não atualizou mas clicou agora, usa o estado local
-if (!almocoAte && almocoState[nome] && almocoState[nome].ativo) {
-  almocoAte = almocoState[nome].volta;
-}
+      if (!almocoAte && almocoState[nome] && almocoState[nome].ativo) {
+        almocoAte = almocoState[nome].volta;
+      }
 
-if (almocoAte) {
-  var partes = almocoAte.replace('h',':').split(':');
-  var voltaHoje = new Date();
-  voltaHoje.setHours(parseInt(partes[0]), parseInt(partes[1] || 0), 0, 0);
-  if (new Date() < voltaHoje) {
-    emAlmoco = true;
-    almocoState[nome] = { ativo: true, volta: almocoAte, fim: voltaHoje.getTime(), acionadoHoje: true };
-    salvarAlmoco(nome, almocoState[nome]);
-    jaAcionou = true;
-  } else {
-    // Horário de volta já passou — limpa tudo
-    almocoState[nome] = {};
-    try { localStorage.removeItem(almocoKey(nome)); } catch(e) {}
-    jaAcionou = false;
-  }
-} else {
-  // Planilha vazia — limpa localStorage para voltar ao normal
-  almocoState[nome] = {};
-  try { localStorage.removeItem(almocoKey(nome)); } catch(e) {}
-  jaAcionou = false;
-}
+      if (almocoAte) {
+        var partes = almocoAte.replace('h', ':').split(':');
+        var voltaHoje = new Date();
+        voltaHoje.setHours(parseInt(partes[0]), parseInt(partes[1] || 0), 0, 0);
+        if (new Date() < voltaHoje) {
+          emAlmoco = true;
+          almocoState[nome] = { ativo: true, volta: almocoAte, fim: voltaHoje.getTime(), acionadoHoje: true };
+          salvarAlmoco(nome, almocoState[nome]);
+          jaAcionou = true;
+        } else {
+          almocoState[nome] = {};
+          try { localStorage.removeItem(almocoKey(nome)); } catch(e) {}
+          jaAcionou = false;
+        }
+      } else {
+        almocoState[nome] = {};
+        try { localStorage.removeItem(almocoKey(nome)); } catch(e) {}
+        jaAcionou = false;
+      }
 
-      // Se em almoço, força status atualizado
       if (emAlmoco) status = 'atualizado';
 
-      // Status da planilha tem prioridade absoluta
       var estado;
       if (status === 'alerta') {
         estado = 'alerta';
@@ -371,9 +311,9 @@ if (almocoAte) {
       } else if (status === 'atualizado') {
         estado = 'ok';
       } else {
-        if (minutos >= 180) { estado = 'alerta'; }
-        else if (minutos >= 60) { estado = 'atencao'; }
-        else { estado = 'ok'; }
+        if (minutos >= 180)      { estado = 'alerta'; }
+        else if (minutos >= 60)  { estado = 'atencao'; }
+        else                     { estado = 'ok'; }
       }
 
       var badgeClass, badgeIcon, badgeTexto, iconColor, descTexto, tempoColor, subtexto;
@@ -391,22 +331,20 @@ if (almocoAte) {
         descTexto = 'no pipe agora'; tempoColor = 'color-ok'; subtexto = 'dentro do prazo';
       }
 
-      // Botão almoço
       var btnAlmoco;
       if (jaAcionou) {
         btnAlmoco = '<div style="font-size:12px;font-weight:500;padding:6px 14px;border-radius:20px;border:0.5px solid #1e2d3d;background:#161b22;color:#3a4a5a;cursor:not-allowed;white-space:nowrap;flex-shrink:0;">☕ Almoço</div>';
       } else {
-        btnAlmoco = '<button onclick="acionarAlmoco(\'' + nome.replace(/'/g,"\\'") + '\')" style="font-size:12px;font-weight:500;padding:6px 14px;border-radius:20px;border:1px solid #c97a00;background:#7a4500;color:#ffb84d;cursor:pointer;white-space:nowrap;flex-shrink:0;">☕ Almoço</button>';
+        btnAlmoco = '<button onclick="acionarAlmoco(\'' + nome.replace(/'/g, "\\'") + '\')" style="font-size:12px;font-weight:500;padding:6px 14px;border-radius:20px;border:1px solid #c97a00;background:#7a4500;color:#ffb84d;cursor:pointer;white-space:nowrap;flex-shrink:0;">☕ Almoço</button>';
       }
 
       var barraHTML = '';
       if (estado === 'atencao') {
-        barraHTML = '<div class="barra-wrap"><div class="barra-atencao" style="width:' + Math.min((minutos/180)*100, 99) + '%"></div></div>';
+        barraHTML = '<div class="barra-wrap"><div class="barra-atencao" style="width:' + Math.min((minutos / 180) * 100, 99) + '%"></div></div>';
       } else if (estado === 'alerta') {
         barraHTML = '<div class="barra-wrap"><div class="barra-alerta" style="width:100%"></div></div>';
       }
 
-      // Conteúdo central: almoço ativo ou stats normais
       var centroHTML;
       if (emAlmoco) {
         centroHTML =
@@ -458,20 +396,26 @@ if (almocoAte) {
     });
   }
 
-  // ─── Render métricas de leads ───
+  // ─── Render métricas de leads ────────────────────────────────────────────────
   function renderLeads(d) {
-    var metaBH   = num(d['metaads bh']);
-    var metaInt  = num(d['metaads interior']);
-    var metaFora = num(d['metaads fora de mg']);
+    // Normaliza as chaves para lowercase sem acentos para comparação segura
+    var dn = {};
+    Object.keys(d).forEach(function(k) {
+      dn[k.toLowerCase().trim()] = d[k];
+    });
+
+    var metaBH   = num(dn['metaads bh']       || dn['metaads_bh']       || 0);
+    var metaInt  = num(dn['metaads interior']  || dn['metaads_interior'] || 0);
+    var metaFora = num(dn['metaads fora de mg']|| dn['metaads_fora_de_mg'] || 0);
     var metaTot  = metaBH + metaInt + metaFora;
 
-    set('v-leads-mes',        num(d['total leads mes']));
-    set('v-conv-bh',          d['conversão bh']       || d['conversao bh']       || '—');
-    set('v-conv-interior',    d['conversão interior'] || d['conversao interior'] || '—');
-    set('v-leads-hoje',       num(d['leads hoje']));
-    set('v-disparo-hj',       num(d['disparo hj']));
-    set('v-organico-hoje',    num(d['organico hoje']));
-    set('v-remarketing-hoje', num(d['remarketing hoje']));
+    set('v-leads-mes',        num(dn['total leads mes']    || dn['total_leads_mes']    || 0));
+    set('v-conv-bh',          dn['conversão bh']           || dn['conversao bh']       || dn['conversão_bh'] || '—');
+    set('v-conv-interior',    dn['conversão interior']     || dn['conversao interior'] || dn['conversão_interior'] || '—');
+    set('v-leads-hoje',       num(dn['leads hoje']         || dn['leads_hoje']         || 0));
+    set('v-disparo-hj',       num(dn['disparo hj']         || dn['disparo_hj']         || 0));
+    set('v-organico-hoje',    num(dn['organico hoje']      || dn['organico_hoje']      || 0));
+    set('v-remarketing-hoje', num(dn['remarketing hoje']   || dn['remarketing_hoje']   || 0));
     set('v-meta-total',       metaTot);
     set('v-meta-bh',          metaBH);
     set('v-meta-interior',    metaInt);
@@ -479,19 +423,15 @@ if (almocoAte) {
 
     document.getElementById('pct-bh').textContent       = pct(metaBH,  metaTot);
     document.getElementById('pct-interior').textContent = pct(metaInt, metaTot);
-    document.getElementById('pct-fora').textContent     = pct(metaFora,metaTot);
+    document.getElementById('pct-fora').textContent     = pct(metaFora, metaTot);
 
     document.getElementById('update-time').textContent =
-      'atualizado às ' + new Date().toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+      'atualizado às ' + new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
   }
 
-  // ─── Fetch das duas planilhas ───
+  // ─── Controle de loading ─────────────────────────────────────────────────────
   var leadsCarregado = false;
   var pipeCarregado  = false;
-
-  // Timestamps para ignorar respostas fora de ordem
-  var leadsTs = 0;
-  var pipeTs  = 0;
 
   function checkLoading() {
     if (leadsCarregado && pipeCarregado) {
@@ -499,37 +439,55 @@ if (almocoAte) {
     }
   }
 
+  // ─── Fetch Leads (a cada 2 minutos) ─────────────────────────────────────────
   function loadLeads() {
-    var ts = Date.now();
-    fetch(API_LEADS, { cache: 'no-store' })
-      .then(function(r) { if (!r.ok) throw new Error(); return r.json(); })
-      .then(function(json) {
-        if (ts < leadsTs) return; // resposta chegou fora de ordem, ignora
-        leadsTs = ts;
-        var d = json.dados;
-        if (d) { renderLeads(d); leadsCarregado = true; checkLoading(); }
+    fetch(N8N_LEADS, { cache: 'no-store' })
+      .then(function(r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
       })
-      .catch(function() { setTimeout(loadLeads, 5000); });
+      .then(function(json) {
+        // O n8n retorna { dados: {...} } ou diretamente o objeto
+        var d = json.dados || json;
+        if (d && typeof d === 'object') {
+          renderLeads(d);
+          leadsCarregado = true;
+          checkLoading();
+        }
+      })
+      .catch(function(e) {
+        console.error('Erro loadLeads:', e);
+        setTimeout(loadLeads, 10000);
+      });
   }
 
+  // ─── Fetch Pipe (a cada 5 segundos) ─────────────────────────────────────────
   function loadPipe() {
-    var ts = Date.now();
-    fetch(API_PIPE, { cache: 'no-store' })
-      .then(function(r) { if (!r.ok) throw new Error(); return r.json(); })
-      .then(function(json) {
-        if (ts < pipeTs) return; // resposta chegou fora de ordem, ignora
-        pipeTs = ts;
-        var rows = json.dados;
-        if (rows && rows.length) { renderVendedores(rows); pipeCarregado = true; checkLoading(); }
+    fetch(N8N_PIPE, { cache: 'no-store' })
+      .then(function(r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
       })
-      .catch(function() { setTimeout(loadPipe, 5000); });
+      .then(function(json) {
+        // O n8n retorna { dados: [...] } ou diretamente o array
+        var rows = json.dados || json;
+        if (Array.isArray(rows) && rows.length) {
+          renderVendedores(rows);
+          pipeCarregado = true;
+          checkLoading();
+        }
+      })
+      .catch(function(e) {
+        console.error('Erro loadPipe:', e);
+        setTimeout(loadPipe, 10000);
+      });
   }
 
-  // Carrega tudo e repete a cada 10s
+  // ─── Inicializa ──────────────────────────────────────────────────────────────
   loadLeads();
   loadPipe();
-  setInterval(loadLeads, 5000);
-  setInterval(loadPipe,  5000);
+  setInterval(loadLeads, 120000); // 2 minutos
+  setInterval(loadPipe,    5000); // 5 segundos
 </script>
 </body>
 </html>
