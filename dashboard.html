@@ -236,7 +236,7 @@
     return rows;
   }
 
-  function num(v) { return parseInt((v||'').replace(/[^0-9]/g,'')) || 0; }
+  function num(v) { if (typeof v === 'number') return v; return parseInt((v||'').toString().replace(/[^0-9]/g,'')) || 0; }
   function fmt(n) { return Number(n).toLocaleString('pt-BR'); }
   function pct(a, t) { return t > 0 ? (a/t*100).toFixed(1)+'%' : '—'; }
 
