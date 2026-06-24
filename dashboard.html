@@ -8,13 +8,14 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { background: #0d1117; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; overflow: hidden; }
+    html, body { width: 100%; height: 100%; overflow: hidden; }
+    body { background: #0d1117; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
     #loading { position: fixed; inset: 0; background: #0d1117; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; z-index: 999; transition: opacity .4s; }
     #loading.hidden { opacity: 0; pointer-events: none; }
     .spinner { width: 32px; height: 32px; border: 2px solid rgba(255,255,255,0.1); border-top-color: #4fc3f7; border-radius: 50%; animation: spin .7s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
     .loading-txt { font-size: 13px; color: #4a5568; }
-    .tv { display: grid; grid-template-columns: 1fr 1fr; height: 100vh; padding: 20px 24px; gap: 20px; }
+    .tv { display: grid; grid-template-columns: 1fr 1fr; height: 100%; padding: 20px 24px; gap: 20px; }
     .col-left { display: flex; flex-direction: column; height: 100%; }
     .topbar { display: flex; align-items: center; justify-content: space-between; padding-bottom: 14px; border-bottom: 0.5px solid #1e2d3d; margin-bottom: 16px; flex-shrink: 0; }
     .brand-name { font-size: 18px; font-weight: 500; color: #e6edf3; letter-spacing: -0.4px; }
@@ -500,6 +501,39 @@
   loadPipe();
   setInterval(loadLeads, 120000); // 2 minutos
   setInterval(loadPipe,   10000); // 10 segundos
+</script>
+
+<script>
+  // ─── Auto-scale para TV ───────────────────────────────────────────────────────
+  // O layout foi projetado para 1920×1080. Este script escala proporcionalmente
+  // para qualquer resolução de TV (4K, Full HD, etc.) sem zoom manual no browser.
+  (function () {
+    var BASE_W = 1920;
+    var BASE_H = 1080;
+
+    function fitTV() {
+      var scaleX = window.innerWidth  / BASE_W;
+      var scaleY = window.innerHeight / BASE_H;
+      var scale  = Math.min(scaleX, scaleY);
+
+      var tv = document.querySelector('.tv');
+      if (!tv) return;
+
+      tv.style.width           = BASE_W + 'px';
+      tv.style.height          = BASE_H + 'px';
+      tv.style.transform       = 'scale(' + scale + ')';
+      tv.style.transformOrigin = 'top left';
+
+      // Centraliza se houver espaço sobrando (ex.: TV 21:9)
+      var offX = (window.innerWidth  - BASE_W * scale) / 2;
+      var offY = (window.innerHeight - BASE_H * scale) / 2;
+      tv.style.marginLeft = Math.max(0, offX) + 'px';
+      tv.style.marginTop  = Math.max(0, offY) + 'px';
+    }
+
+    fitTV();
+    window.addEventListener('resize', fitTV);
+  })();
 </script>
 </body>
 </html>
