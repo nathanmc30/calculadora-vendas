@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard de Vendas</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:        #0f1117;
+    --surface:   #1a1d27;
+    --surface2:  #21253a;
+    --border:    #2a2f45;
+    --accent:    #4f6ef7;
+    --accent2:   #7c3aed;
+    --green:     #10b981;
+    --yellow:    #f59e0b;
+    --red:       #ef4444;
+    --text:      #e8eaf0;
+    --muted:     #6b7280;
+    --muted2:    #9ca3af;
+    --radius:    12px;
+    --radius-sm: 8px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    min-height: 100vh;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 32px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .header-left { display: flex; align-items: center; gap: 12px; }
+  .logo-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 10px var(--accent);
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%,100% { opacity: 1; } 50% { opacity: 0.4; }
+  }
+  .header h1 { font-size: 16px; font-weight: 600; letter-spacing: -0.3px; }
+  .header-right { display: flex; align-items: center; gap: 8px; }
+  .last-updated { font-size: 12px; color: var(--muted); font-family: 'JetBrains Mono', monospace; }
+
+  /* ── FILTERS ── */
+  .filters {
+    display: flex;
+    gap: 12px;
+    padding: 20px 32px;
+    flex-wrap: wrap;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+  }
+  .filter-group { display: flex; flex-direction: column; gap: 4px; }
+  .filter-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; font-weight: 500; }
+  select, .btn-refresh {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 8px 12px;
+    border-radius: var(--radius-sm);
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    cursor: pointer;
+    transition: border-color 0.2s;
+    outline: none;
+  }
+  select:hover, select:focus { border-color: var(--accent); }
+  .btn-refresh {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 18px;
+  }
+  .btn-refresh:hover { opacity: 0.85; }
+
+  /* ── MAIN ── */
+  .main { padding: 24px 32px; display: flex; flex-direction: column; gap: 24px; }
+
+  /* ── KPI CARDS ── */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+  }
+  .kpi-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    transition: border-color 0.2s;
+  }
+  .kpi-card:hover { border-color: var(--accent); }
+  .kpi-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; font-weight: 500; }
+  .kpi-value { font-size: 28px; font-weight: 700; letter-spacing: -1px; font-family: 'JetBrains Mono', monospace; }
+  .kpi-value.green { color: var(--green); }
+  .kpi-value.accent { color: var(--accent); }
+  .kpi-value.yellow { color: var(--yellow); }
+  .kpi-sub { font-size: 12px; color: var(--muted2); }
+
+  /* ── SECTION TITLE ── */
+  .section-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--muted2);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 12px;
+  }
+
+  /* ── VENDEDOR CARDS ── */
+  .vendedor-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 16px;
+  }
+  .vendedor-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    transition: border-color 0.2s, transform 0.15s;
+    cursor: pointer;
+  }
+  .vendedor-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .vendedor-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .vendedor-name { font-weight: 600; font-size: 15px; }
+  .vendedor-badge {
+    font-size: 11px;
+    padding: 3px 8px;
+    border-radius: 20px;
+    background: rgba(79,110,247,0.15);
+    color: var(--accent);
+    font-weight: 500;
+  }
+  .vendedor-body { padding: 16px 20px; display: flex; flex-direction: column; gap: 12px; }
+  .vendedor-stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+  .stat-item { display: flex; flex-direction: column; gap: 2px; }
+  .stat-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; }
+  .stat-value { font-size: 18px; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+  .stat-value.green { color: var(--green); }
+  .stat-value.accent { color: var(--accent); }
+
+  /* Barras de conversão */
+  .conv-section { display: flex; flex-direction: column; gap: 8px; }
+  .conv-row { display: flex; flex-direction: column; gap: 4px; }
+  .conv-header { display: flex; justify-content: space-between; align-items: center; }
+  .conv-label { font-size: 11px; color: var(--muted2); }
+  .conv-pct { font-size: 11px; font-weight: 600; font-family: 'JetBrains Mono', monospace; }
+  .conv-bar-bg { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+  .conv-bar-fill { height: 100%; border-radius: 2px; transition: width 0.6s ease; }
+  .fill-bh      { background: var(--accent); }
+  .fill-interior{ background: var(--green); }
+  .fill-fora    { background: var(--yellow); }
+  .fill-meta    { background: #ec4899; }
+  .fill-disparo { background: #f97316; }
+  .fill-organico{ background: var(--green); }
+
+  .vendedor-footer {
+    padding: 12px 20px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .ver-vendas {
+    font-size: 12px;
+    color: var(--accent);
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  /* ── MODAL ── */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    width: 100%;
+    max-width: 800px;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border);
+  }
+  .modal-title { font-weight: 600; font-size: 16px; }
+  .modal-subtitle { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .modal-close {
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 20px;
+    line-height: 1;
+    padding: 4px;
+  }
+  .modal-close:hover { color: var(--text); }
+  .modal-body { overflow-y: auto; flex: 1; }
+
+  /* Tabela */
+  table { width: 100%; border-collapse: collapse; }
+  thead th {
+    padding: 12px 20px;
+    text-align: left;
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    font-weight: 500;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    background: var(--surface);
+  }
+  tbody tr { border-bottom: 1px solid var(--border); transition: background 0.15s; }
+  tbody tr:hover { background: var(--surface2); }
+  tbody td { padding: 12px 20px; font-size: 13px; }
+  td.mono { font-family: 'JetBrains Mono', monospace; }
+  td.green { color: var(--green); font-weight: 600; }
+  td.muted { color: var(--muted2); }
+
+  /* ── LOADING / ERROR ── */
+  .loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    padding: 80px;
+    color: var(--muted);
+  }
+  .spinner {
+    width: 32px; height: 32px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .empty {
+    text-align: center;
+    padding: 60px;
+    color: var(--muted);
+  }
+  .empty strong { display: block; font-size: 16px; margin-bottom: 8px; color: var(--muted2); }
+
+  /* ── ORIGEM TAGS ── */
+  .tag {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 500;
+  }
+  .tag-bh       { background: rgba(79,110,247,0.15); color: var(--accent); }
+  .tag-interior { background: rgba(16,185,129,0.15); color: var(--green); }
+  .tag-fora     { background: rgba(245,158,11,0.15); color: var(--yellow); }
+  .tag-outros   { background: rgba(107,114,128,0.15); color: var(--muted2); }
+
+  /* responsive */
+  @media (max-width: 640px) {
+    .header, .filters, .main { padding-left: 16px; padding-right: 16px; }
+    .kpi-value { font-size: 22px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-left">
+    <div class="logo-dot"></div>
+    <h1>Dashboard de Vendas</h1>
+  </div>
+  <div class="header-right">
+    <span class="last-updated" id="lastUpdated">—</span>
+  </div>
+</div>
+
+<!-- FILTERS -->
+<div class="filters">
+  <div class="filter-group">
+    <span class="filter-label">Vendedor</span>
+    <select id="filtroVendedor">
+      <option value="todos">Todos os vendedores</option>
+    </select>
+  </div>
+  <div class="filter-group">
+    <span class="filter-label">Período</span>
+    <select id="filtroPeriodo">
+      <option value="todos">Todo o período</option>
+    </select>
+  </div>
+  <button class="btn-refresh" onclick="carregarDados()">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+    Atualizar
+  </button>
+</div>
+
+<!-- MAIN -->
+<div class="main" id="mainContent">
+  <div class="loading"><div class="spinner"></div><span>Carregando dados...</span></div>
+</div>
+
+<!-- MODAL VENDAS -->
+<div class="modal-overlay" id="modalOverlay" onclick="fecharModal(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="modalTitle">Vendas</div>
+        <div class="modal-subtitle" id="modalSubtitle"></div>
+      </div>
+      <button class="modal-close" onclick="fecharModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<script>
+// ── CONFIG ──
+const API_URL = "https://script.google.com/macros/s/AKfycbwzzvjTdpjpFV9QrBG0bIL1NFaKYTkrPt4QeX-MktgGlWe5cSUAaGESSXt5Vhapucc0/exec";
+
+let dadosGlobais = [];
+let vendedoresDisponiveis = [];
+let periodosDisponiveis = [];
+
+// ── FORMATOS ──
+function formatMoeda(v) {
+  if (!v && v !== 0) return '—';
+  return 'R$ ' + Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+function formatPct(v) {
+  if (!v && v !== 0) return '0%';
+  return Number(v).toFixed(1) + '%';
+}
+function formatMesAno(s) {
+  if (!s || s === '0000-00') return '—';
+  const [y, m] = s.split('-');
+  const meses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  return meses[parseInt(m) - 1] + ' ' + y;
+}
+function formatData(s) {
+  if (!s) return '—';
+  const d = new Date(s);
+  if (isNaN(d)) return s;
+  return d.toLocaleDateString('pt-BR');
+}
+function tagRegiao(r) {
+  if (r === 'BH') return '<span class="tag tag-bh">BH</span>';
+  if (r === 'Interior MG') return '<span class="tag tag-interior">Interior</span>';
+  if (r === 'Fora do Estado') return '<span class="tag tag-fora">Fora do Estado</span>';
+  return '<span class="tag tag-outros">—</span>';
+}
+
+// ── CARREGA DADOS ──
+async function carregarDados() {
+  document.getElementById('mainContent').innerHTML =
+    '<div class="loading"><div class="spinner"></div><span>Carregando dados...</span></div>';
+
+  try {
+    const res  = await fetch(API_URL + '?acao=dashboard');
+    const data = await res.json();
+    dadosGlobais = data;
+    document.getElementById('lastUpdated').textContent = 'Atualizado ' + new Date().toLocaleTimeString('pt-BR');
+
+    // Popula filtros
+    const vendedores = [...new Set(data.map(d => d.vendedor))].filter(Boolean).sort();
+    const periodos   = [...new Set(data.map(d => d.mes_ano))].filter(d => d && d !== '0000-00').sort().reverse();
+    vendedoresDisponiveis = vendedores;
+    periodosDisponiveis   = periodos;
+
+    const selV = document.getElementById('filtroVendedor');
+    const selP = document.getElementById('filtroPeriodo');
+    const curV = selV.value;
+    const curP = selP.value;
+
+    selV.innerHTML = '<option value="todos">Todos os vendedores</option>' +
+      vendedores.map(v => `<option value="${v}" ${v === curV ? 'selected' : ''}>${v}</option>`).join('');
+    selP.innerHTML = '<option value="todos">Todo o período</option>' +
+      periodos.map(p => `<option value="${p}" ${p === curP ? 'selected' : ''}>${formatMesAno(p)}</option>`).join('');
+
+    renderizar();
+  } catch(e) {
+    document.getElementById('mainContent').innerHTML =
+      `<div class="empty"><strong>Erro ao carregar dados</strong>Verifique a URL do endpoint e tente novamente.<br><small style="color:var(--muted);margin-top:8px;display:block">${e.message}</small></div>`;
+  }
+}
+
+// ── FILTRA ──
+function dadosFiltrados() {
+  const v = document.getElementById('filtroVendedor').value;
+  const p = document.getElementById('filtroPeriodo').value;
+  return dadosGlobais.filter(d =>
+    (v === 'todos' || d.vendedor === v) &&
+    (p === 'todos' || d.mes_ano === p)
+  );
+}
+
+// ── AGREGA ──
+function agregar(dados) {
+  return dados.reduce((acc, d) => {
+    acc.num_vendas       += Number(d.num_vendas)       || 0;
+    acc.valor_vendido    += Number(d.valor_vendido)    || 0;
+    acc.leads_bh         += Number(d.leads_bh)         || 0;
+    acc.leads_interior   += Number(d.leads_interior)   || 0;
+    acc.leads_fora       += Number(d.leads_fora)       || 0;
+    acc.vendas_bh        += Number(d.vendas_bh)        || 0;
+    acc.vendas_interior  += Number(d.vendas_interior)  || 0;
+    acc.vendas_fora      += Number(d.vendas_fora)      || 0;
+    acc.leads_meta       += Number(d.leads_meta)       || 0;
+    acc.leads_disparo    += Number(d.leads_disparo)    || 0;
+    acc.leads_organico   += Number(d.leads_organico)   || 0;
+    acc.vendas_meta      += Number(d.vendas_meta)      || 0;
+    acc.vendas_disparo   += Number(d.vendas_disparo)   || 0;
+    acc.vendas_organico  += Number(d.vendas_organico)  || 0;
+    acc.vendas_outros_origem += Number(d.vendas_outros_origem) || 0;
+    return acc;
+  }, {
+    num_vendas:0, valor_vendido:0,
+    leads_bh:0, leads_interior:0, leads_fora:0,
+    vendas_bh:0, vendas_interior:0, vendas_fora:0,
+    leads_meta:0, leads_disparo:0, leads_organico:0,
+    vendas_meta:0, vendas_disparo:0, vendas_organico:0, vendas_outros_origem:0
+  });
+}
+
+function pct(v, l) { return l > 0 ? (v / l * 100) : 0; }
+
+// ── RENDERIZA ──
+function renderizar() {
+  const filtrados = dadosFiltrados();
+  if (!filtrados.length) {
+    document.getElementById('mainContent').innerHTML =
+      '<div class="empty"><strong>Nenhum dado encontrado</strong>Ajuste os filtros e tente novamente.</div>';
+    return;
+  }
+
+  const total = agregar(filtrados);
+  const ticketMedio = total.num_vendas > 0 ? total.valor_vendido / total.num_vendas : 0;
+  const totalLeads  = total.leads_bh + total.leads_interior + total.leads_fora;
+  const convGeral   = pct(total.num_vendas, totalLeads);
+
+  // KPIs
+  const kpiHtml = `
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <span class="kpi-label">Valor Vendido</span>
+        <span class="kpi-value green">${formatMoeda(total.valor_vendido)}</span>
+        <span class="kpi-sub">${total.num_vendas} vendas realizadas</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-label">Ticket Médio</span>
+        <span class="kpi-value accent">${formatMoeda(ticketMedio)}</span>
+        <span class="kpi-sub">por venda</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-label">Total de Leads</span>
+        <span class="kpi-value">${totalLeads.toLocaleString('pt-BR')}</span>
+        <span class="kpi-sub">BH: ${total.leads_bh} · Interior: ${total.leads_interior} · Fora: ${total.leads_fora}</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-label">Conv. Geral</span>
+        <span class="kpi-value yellow">${formatPct(convGeral)}</span>
+        <span class="kpi-sub">leads → vendas</span>
+      </div>
+    </div>`;
+
+  // Vendedores
+  const filtroV = document.getElementById('filtroVendedor').value;
+  const filtroP = document.getElementById('filtroPeriodo').value;
+
+  // Agrupa por vendedor
+  const porVendedor = {};
+  filtrados.forEach(d => {
+    if (!porVendedor[d.vendedor]) porVendedor[d.vendedor] = [];
+    porVendedor[d.vendedor].push(d);
+  });
+
+  const vendedoresOrdenados = Object.entries(porVendedor)
+    .map(([nome, rows]) => ({ nome, ...agregar(rows) }))
+    .sort((a, b) => b.valor_vendido - a.valor_vendido);
+
+  const cardsHtml = vendedoresOrdenados.map(v => {
+    const totalL  = v.leads_bh + v.leads_interior + v.leads_fora;
+    const convB   = pct(v.vendas_bh, v.leads_bh);
+    const convI   = pct(v.vendas_interior, v.leads_interior);
+    const convF   = pct(v.vendas_fora, v.leads_fora);
+    const convM   = pct(v.vendas_meta, v.leads_meta);
+    const convD   = pct(v.vendas_disparo, v.leads_disparo);
+    const convO   = pct(v.vendas_organico, v.leads_organico);
+    const ticket  = v.num_vendas > 0 ? v.valor_vendido / v.num_vendas : 0;
+
+    return `
+    <div class="vendedor-card" onclick="abrirVendas('${v.nome}', '${filtroP}')">
+      <div class="vendedor-header">
+        <span class="vendedor-name">${v.nome}</span>
+        <span class="vendedor-badge">${v.num_vendas} vendas</span>
+      </div>
+      <div class="vendedor-body">
+        <div class="vendedor-stats">
+          <div class="stat-item">
+            <span class="stat-label">Vendido</span>
+            <span class="stat-value green" style="font-size:14px">${formatMoeda(v.valor_vendido)}</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Ticket</span>
+            <span class="stat-value accent" style="font-size:14px">${formatMoeda(ticket)}</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Leads</span>
+            <span class="stat-value" style="font-size:14px">${totalL.toLocaleString('pt-BR')}</span>
+          </div>
+        </div>
+
+        <div class="conv-section">
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:4px">Conversão por Região</div>
+          ${convRow('BH', convB, 'fill-bh', v.vendas_bh, v.leads_bh)}
+          ${convRow('Interior MG', convI, 'fill-interior', v.vendas_interior, v.leads_interior)}
+          ${convRow('Fora do Estado', convF, 'fill-fora', v.vendas_fora, v.leads_fora)}
+        </div>
+
+        <div class="conv-section">
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:4px">Conversão por Origem</div>
+          ${convRow('Meta ADS', convM, 'fill-meta', v.vendas_meta, v.leads_meta)}
+          ${convRow('Disparo', convD, 'fill-disparo', v.vendas_disparo, v.leads_disparo)}
+          ${convRow('Orgânico', convO, 'fill-organico', v.vendas_organico, v.leads_organico)}
+        </div>
+      </div>
+      <div class="vendedor-footer">
+        <span class="ver-vendas">Ver todas as vendas →</span>
+        <span style="font-size:11px;color:var(--muted)">${totalL} leads · ${v.num_vendas} vendas</span>
+      </div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('mainContent').innerHTML = `
+    ${kpiHtml}
+    <div>
+      <div class="section-title">Performance por Vendedor</div>
+      <div class="vendedor-grid">${cardsHtml}</div>
+    </div>`;
+}
+
+function convRow(label, pctVal, fillClass, vendas, leads) {
+  const w = Math.min(pctVal, 100).toFixed(1);
+  return `
+    <div class="conv-row">
+      <div class="conv-header">
+        <span class="conv-label">${label}</span>
+        <span class="conv-pct">${formatPct(pctVal)} <span style="color:var(--muted);font-weight:400">(${vendas}/${leads})</span></span>
+      </div>
+      <div class="conv-bar-bg">
+        <div class="conv-bar-fill ${fillClass}" style="width:${w}%"></div>
+      </div>
+    </div>`;
+}
+
+// ── MODAL VENDAS ──
+async function abrirVendas(vendedor, mesAno) {
+  document.getElementById('modalTitle').textContent = vendedor;
+  document.getElementById('modalSubtitle').textContent =
+    mesAno === 'todos' ? 'Todo o período' : formatMesAno(mesAno);
+  document.getElementById('modalBody').innerHTML =
+    '<div class="loading"><div class="spinner"></div><span>Carregando vendas...</span></div>';
+  document.getElementById('modalOverlay').classList.add('open');
+
+  try {
+    let url = API_URL + '?acao=vendas_detalhe&vendedor=' + encodeURIComponent(vendedor);
+    if (mesAno && mesAno !== 'todos') url += '&mes_ano=' + encodeURIComponent(mesAno);
+
+    const res   = await fetch(url);
+    const dados = await res.json();
+
+    if (!dados.length) {
+      document.getElementById('modalBody').innerHTML =
+        '<div class="empty"><strong>Nenhuma venda encontrada</strong>para este período.</div>';
+      return;
+    }
+
+    // Ordena por data desc
+    dados.sort((a, b) => new Date(b.data) - new Date(a.data));
+
+    const totalModal = dados.reduce((s, d) => s + (Number(d.valorLiquido) || 0), 0);
+
+    const rows = dados.map(d => `
+      <tr>
+        <td>${d.nome || '—'}</td>
+        <td class="mono muted">${d.telefone || '—'}</td>
+        <td class="muted">${formatData(d.data)}</td>
+        <td class="mono green">${formatMoeda(d.valorLiquido)}</td>
+        <td>${tagRegiao(d.regiao)}</td>
+      </tr>`).join('');
+
+    document.getElementById('modalBody').innerHTML = `
+      <div style="padding:12px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:12px;color:var(--muted)">${dados.length} vendas encontradas</span>
+        <span style="font-size:14px;font-weight:600;color:var(--green);font-family:'JetBrains Mono',monospace">${formatMoeda(totalModal)}</span>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>Telefone</th>
+            <th>Data</th>
+            <th>Valor</th>
+            <th>Região</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+  } catch(e) {
+    document.getElementById('modalBody').innerHTML =
+      `<div class="empty"><strong>Erro ao carregar vendas</strong>${e.message}</div>`;
+  }
+}
+
+function fecharModal(e) {
+  if (!e || e.target === document.getElementById('modalOverlay')) {
+    document.getElementById('modalOverlay').classList.remove('open');
+  }
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') fecharModal(); });
+
+// Atualiza ao mudar filtros
+document.getElementById('filtroVendedor').addEventListener('change', renderizar);
+document.getElementById('filtroPeriodo').addEventListener('change', renderizar);
+
+// Inicia
+carregarDados();
+</script>
+</body>
+</html>
