@@ -633,19 +633,27 @@ async function abrirVendas(vendedor, mesAno) {
 
     const totalModal = dados.reduce((s, d) => s + (Number(d.valorLiquido) || 0), 0);
 
-    const rows = dados.map(d => `
-      <tr>
+    // Guarda vendas para o delete acessar
+    window._vendasModal = dados;
+
+    const rows = dados.map((d, idx) => `
+      <tr id="venda-row-${idx}">
         <td>${d.nome || '—'}</td>
         <td class="mono muted">${d.telefone || '—'}</td>
         <td class="muted">${formatData(d.data)}</td>
         <td class="mono green">${formatMoeda(d.valorLiquido)}</td>
         <td>${tagRegiao(d.regiao)}</td>
+        <td>
+          <button onclick="deletarVenda(${idx}, this)" style="background:none;border:1px solid var(--border);color:var(--muted);padding:3px 8px;border-radius:6px;cursor:pointer;font-size:11px;transition:all 0.2s" onmouseover="this.style.borderColor='var(--red)';this.style.color='var(--red)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">
+            🗑 Apagar
+          </button>
+        </td>
       </tr>`).join('');
 
     document.getElementById('modalBody').innerHTML = `
       <div style="padding:12px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
-        <span style="font-size:12px;color:var(--muted)">${dados.length} vendas encontradas</span>
-        <span style="font-size:14px;font-weight:600;color:var(--green);font-family:'JetBrains Mono',monospace">${formatMoeda(totalModal)}</span>
+        <span style="font-size:12px;color:var(--muted)" id="modalCount">${dados.length} vendas encontradas</span>
+        <span style="font-size:14px;font-weight:600;color:var(--green);font-family:'JetBrains Mono',monospace" id="modalTotal">${formatMoeda(totalModal)}</span>
       </div>
       <table>
         <thead>
@@ -655,6 +663,7 @@ async function abrirVendas(vendedor, mesAno) {
             <th>Data</th>
             <th>Valor</th>
             <th>Região</th>
+            <th></th>
           </tr>
         </thead>
         <tbody>${rows}</tbody>
@@ -662,6 +671,67 @@ async function abrirVendas(vendedor, mesAno) {
   } catch(e) {
     document.getElementById('modalBody').innerHTML =
       `<div class="empty"><strong>Erro ao carregar vendas</strong>${e.message}</div>`;
+  }
+}
+
+async function deletarVenda(idx, btn) {
+  const venda = window._vendasModal[idx];
+  if (!venda) return;
+
+  const senha = prompt(`Apagar a venda de ${venda.nome} (${formatMoeda(venda.valorLiquido)})?
+
+Digite a senha para confirmar:`);
+  if (!senha) return;
+
+  btn.disabled = true;
+  btn.textContent = '...';
+
+  try {
+    const payload = {
+      tipo:         "delete_venda",
+      senha:        senha,
+      prontuario:   venda.prontuario,
+      data:         venda.data,
+      valorLiquido: venda.valorLiquido.toString(),
+    };
+
+    const res  = await fetch(API_URL, {
+      method:  "post",
+      headers: { "Content-Type": "application/json" },
+      body:    JSON.stringify(payload),
+    });
+    const resp = await res.json();
+
+    if (resp.status === "ok") {
+      // Remove a linha da tabela
+      const row = document.getElementById('venda-row-' + idx);
+      if (row) row.style.opacity = '0.3';
+      btn.textContent = '✓ Apagado';
+      btn.style.color = 'var(--green)';
+      btn.style.borderColor = 'var(--green)';
+
+      // Atualiza totais no modal
+      window._vendasModal[idx]._deleted = true;
+      const restantes = window._vendasModal.filter(v => !v._deleted);
+      const novoTotal = restantes.reduce((s, v) => s + (v.valorLiquido || 0), 0);
+      const countEl = document.getElementById('modalCount');
+      const totalEl = document.getElementById('modalTotal');
+      if (countEl) countEl.textContent = restantes.length + ' vendas encontradas';
+      if (totalEl) totalEl.textContent = formatMoeda(novoTotal);
+
+    } else if (resp.msg === "Senha incorreta") {
+      alert("Senha incorreta!");
+      btn.disabled = false;
+      btn.textContent = '🗑 Apagar';
+    } else {
+      alert("Erro: " + resp.msg);
+      btn.disabled = false;
+      btn.textContent = '🗑 Apagar';
+    }
+  } catch(e) {
+    alert("Erro ao apagar: " + e.message);
+    btn.disabled = false;
+    btn.textContent = '🗑 Apagar';
   }
 }
 
