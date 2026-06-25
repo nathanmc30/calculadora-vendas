@@ -3,441 +3,267 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dashboard de Vendas</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<title>Grupo Aspekto — Dashboard de Vendas</title>
+<link rel="icon" type="image/png" href="data:image/png;base64,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">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg:        #0f1117;
-    --surface:   #1a1d27;
-    --surface2:  #21253a;
-    --border:    #2a2f45;
-    --accent:    #4f6ef7;
-    --accent2:   #7c3aed;
-    --green:     #10b981;
-    --yellow:    #f59e0b;
-    --red:       #ef4444;
-    --text:      #e8eaf0;
-    --muted:     #6b7280;
-    --muted2:    #9ca3af;
-    --radius:    12px;
-    --radius-sm: 8px;
+    --bg:       #0b0d14;
+    --surface:  #12151f;
+    --surface2: #181c29;
+    --surface3: #1e2235;
+    --border:   #252a3d;
+    --border2:  #2e3450;
+    --accent:   #4f80ff;
+    --green:    #00d084;
+    --yellow:   #ffb800;
+    --red:      #ff4d4d;
+    --purple:   #9b59f7;
+    --orange:   #ff7a30;
+    --pink:     #f736a8;
+    --text:     #ffffff;
+    --text2:    #c8cfe8;
+    --muted:    #5a6380;
+    --muted2:   #8892b0;
+    --radius:   14px;
+    --radius-sm:8px;
   }
-
   * { box-sizing: border-box; margin: 0; padding: 0; }
-
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'Inter', sans-serif;
-    font-size: 14px;
-    min-height: 100vh;
-  }
+  body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; font-size: 14px; min-height: 100vh; }
 
   /* ── HEADER ── */
   .header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 20px 32px;
-    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 32px; height: 64px;
     background: var(--surface);
-    position: sticky;
-    top: 0;
-    z-index: 100;
+    border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; z-index: 200;
   }
-  .header-left { display: flex; align-items: center; gap: 12px; }
-  .logo-dot {
-    width: 10px; height: 10px;
-    border-radius: 50%;
-    background: var(--accent);
-    box-shadow: 0 0 10px var(--accent);
-    animation: pulse 2s ease-in-out infinite;
+  .header-left { display: flex; align-items: center; gap: 14px; }
+  .logo-img { width: 32px; height: 32px; object-fit: contain; }
+  .header-brand { display: flex; flex-direction: column; gap: 1px; }
+  .header-brand-name { font-size: 15px; font-weight: 700; letter-spacing: -0.3px; }
+  .header-brand-sub  { font-size: 11px; color: var(--muted2); }
+  .live-badge {
+    display: flex; align-items: center; gap: 6px;
+    background: rgba(0,208,132,0.12); border: 1px solid rgba(0,208,132,0.3);
+    color: var(--green); padding: 5px 12px; border-radius: 20px;
+    font-size: 11px; font-weight: 600; letter-spacing: 0.5px;
   }
-  @keyframes pulse {
-    0%,100% { opacity: 1; } 50% { opacity: 0.4; }
-  }
-  .header h1 { font-size: 16px; font-weight: 600; letter-spacing: -0.3px; }
-  .header-right { display: flex; align-items: center; gap: 8px; }
-  .last-updated { font-size: 12px; color: var(--muted); font-family: 'JetBrains Mono', monospace; }
+  .live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); animation: blink 1.5s ease-in-out infinite; }
+  @keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0.2;} }
+  .header-right { display: flex; align-items: center; gap: 10px; }
+  .last-updated { font-size: 12px; color: var(--muted); }
 
-  /* ── FILTERS ── */
+  /* ── FILTERS BAR ── */
   .filters {
-    display: flex;
-    gap: 12px;
-    padding: 20px 32px;
-    flex-wrap: wrap;
-    align-items: flex-end;
+    display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end;
+    padding: 16px 32px;
+    background: var(--surface);
     border-bottom: 1px solid var(--border);
   }
-  .filter-group { display: flex; flex-direction: column; gap: 4px; }
-  .filter-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; font-weight: 500; }
-
-  select, input[type="number"], .btn-refresh {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    color: var(--text);
-    padding: 8px 12px;
-    border-radius: var(--radius-sm);
-    font-family: 'Inter', sans-serif;
-    font-size: 13px;
-    cursor: pointer;
-    transition: border-color 0.2s;
-    outline: none;
-    height: 36px;
+  .filter-group { display: flex; flex-direction: column; gap: 5px; }
+  .filter-label { font-size: 10px; color: var(--muted2); text-transform: uppercase; letter-spacing: 0.9px; font-weight: 600; }
+  select, input[type="number"] {
+    background: var(--surface2); border: 1px solid var(--border2);
+    color: var(--text); padding: 0 12px; height: 36px;
+    border-radius: var(--radius-sm); font-family: 'Inter', sans-serif;
+    font-size: 13px; outline: none; cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
   }
-  select:hover, select:focus,
-  input[type="number"]:hover, input[type="number"]:focus { border-color: var(--accent); }
-
-  input[type="number"] {
-    width: 90px;
-    cursor: text;
-    -moz-appearance: textfield;
-  }
+  select:hover, select:focus, input:hover, input:focus { border-color: var(--accent); background: var(--surface3); }
+  input[type="number"] { width: 80px; cursor: text; -moz-appearance: textfield; }
   input[type="number"]::-webkit-inner-spin-button,
-  input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
-
-  .meta-suffix {
-    font-size: 13px;
-    color: var(--muted2);
-    margin-left: -4px;
-    align-self: center;
-    padding-bottom: 0;
-    line-height: 36px;
-  }
-
-  .input-with-suffix {
-    display: flex;
-    align-items: center;
-    gap: 0;
-  }
-  .input-with-suffix input {
-    border-radius: var(--radius-sm) 0 0 var(--radius-sm);
-    border-right: none;
-  }
-  .input-with-suffix .suffix-box {
-    height: 36px;
-    padding: 0 10px;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-left: none;
+  input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
+  .input-suffix-wrap { display: flex; align-items: center; }
+  .input-suffix-wrap input { border-radius: var(--radius-sm) 0 0 var(--radius-sm); border-right: none; }
+  .suffix-box {
+    height: 36px; padding: 0 10px; background: var(--surface3);
+    border: 1px solid var(--border2); border-left: none;
     border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
-    display: flex;
-    align-items: center;
-    font-size: 13px;
-    color: var(--muted2);
+    display: flex; align-items: center; font-size: 13px; color: var(--muted2);
   }
-
-  .btn-refresh {
-    background: var(--accent);
-    border-color: var(--accent);
-    color: #fff;
-    font-weight: 500;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    cursor: pointer;
-  }
-  .btn-refresh:hover { opacity: 0.85; }
+  .btn { height: 36px; padding: 0 16px; border-radius: var(--radius-sm); font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; border: none; display: flex; align-items: center; gap: 7px; transition: opacity 0.2s, transform 0.1s; }
+  .btn:hover { opacity: 0.85; }
+  .btn:active { transform: scale(0.97); }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-ghost   { background: var(--surface3); border: 1px solid var(--border2); color: var(--text2); }
 
   /* ── MAIN ── */
-  .main { padding: 24px 32px; display: flex; flex-direction: column; gap: 24px; }
+  .main { padding: 28px 32px; display: flex; flex-direction: column; gap: 28px; }
 
-  /* ── KPI CARDS ── */
-  .kpi-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 16px;
-  }
+  /* ── KPI GRID ── */
+  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; }
   .kpi-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    transition: border-color 0.2s;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 22px 24px;
+    display: flex; flex-direction: column; gap: 8px;
+    position: relative; overflow: hidden;
+    transition: border-color 0.2s, transform 0.15s;
   }
-  .kpi-card:hover { border-color: var(--accent); }
-  .kpi-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; font-weight: 500; }
-  .kpi-value {
-    font-size: 26px;
-    font-weight: 700;
-    letter-spacing: -0.5px;
-    font-family: 'JetBrains Mono', monospace;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+  .kpi-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: var(--kpi-color, var(--accent));
+    border-radius: var(--radius) var(--radius) 0 0;
   }
-  .kpi-value.green { color: var(--green); }
-  .kpi-value.accent { color: var(--accent); }
-  .kpi-value.yellow { color: var(--yellow); }
-  .kpi-sub { font-size: 12px; color: var(--muted2); }
+  .kpi-card:hover { border-color: var(--kpi-color, var(--accent)); transform: translateY(-2px); }
+  .kpi-label { font-size: 11px; color: var(--muted2); text-transform: uppercase; letter-spacing: 0.9px; font-weight: 600; }
+  .kpi-value { font-size: 28px; font-weight: 800; color: var(--text); line-height: 1; letter-spacing: -1px; white-space: nowrap; }
+  .kpi-value span.currency { font-size: 16px; font-weight: 600; color: var(--muted2); margin-right: 3px; vertical-align: 0.25em; }
+  .kpi-sub { font-size: 12px; color: var(--muted); }
 
   /* ── SECTION TITLE ── */
-  .section-title {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--muted2);
-    text-transform: uppercase;
-    letter-spacing: 0.8px;
-    margin-bottom: 12px;
-  }
+  .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .section-title  { font-size: 12px; font-weight: 700; color: var(--muted2); text-transform: uppercase; letter-spacing: 1px; }
 
-  /* ── VENDEDOR CARDS ── */
-  .vendedor-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-    gap: 16px;
-  }
+  /* ── VENDEDOR GRID ── */
+  .vendedor-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 16px; }
   .vendedor-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    overflow: hidden;
-    transition: border-color 0.2s, transform 0.15s;
-    cursor: pointer;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); overflow: hidden;
+    transition: border-color 0.2s, transform 0.15s; cursor: pointer;
+    display: flex; flex-direction: column;
   }
   .vendedor-card:hover { border-color: var(--accent); transform: translateY(-2px); }
-  .vendedor-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 16px 20px;
-    border-bottom: 1px solid var(--border);
-  }
-  .vendedor-name { font-weight: 600; font-size: 15px; }
-  .vendedor-badge {
-    font-size: 11px;
-    padding: 3px 8px;
-    border-radius: 20px;
-    background: rgba(79,110,247,0.15);
-    color: var(--accent);
-    font-weight: 500;
-  }
-  .vendedor-body { padding: 16px 20px; display: flex; flex-direction: column; gap: 14px; }
 
-  /* Stats — FIX: layout mais flexível para não quebrar R$ */
-  .vendedor-stats {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 10px;
+  .vendedor-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 18px; border-bottom: 1px solid var(--border);
   }
+  .vendedor-name { font-weight: 700; font-size: 15px; }
+  .vendedor-badge { font-size: 11px; padding: 3px 10px; border-radius: 20px; background: rgba(79,128,255,0.15); color: var(--accent); font-weight: 600; }
+
+  /* Stats row */
+  .vendedor-body { padding: 16px 18px; display: flex; flex-direction: column; gap: 16px; flex: 1; }
+  .stat-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
   .stat-item { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
-  .stat-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; }
-  .stat-value {
-    font-size: 13px;
-    font-weight: 700;
-    font-family: 'JetBrains Mono', monospace;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
+  .stat-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.7px; font-weight: 600; }
+  .stat-value { font-size: 14px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: baseline; gap: 2px; }
+  .stat-value .cur { font-size: 10px; color: var(--muted2); font-weight: 500; }
   .stat-value.green { color: var(--green); }
   .stat-value.accent { color: var(--accent); }
 
-  /* ── BARRAS DE CONVERSÃO — redesign ── */
-  .conv-section { display: flex; flex-direction: column; gap: 10px; }
-  .conv-section-title {
-    font-size: 10px;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 0.8px;
-    font-weight: 600;
-    margin-bottom: 2px;
-  }
-  .conv-row { display: flex; flex-direction: column; gap: 5px; }
-  .conv-header { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
-  .conv-label { font-size: 12px; color: var(--muted2); white-space: nowrap; }
-  .conv-right { display: flex; align-items: baseline; gap: 5px; flex-shrink: 0; }
-  .conv-pct {
-    font-size: 12px;
-    font-weight: 700;
-    font-family: 'JetBrains Mono', monospace;
-    color: var(--text);
-  }
-  .conv-ratio {
-    font-size: 10px;
-    color: var(--muted);
-    font-family: 'JetBrains Mono', monospace;
-  }
+  /* ── CONV BARS ── */
+  .conv-block { display: flex; flex-direction: column; gap: 9px; }
+  .conv-block-title { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; font-weight: 600; }
+  .conv-row { display: flex; flex-direction: column; gap: 4px; }
+  .conv-head { display: flex; justify-content: space-between; align-items: baseline; }
+  .conv-label { font-size: 12px; color: var(--text2); }
+  .conv-right { display: flex; align-items: baseline; gap: 6px; }
+  .conv-pct   { font-size: 13px; font-weight: 700; color: var(--text); }
+  .conv-ratio { font-size: 10px; color: var(--muted); }
 
-  /* Barra: mais grossa, com trilho e marcador de meta */
-  .conv-bar-wrap {
-    position: relative;
-    height: 10px;
-  }
-  .conv-bar-bg {
-    height: 10px;
-    background: var(--surface2);
-    border-radius: 6px;
-    overflow: visible;
-    position: relative;
-  }
-  .conv-bar-fill {
-    height: 100%;
-    border-radius: 6px;
-    transition: width 0.7s cubic-bezier(.4,0,.2,1);
-    position: relative;
-  }
-  /* gradientes por categoria */
-  .fill-bh       { background: linear-gradient(90deg, #3b5bd4, #4f6ef7); }
-  .fill-interior { background: linear-gradient(90deg, #059669, #10b981); }
-  .fill-fora     { background: linear-gradient(90deg, #d97706, #f59e0b); }
-  .fill-meta     { background: linear-gradient(90deg, #be185d, #ec4899); }
-  .fill-disparo  { background: linear-gradient(90deg, #c2410c, #f97316); }
-  .fill-organico { background: linear-gradient(90deg, #059669, #10b981); }
-
-  /* Marcador de meta — linha vertical */
+  .bar-wrap { position: relative; height: 12px; }
+  .bar-bg   { height: 12px; background: var(--surface3); border-radius: 8px; overflow: visible; position: relative; }
+  .bar-fill { height: 100%; border-radius: 8px; transition: width 0.7s cubic-bezier(.4,0,.2,1); }
+  .fill-bh       { background: linear-gradient(90deg,#2d4fd4,#4f80ff); }
+  .fill-interior { background: linear-gradient(90deg,#00a36a,#00d084); }
+  .fill-fora     { background: linear-gradient(90deg,#cc8800,#ffb800); }
+  .fill-meta     { background: linear-gradient(90deg,#c0197a,#f736a8); }
+  .fill-disparo  { background: linear-gradient(90deg,#c45a1a,#ff7a30); }
+  .fill-organico { background: linear-gradient(90deg,#5e35b1,#9b59f7); }
   .meta-marker {
-    position: absolute;
-    top: -3px;
-    width: 2px;
-    height: 16px;
-    background: rgba(255,255,255,0.5);
-    border-radius: 1px;
-    transform: translateX(-50%);
-    pointer-events: none;
+    position: absolute; top: -3px; width: 2px; height: 18px;
+    background: rgba(255,255,255,0.45); border-radius: 2px;
+    transform: translateX(-50%); pointer-events: none; z-index: 2;
     transition: left 0.3s ease;
-    z-index: 2;
   }
   .meta-marker::after {
-    content: '';
-    position: absolute;
-    top: -2px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: rgba(255,255,255,0.7);
+    content:''; position: absolute; top: -2px; left: 50%; transform: translateX(-50%);
+    width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,0.7);
   }
 
   .vendedor-footer {
-    padding: 12px 20px;
-    border-top: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+    padding: 11px 18px; border-top: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
   }
-  .ver-vendas {
-    font-size: 12px;
-    color: var(--accent);
-    font-weight: 500;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-  }
+  .ver-vendas { font-size: 12px; color: var(--accent); font-weight: 600; display: flex; align-items: center; gap: 4px; }
+  .footer-meta { font-size: 11px; color: var(--muted); }
 
-  /* ── MODAL ── */
+  /* ── MODAL CONVERSÕES ── */
   .modal-overlay {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.7);
-    z-index: 1000;
-    align-items: center;
-    justify-content: center;
-    padding: 24px;
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.75); z-index: 1000;
+    align-items: center; justify-content: center; padding: 24px;
   }
   .modal-overlay.open { display: flex; }
   .modal {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    width: 100%;
-    max-width: 800px;
-    max-height: 85vh;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
+    background: var(--surface); border: 1px solid var(--border2);
+    border-radius: var(--radius); width: 100%; max-width: 780px;
+    max-height: 85vh; display: flex; flex-direction: column; overflow: hidden;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.6);
   }
   .modal-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 20px 24px;
-    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 20px 24px; border-bottom: 1px solid var(--border);
   }
-  .modal-title { font-weight: 600; font-size: 16px; }
+  .modal-title    { font-weight: 700; font-size: 16px; }
   .modal-subtitle { font-size: 12px; color: var(--muted); margin-top: 2px; }
   .modal-close {
-    background: none;
-    border: none;
-    color: var(--muted);
-    cursor: pointer;
-    font-size: 20px;
-    line-height: 1;
-    padding: 4px;
+    background: none; border: none; color: var(--muted);
+    cursor: pointer; font-size: 20px; line-height: 1; padding: 4px;
+    border-radius: 6px; transition: color 0.15s, background 0.15s;
   }
-  .modal-close:hover { color: var(--text); }
+  .modal-close:hover { color: var(--text); background: var(--surface3); }
   .modal-body { overflow-y: auto; flex: 1; }
 
-  /* Tabela */
+  /* Modal conversões — grid */
+  .meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
+  .meta-group { padding: 20px 24px; }
+  .meta-group:first-child { border-right: 1px solid var(--border); }
+  .meta-group-title { font-size: 11px; color: var(--muted2); text-transform: uppercase; letter-spacing: 0.9px; font-weight: 700; margin-bottom: 16px; }
+  .meta-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; gap: 12px; }
+  .meta-row-label { font-size: 13px; color: var(--text2); display: flex; align-items: center; gap: 8px; }
+  .meta-color-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .meta-input-wrap { display: flex; align-items: center; gap: 0; }
+  .meta-input {
+    width: 72px; height: 32px; padding: 0 10px;
+    background: var(--surface3); border: 1px solid var(--border2);
+    color: var(--text); font-size: 13px; font-weight: 600; font-family: 'Inter', sans-serif;
+    border-radius: var(--radius-sm) 0 0 var(--radius-sm); border-right: none;
+    outline: none; transition: border-color 0.2s;
+    -moz-appearance: textfield;
+  }
+  .meta-input::-webkit-inner-spin-button,
+  .meta-input::-webkit-outer-spin-button { -webkit-appearance: none; }
+  .meta-input:focus { border-color: var(--accent); }
+  .meta-suffix-sm {
+    height: 32px; padding: 0 8px; background: var(--surface2);
+    border: 1px solid var(--border2); border-left: none;
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    display: flex; align-items: center; font-size: 12px; color: var(--muted2);
+  }
+
+  /* Tabela vendas */
   table { width: 100%; border-collapse: collapse; }
   thead th {
-    padding: 12px 20px;
-    text-align: left;
-    font-size: 11px;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 0.8px;
-    font-weight: 500;
-    border-bottom: 1px solid var(--border);
-    position: sticky;
-    top: 0;
-    background: var(--surface);
+    padding: 12px 20px; text-align: left; font-size: 10px; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 0.9px; font-weight: 700;
+    border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--surface);
   }
   tbody tr { border-bottom: 1px solid var(--border); transition: background 0.15s; }
   tbody tr:hover { background: var(--surface2); }
   tbody td { padding: 12px 20px; font-size: 13px; }
-  td.mono { font-family: 'JetBrains Mono', monospace; }
-  td.green { color: var(--green); font-weight: 600; }
-  td.muted { color: var(--muted2); }
+  td.green { color: var(--green); font-weight: 700; }
+  td.muted  { color: var(--muted2); }
 
-  /* ── LOADING / ERROR ── */
-  .loading {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 16px;
-    padding: 80px;
-    color: var(--muted);
-  }
-  .spinner {
-    width: 32px; height: 32px;
-    border: 3px solid var(--border);
-    border-top-color: var(--accent);
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-  }
+  .tag { display: inline-block; padding: 2px 9px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+  .tag-bh       { background: rgba(79,128,255,0.15); color: var(--accent); }
+  .tag-interior { background: rgba(0,208,132,0.15); color: var(--green); }
+  .tag-fora     { background: rgba(255,184,0,0.15); color: var(--yellow); }
+  .tag-outros   { background: rgba(90,99,128,0.15); color: var(--muted2); }
+
+  /* Loading */
+  .loading { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; padding: 80px; color: var(--muted); }
+  .spinner { width: 30px; height: 30px; border: 2.5px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.75s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
-
-  .empty {
-    text-align: center;
-    padding: 60px;
-    color: var(--muted);
-  }
+  .empty { text-align: center; padding: 60px; color: var(--muted); }
   .empty strong { display: block; font-size: 16px; margin-bottom: 8px; color: var(--muted2); }
 
-  /* ── ORIGEM TAGS ── */
-  .tag {
-    display: inline-block;
-    padding: 2px 8px;
-    border-radius: 20px;
-    font-size: 11px;
-    font-weight: 500;
-  }
-  .tag-bh       { background: rgba(79,110,247,0.15); color: var(--accent); }
-  .tag-interior { background: rgba(16,185,129,0.15); color: var(--green); }
-  .tag-fora     { background: rgba(245,158,11,0.15); color: var(--yellow); }
-  .tag-outros   { background: rgba(107,114,128,0.15); color: var(--muted2); }
-
-  /* responsive */
   @media (max-width: 640px) {
     .header, .filters, .main { padding-left: 16px; padding-right: 16px; }
-    .kpi-value { font-size: 20px; }
+    .meta-grid { grid-template-columns: 1fr; }
+    .meta-group:first-child { border-right: none; border-bottom: 1px solid var(--border); }
   }
 </style>
 </head>
@@ -446,11 +272,15 @@
 <!-- HEADER -->
 <div class="header">
   <div class="header-left">
-    <div class="logo-dot"></div>
-    <h1>Dashboard de Vendas</h1>
+    <img class="logo-img" src="data:image/png;base64,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" alt="Grupo Aspekto">
+    <div class="header-brand">
+      <div class="header-brand-name">Grupo Aspekto</div>
+      <div class="header-brand-sub">Dashboard de Vendas</div>
+    </div>
   </div>
   <div class="header-right">
-    <span class="last-updated" id="lastUpdated">—</span>
+    <span class="last-updated" id="lastUpdated"></span>
+    <div class="live-badge"><div class="live-dot"></div> Ao vivo</div>
   </div>
 </div>
 
@@ -458,27 +288,25 @@
 <div class="filters">
   <div class="filter-group">
     <span class="filter-label">Vendedor</span>
-    <select id="filtroVendedor">
-      <option value="todos">Todos os vendedores</option>
-    </select>
+    <select id="filtroVendedor"><option value="todos">Todos os vendedores</option></select>
   </div>
   <div class="filter-group">
     <span class="filter-label">Período</span>
-    <select id="filtroPeriodo">
-      <option value="todos">Todo o período</option>
-    </select>
+    <select id="filtroPeriodo"><option value="todos">Todo o período</option></select>
   </div>
-  <div class="filter-group">
-    <span class="filter-label">Meta de Conversão</span>
-    <div class="input-with-suffix">
-      <input type="number" id="metaConversao" value="20" min="0" max="100" step="1">
-      <div class="suffix-box">%</div>
+  <div class="filter-group" style="margin-left:auto">
+    <span class="filter-label">&nbsp;</span>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-ghost" onclick="abrirModalMetas()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+        Metas de Conversão
+      </button>
+      <button class="btn btn-primary" onclick="carregarDados()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+        Atualizar
+      </button>
     </div>
   </div>
-  <button class="btn-refresh" onclick="carregarDados()">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
-    Atualizar
-  </button>
 </div>
 
 <!-- MAIN -->
@@ -487,36 +315,87 @@
 </div>
 
 <!-- MODAL VENDAS -->
-<div class="modal-overlay" id="modalOverlay" onclick="fecharModal(event)">
+<div class="modal-overlay" id="modalVendas" onclick="fecharModalVendas(event)">
   <div class="modal">
     <div class="modal-header">
-      <div>
-        <div class="modal-title" id="modalTitle">Vendas</div>
-        <div class="modal-subtitle" id="modalSubtitle"></div>
-      </div>
-      <button class="modal-close" onclick="fecharModal()">✕</button>
+      <div><div class="modal-title" id="modalVendasTitle"></div><div class="modal-subtitle" id="modalVendasSub"></div></div>
+      <button class="modal-close" onclick="fecharModalVendas()">✕</button>
     </div>
-    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-body" id="modalVendasBody"></div>
+  </div>
+</div>
+
+<!-- MODAL METAS -->
+<div class="modal-overlay" id="modalMetas" onclick="fecharModalMetas(event)">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">Metas de Conversão</div>
+        <div class="modal-subtitle">Defina a meta para cada canal — a barra mostrará o marcador</div>
+      </div>
+      <button class="modal-close" onclick="fecharModalMetas()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="meta-grid">
+        <div class="meta-group">
+          <div class="meta-group-title">Por Região</div>
+          <div class="meta-row">
+            <span class="meta-row-label"><span class="meta-color-dot" style="background:#4f80ff"></span>BH</span>
+            <div class="meta-input-wrap"><input type="number" class="meta-input" id="meta_bh" value="20" min="0" max="100"><div class="meta-suffix-sm">%</div></div>
+          </div>
+          <div class="meta-row">
+            <span class="meta-row-label"><span class="meta-color-dot" style="background:#00d084"></span>Interior MG</span>
+            <div class="meta-input-wrap"><input type="number" class="meta-input" id="meta_interior" value="20" min="0" max="100"><div class="meta-suffix-sm">%</div></div>
+          </div>
+          <div class="meta-row">
+            <span class="meta-row-label"><span class="meta-color-dot" style="background:#ffb800"></span>Fora do Estado</span>
+            <div class="meta-input-wrap"><input type="number" class="meta-input" id="meta_fora" value="20" min="0" max="100"><div class="meta-suffix-sm">%</div></div>
+          </div>
+        </div>
+        <div class="meta-group">
+          <div class="meta-group-title">Por Origem</div>
+          <div class="meta-row">
+            <span class="meta-row-label"><span class="meta-color-dot" style="background:#f736a8"></span>Meta ADS</span>
+            <div class="meta-input-wrap"><input type="number" class="meta-input" id="meta_meta" value="20" min="0" max="100"><div class="meta-suffix-sm">%</div></div>
+          </div>
+          <div class="meta-row">
+            <span class="meta-row-label"><span class="meta-color-dot" style="background:#ff7a30"></span>Disparo</span>
+            <div class="meta-input-wrap"><input type="number" class="meta-input" id="meta_disparo" value="20" min="0" max="100"><div class="meta-suffix-sm">%</div></div>
+          </div>
+          <div class="meta-row">
+            <span class="meta-row-label"><span class="meta-color-dot" style="background:#9b59f7"></span>Orgânico</span>
+            <div class="meta-input-wrap"><input type="number" class="meta-input" id="meta_organico" value="20" min="0" max="100"><div class="meta-suffix-sm">%</div></div>
+          </div>
+        </div>
+      </div>
+      <div style="padding:16px 24px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px">
+        <button class="btn btn-ghost" onclick="fecharModalMetas()">Cancelar</button>
+        <button class="btn btn-primary" onclick="aplicarMetas()">Aplicar</button>
+      </div>
+    </div>
   </div>
 </div>
 
 <script>
-// ── CONFIG ──
 const API_URL = "https://script.google.com/macros/s/AKfycbwzzvjTdpjpFV9QrBG0bIL1NFaKYTkrPt4QeX-MktgGlWe5cSUAaGESSXt5Vhapucc0/exec";
 
 let dadosGlobais = [];
-let vendedoresDisponiveis = [];
-let periodosDisponiveis = [];
 
-function getMeta() {
-  const v = parseFloat(document.getElementById('metaConversao').value);
-  return isNaN(v) ? 20 : Math.max(0, Math.min(100, v));
-}
+// Metas por canal (independentes)
+const metas = { bh: 20, interior: 20, fora: 20, meta: 20, disparo: 20, organico: 20 };
 
 // ── FORMATOS ──
 function formatMoeda(v) {
-  if (!v && v !== 0) return '—';
-  return 'R$\u00a0' + Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  if (v == null || v === '') return '—';
+  const n = Number(v);
+  if (isNaN(n)) return '—';
+  return n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+function moedaHtml(v) {
+  if (v == null || v === '') return '—';
+  const n = Number(v);
+  if (isNaN(n)) return '—';
+  return '<span class="cur">R$</span>' + formatMoeda(n);
 }
 function formatPct(v) {
   if (!v && v !== 0) return '0%';
@@ -531,31 +410,27 @@ function formatMesAno(s) {
 function formatData(s) {
   if (!s) return '—';
   const d = new Date(s);
-  if (isNaN(d)) return s;
-  return d.toLocaleDateString('pt-BR');
+  return isNaN(d) ? s : d.toLocaleDateString('pt-BR');
 }
 function tagRegiao(r) {
-  if (r === 'BH') return '<span class="tag tag-bh">BH</span>';
-  if (r === 'Interior MG') return '<span class="tag tag-interior">Interior</span>';
-  if (r === 'Fora do Estado') return '<span class="tag tag-fora">Fora do Estado</span>';
+  if (r === 'BH')            return '<span class="tag tag-bh">BH</span>';
+  if (r === 'Interior MG')   return '<span class="tag tag-interior">Interior MG</span>';
+  if (r === 'Fora do Estado')return '<span class="tag tag-fora">Fora do Estado</span>';
   return '<span class="tag tag-outros">—</span>';
 }
 
-// ── CARREGA DADOS ──
+// ── CARREGA ──
 async function carregarDados() {
   document.getElementById('mainContent').innerHTML =
     '<div class="loading"><div class="spinner"></div><span>Carregando dados...</span></div>';
-
   try {
     const res  = await fetch(API_URL + '?acao=dashboard');
     const data = await res.json();
     dadosGlobais = data;
-    document.getElementById('lastUpdated').textContent = 'Atualizado ' + new Date().toLocaleTimeString('pt-BR');
+    document.getElementById('lastUpdated').textContent = 'atualizado às ' + new Date().toLocaleTimeString('pt-BR');
 
     const vendedores = [...new Set(data.map(d => d.vendedor))].filter(Boolean).sort();
     const periodos   = [...new Set(data.map(d => d.mes_ano))].filter(d => d && d !== '0000-00').sort().reverse();
-    vendedoresDisponiveis = vendedores;
-    periodosDisponiveis   = periodos;
 
     const selV = document.getElementById('filtroVendedor');
     const selP = document.getElementById('filtroPeriodo');
@@ -563,18 +438,18 @@ async function carregarDados() {
     const curP = selP.value;
 
     selV.innerHTML = '<option value="todos">Todos os vendedores</option>' +
-      vendedores.map(v => `<option value="${v}" ${v === curV ? 'selected' : ''}>${v}</option>`).join('');
+      vendedores.map(v => '<option value="' + v + '"' + (v === curV ? ' selected' : '') + '>' + v + '</option>').join('');
     selP.innerHTML = '<option value="todos">Todo o período</option>' +
-      periodos.map(p => `<option value="${p}" ${p === curP ? 'selected' : ''}>${formatMesAno(p)}</option>`).join('');
+      periodos.map(p => '<option value="' + p + '"' + (p === curP ? ' selected' : '') + '>' + formatMesAno(p) + '</option>').join('');
 
     renderizar();
   } catch(e) {
     document.getElementById('mainContent').innerHTML =
-      `<div class="empty"><strong>Erro ao carregar dados</strong>Verifique a URL do endpoint e tente novamente.<br><small style="color:var(--muted);margin-top:8px;display:block">${e.message}</small></div>`;
+      '<div class="empty"><strong>Erro ao carregar dados</strong><span>' + e.message + '</span></div>';
   }
 }
 
-// ── FILTRA ──
+// ── FILTRA / AGREGA ──
 function dadosFiltrados() {
   const v = document.getElementById('filtroVendedor').value;
   const p = document.getElementById('filtroPeriodo').value;
@@ -583,36 +458,50 @@ function dadosFiltrados() {
     (p === 'todos' || d.mes_ano === p)
   );
 }
-
-// ── AGREGA ──
-function agregar(dados) {
-  return dados.reduce((acc, d) => {
-    acc.num_vendas           += Number(d.num_vendas)           || 0;
-    acc.valor_vendido        += Number(d.valor_vendido)        || 0;
-    acc.leads_bh             += Number(d.leads_bh)             || 0;
-    acc.leads_interior       += Number(d.leads_interior)       || 0;
-    acc.leads_fora           += Number(d.leads_fora)           || 0;
-    acc.vendas_bh            += Number(d.vendas_bh)            || 0;
-    acc.vendas_interior      += Number(d.vendas_interior)      || 0;
-    acc.vendas_fora          += Number(d.vendas_fora)          || 0;
-    acc.leads_meta           += Number(d.leads_meta)           || 0;
-    acc.leads_disparo        += Number(d.leads_disparo)        || 0;
-    acc.leads_organico       += Number(d.leads_organico)       || 0;
-    acc.vendas_meta          += Number(d.vendas_meta)          || 0;
-    acc.vendas_disparo       += Number(d.vendas_disparo)       || 0;
-    acc.vendas_organico      += Number(d.vendas_organico)      || 0;
-    acc.vendas_outros_origem += Number(d.vendas_outros_origem) || 0;
-    return acc;
-  }, {
-    num_vendas:0, valor_vendido:0,
-    leads_bh:0, leads_interior:0, leads_fora:0,
-    vendas_bh:0, vendas_interior:0, vendas_fora:0,
-    leads_meta:0, leads_disparo:0, leads_organico:0,
-    vendas_meta:0, vendas_disparo:0, vendas_organico:0, vendas_outros_origem:0
-  });
+function agregar(rows) {
+  return rows.reduce((a, d) => {
+    a.num_vendas      += +d.num_vendas      || 0;
+    a.valor_vendido   += +d.valor_vendido   || 0;
+    a.leads_bh        += +d.leads_bh        || 0;
+    a.leads_interior  += +d.leads_interior  || 0;
+    a.leads_fora      += +d.leads_fora      || 0;
+    a.vendas_bh       += +d.vendas_bh       || 0;
+    a.vendas_interior += +d.vendas_interior || 0;
+    a.vendas_fora     += +d.vendas_fora     || 0;
+    a.leads_meta      += +d.leads_meta      || 0;
+    a.leads_disparo   += +d.leads_disparo   || 0;
+    a.leads_organico  += +d.leads_organico  || 0;
+    a.vendas_meta     += +d.vendas_meta     || 0;
+    a.vendas_disparo  += +d.vendas_disparo  || 0;
+    a.vendas_organico += +d.vendas_organico || 0;
+    return a;
+  }, { num_vendas:0, valor_vendido:0, leads_bh:0, leads_interior:0, leads_fora:0, vendas_bh:0, vendas_interior:0, vendas_fora:0, leads_meta:0, leads_disparo:0, leads_organico:0, vendas_meta:0, vendas_disparo:0, vendas_organico:0 });
 }
-
 function pct(v, l) { return l > 0 ? (v / l * 100) : 0; }
+
+// ── BARRA ──
+function barRow(label, pctVal, fillClass, vendas, leads, metaVal) {
+  const escala     = Math.max(pctVal, metaVal, 1) * 1.25;
+  const fillW      = Math.min((pctVal / escala) * 100, 100).toFixed(1);
+  const markerLeft = Math.min((metaVal / escala) * 100, 100).toFixed(1);
+  return [
+    '<div class="conv-row">',
+      '<div class="conv-head">',
+        '<span class="conv-label">' + label + '</span>',
+        '<div class="conv-right">',
+          '<span class="conv-pct">' + formatPct(pctVal) + '</span>',
+          '<span class="conv-ratio">' + vendas + '/' + leads + '</span>',
+        '</div>',
+      '</div>',
+      '<div class="bar-wrap">',
+        '<div class="bar-bg">',
+          '<div class="bar-fill ' + fillClass + '" style="width:' + fillW + '%"></div>',
+        '</div>',
+        '<div class="meta-marker" style="left:' + markerLeft + '%" title="Meta: ' + metaVal + '%"></div>',
+      '</div>',
+    '</div>'
+  ].join('');
+}
 
 // ── RENDERIZA ──
 function renderizar() {
@@ -622,266 +511,188 @@ function renderizar() {
       '<div class="empty"><strong>Nenhum dado encontrado</strong>Ajuste os filtros e tente novamente.</div>';
     return;
   }
+  const tot   = agregar(filtrados);
+  const totalLeads = tot.leads_bh + tot.leads_interior + tot.leads_fora;
+  const ticket = tot.num_vendas > 0 ? tot.valor_vendido / tot.num_vendas : 0;
+  const convG  = pct(tot.num_vendas, totalLeads);
 
-  const total = agregar(filtrados);
-  const ticketMedio = total.num_vendas > 0 ? total.valor_vendido / total.num_vendas : 0;
-  const totalLeads  = total.leads_bh + total.leads_interior + total.leads_fora;
-  const convGeral   = pct(total.num_vendas, totalLeads);
+  const kpiHtml = '<div class="kpi-grid">' + [
+    { label:'Valor Vendido',   value:'<span class="cur">R$</span>' + formatMoeda(tot.valor_vendido), sub: tot.num_vendas + ' vendas realizadas', color:'var(--green)' },
+    { label:'Ticket Médio',    value:'<span class="cur">R$</span>' + formatMoeda(ticket),            sub: 'por venda',                           color:'var(--accent)' },
+    { label:'Total de Leads',  value: totalLeads.toLocaleString('pt-BR'),                             sub: 'BH: ' + tot.leads_bh + ' · Interior: ' + tot.leads_interior + ' · Fora: ' + tot.leads_fora, color:'var(--purple)' },
+    { label:'Conversão Geral', value: formatPct(convG),                                               sub: 'leads → vendas',                       color:'var(--yellow)' },
+  ].map(k => [
+    '<div class="kpi-card" style="--kpi-color:' + k.color + '">',
+      '<span class="kpi-label">' + k.label + '</span>',
+      '<div class="kpi-value">' + k.value + '</div>',
+      '<div class="kpi-sub">' + k.sub + '</div>',
+    '</div>'
+  ].join('')).join('') + '</div>';
 
-  const kpiHtml = `
-    <div class="kpi-grid">
-      <div class="kpi-card">
-        <span class="kpi-label">Valor Vendido</span>
-        <span class="kpi-value green">${formatMoeda(total.valor_vendido)}</span>
-        <span class="kpi-sub">${total.num_vendas} vendas realizadas</span>
-      </div>
-      <div class="kpi-card">
-        <span class="kpi-label">Ticket Médio</span>
-        <span class="kpi-value accent">${formatMoeda(ticketMedio)}</span>
-        <span class="kpi-sub">por venda</span>
-      </div>
-      <div class="kpi-card">
-        <span class="kpi-label">Total de Leads</span>
-        <span class="kpi-value">${totalLeads.toLocaleString('pt-BR')}</span>
-        <span class="kpi-sub">BH: ${total.leads_bh} · Interior: ${total.leads_interior} · Fora: ${total.leads_fora}</span>
-      </div>
-      <div class="kpi-card">
-        <span class="kpi-label">Conv. Geral</span>
-        <span class="kpi-value yellow">${formatPct(convGeral)}</span>
-        <span class="kpi-sub">leads → vendas</span>
-      </div>
-    </div>`;
-
-  const filtroV = document.getElementById('filtroVendedor').value;
   const filtroP = document.getElementById('filtroPeriodo').value;
-  const meta    = getMeta();
-
   const porVendedor = {};
-  filtrados.forEach(d => {
-    if (!porVendedor[d.vendedor]) porVendedor[d.vendedor] = [];
-    porVendedor[d.vendedor].push(d);
-  });
+  filtrados.forEach(d => { if (!porVendedor[d.vendedor]) porVendedor[d.vendedor] = []; porVendedor[d.vendedor].push(d); });
 
-  const vendedoresOrdenados = Object.entries(porVendedor)
+  const ordenados = Object.entries(porVendedor)
     .map(([nome, rows]) => ({ nome, ...agregar(rows) }))
     .sort((a, b) => b.valor_vendido - a.valor_vendido);
 
-  const cardsHtml = vendedoresOrdenados.map(v => {
-    const totalL  = v.leads_bh + v.leads_interior + v.leads_fora;
-    const convB   = pct(v.vendas_bh,       v.leads_bh);
-    const convI   = pct(v.vendas_interior,  v.leads_interior);
-    const convF   = pct(v.vendas_fora,      v.leads_fora);
-    const convM   = pct(v.vendas_meta,      v.leads_meta);
-    const convD   = pct(v.vendas_disparo,   v.leads_disparo);
-    const convO   = pct(v.vendas_organico,  v.leads_organico);
+  const cardsHtml = ordenados.map(v => {
+    const totalL = v.leads_bh + v.leads_interior + v.leads_fora;
     const ticket  = v.num_vendas > 0 ? v.valor_vendido / v.num_vendas : 0;
+    const convB  = pct(v.vendas_bh,       v.leads_bh);
+    const convI  = pct(v.vendas_interior,  v.leads_interior);
+    const convF  = pct(v.vendas_fora,      v.leads_fora);
+    const convM  = pct(v.vendas_meta,      v.leads_meta);
+    const convD  = pct(v.vendas_disparo,   v.leads_disparo);
+    const convO  = pct(v.vendas_organico,  v.leads_organico);
 
-    return `
-    <div class="vendedor-card" onclick="abrirVendas('${v.nome}', '${filtroP}')">
-      <div class="vendedor-header">
-        <span class="vendedor-name">${v.nome}</span>
-        <span class="vendedor-badge">${v.num_vendas} vendas</span>
-      </div>
-      <div class="vendedor-body">
-        <div class="vendedor-stats">
-          <div class="stat-item">
-            <span class="stat-label">Vendido</span>
-            <span class="stat-value green">${formatMoeda(v.valor_vendido)}</span>
-          </div>
-          <div class="stat-item">
-            <span class="stat-label">Ticket</span>
-            <span class="stat-value accent">${formatMoeda(ticket)}</span>
-          </div>
-          <div class="stat-item">
-            <span class="stat-label">Leads</span>
-            <span class="stat-value">${totalL.toLocaleString('pt-BR')}</span>
-          </div>
-        </div>
-
-        <div class="conv-section">
-          <div class="conv-section-title">Conversão por Região</div>
-          ${convRow('BH',             convB, 'fill-bh',       v.vendas_bh,       v.leads_bh,       meta)}
-          ${convRow('Interior MG',    convI, 'fill-interior', v.vendas_interior,  v.leads_interior,  meta)}
-          ${convRow('Fora do Estado', convF, 'fill-fora',     v.vendas_fora,      v.leads_fora,      meta)}
-        </div>
-
-        <div class="conv-section">
-          <div class="conv-section-title">Conversão por Origem</div>
-          ${convRow('Meta ADS', convM, 'fill-meta',     v.vendas_meta,     v.leads_meta,     meta)}
-          ${convRow('Disparo',  convD, 'fill-disparo',  v.vendas_disparo,  v.leads_disparo,  meta)}
-          ${convRow('Orgânico', convO, 'fill-organico', v.vendas_organico, v.leads_organico, meta)}
-        </div>
-      </div>
-      <div class="vendedor-footer">
-        <span class="ver-vendas">Ver todas as vendas →</span>
-        <span style="font-size:11px;color:var(--muted)">${totalL} leads · ${v.num_vendas} vendas</span>
-      </div>
-    </div>`;
+    return [
+      '<div class="vendedor-card" onclick="abrirVendas(\'' + v.nome + '\', \'' + filtroP + '\')">',
+        '<div class="vendedor-header">',
+          '<span class="vendedor-name">' + v.nome + '</span>',
+          '<span class="vendedor-badge">' + v.num_vendas + ' vendas</span>',
+        '</div>',
+        '<div class="vendedor-body">',
+          '<div class="stat-row">',
+            '<div class="stat-item"><span class="stat-label">Faturamento</span><div class="stat-value green">' + moedaHtml(v.valor_vendido) + '</div></div>',
+            '<div class="stat-item"><span class="stat-label">Ticket Médio</span><div class="stat-value accent">' + moedaHtml(ticket) + '</div></div>',
+            '<div class="stat-item"><span class="stat-label">Leads</span><div class="stat-value">' + totalL.toLocaleString('pt-BR') + '</div></div>',
+          '</div>',
+          '<div class="conv-block">',
+            '<div class="conv-block-title">Conversão por Região</div>',
+            barRow('BH',             convB, 'fill-bh',       v.vendas_bh,       v.leads_bh,       metas.bh),
+            barRow('Interior MG',    convI, 'fill-interior', v.vendas_interior,  v.leads_interior,  metas.interior),
+            barRow('Fora do Estado', convF, 'fill-fora',     v.vendas_fora,      v.leads_fora,      metas.fora),
+          '</div>',
+          '<div class="conv-block">',
+            '<div class="conv-block-title">Conversão por Origem</div>',
+            barRow('Meta ADS', convM, 'fill-meta',     v.vendas_meta,     v.leads_meta,     metas.meta),
+            barRow('Disparo',  convD, 'fill-disparo',  v.vendas_disparo,  v.leads_disparo,  metas.disparo),
+            barRow('Orgânico', convO, 'fill-organico', v.vendas_organico, v.leads_organico, metas.organico),
+          '</div>',
+        '</div>',
+        '<div class="vendedor-footer">',
+          '<span class="ver-vendas">Ver todas as vendas →</span>',
+          '<span class="footer-meta">' + totalL + ' leads · ' + v.num_vendas + ' vendas</span>',
+        '</div>',
+      '</div>'
+    ].join('');
   }).join('');
 
-  document.getElementById('mainContent').innerHTML = `
-    ${kpiHtml}
-    <div>
-      <div class="section-title">Performance por Vendedor</div>
-      <div class="vendedor-grid">${cardsHtml}</div>
-    </div>`;
+  document.getElementById('mainContent').innerHTML =
+    kpiHtml +
+    '<div><div class="section-header"><span class="section-title">Performance por Vendedor</span></div>' +
+    '<div class="vendedor-grid">' + cardsHtml + '</div></div>';
 }
 
-// ── BARRA COM MARCADOR DE META ──
-function convRow(label, pctVal, fillClass, vendas, leads, meta) {
-  const w           = Math.min(pctVal, 100).toFixed(1);
-  // posição do marcador de meta é relativa à escala da barra
-  // a barra representa de 0 até max(pctVal, meta, 1) * 1.2
-  const escala      = Math.max(pctVal, meta, 1) * 1.2;
-  const markerLeft  = Math.min((meta / escala) * 100, 100).toFixed(1);
-  const fillWidth   = Math.min((pctVal / escala) * 100, 100).toFixed(1);
-
-  return `
-    <div class="conv-row">
-      <div class="conv-header">
-        <span class="conv-label">${label}</span>
-        <div class="conv-right">
-          <span class="conv-pct">${formatPct(pctVal)}</span>
-          <span class="conv-ratio">${vendas}/${leads}</span>
-        </div>
-      </div>
-      <div class="conv-bar-wrap">
-        <div class="conv-bar-bg">
-          <div class="conv-bar-fill ${fillClass}" style="width:${fillWidth}%"></div>
-        </div>
-        <div class="meta-marker" style="left:${markerLeft}%" title="Meta: ${meta}%"></div>
-      </div>
-    </div>`;
+// ── MODAL METAS ──
+function abrirModalMetas() {
+  document.getElementById('meta_bh').value       = metas.bh;
+  document.getElementById('meta_interior').value = metas.interior;
+  document.getElementById('meta_fora').value     = metas.fora;
+  document.getElementById('meta_meta').value     = metas.meta;
+  document.getElementById('meta_disparo').value  = metas.disparo;
+  document.getElementById('meta_organico').value = metas.organico;
+  document.getElementById('modalMetas').classList.add('open');
+}
+function fecharModalMetas(e) {
+  if (!e || e.target === document.getElementById('modalMetas'))
+    document.getElementById('modalMetas').classList.remove('open');
+}
+function aplicarMetas() {
+  const read = id => { const v = parseFloat(document.getElementById(id).value); return isNaN(v) ? 20 : Math.max(0, Math.min(100, v)); };
+  metas.bh       = read('meta_bh');
+  metas.interior = read('meta_interior');
+  metas.fora     = read('meta_fora');
+  metas.meta     = read('meta_meta');
+  metas.disparo  = read('meta_disparo');
+  metas.organico = read('meta_organico');
+  document.getElementById('modalMetas').classList.remove('open');
+  renderizar();
 }
 
 // ── MODAL VENDAS ──
 async function abrirVendas(vendedor, mesAno) {
-  document.getElementById('modalTitle').textContent = vendedor;
-  document.getElementById('modalSubtitle').textContent =
-    mesAno === 'todos' ? 'Todo o período' : formatMesAno(mesAno);
-  document.getElementById('modalBody').innerHTML =
+  document.getElementById('modalVendasTitle').textContent = vendedor;
+  document.getElementById('modalVendasSub').textContent   = mesAno === 'todos' ? 'Todo o período' : formatMesAno(mesAno);
+  document.getElementById('modalVendasBody').innerHTML    =
     '<div class="loading"><div class="spinner"></div><span>Carregando vendas...</span></div>';
-  document.getElementById('modalOverlay').classList.add('open');
+  document.getElementById('modalVendas').classList.add('open');
 
   try {
     let url = API_URL + '?acao=vendas_detalhe&vendedor=' + encodeURIComponent(vendedor);
+    // FIX: só adiciona mes_ano se for um mês específico (não "todos")
     if (mesAno && mesAno !== 'todos') url += '&mes_ano=' + encodeURIComponent(mesAno);
 
     const res   = await fetch(url);
     const dados = await res.json();
 
-    if (!dados.length) {
-      document.getElementById('modalBody').innerHTML =
+    if (!dados || !dados.length) {
+      document.getElementById('modalVendasBody').innerHTML =
         '<div class="empty"><strong>Nenhuma venda encontrada</strong>para este período.</div>';
       return;
     }
 
     dados.sort((a, b) => new Date(b.data) - new Date(a.data));
-
     const totalModal = dados.reduce((s, d) => s + (Number(d.valorLiquido) || 0), 0);
     window._vendasModal = dados;
 
-    const rows = dados.map((d, idx) => `
-      <tr id="venda-row-${idx}">
-        <td>${d.nome || '—'}</td>
-        <td class="mono muted">${d.telefone || '—'}</td>
-        <td class="muted">${formatData(d.data)}</td>
-        <td class="mono green">${formatMoeda(d.valorLiquido)}</td>
-        <td>${tagRegiao(d.regiao)}</td>
-        <td>
-          <button onclick="deletarVenda(${idx}, this)" style="background:none;border:1px solid var(--border);color:var(--muted);padding:3px 8px;border-radius:6px;cursor:pointer;font-size:11px;transition:all 0.2s" onmouseover="this.style.borderColor='var(--red)';this.style.color='var(--red)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">
-            🗑 Apagar
-          </button>
-        </td>
-      </tr>`).join('');
+    const rows = dados.map((d, i) =>
+      '<tr id="vr-' + i + '">' +
+        '<td>' + (d.nome || '—') + '</td>' +
+        '<td class="muted" style="font-family:monospace;font-size:12px">' + (d.telefone || '—') + '</td>' +
+        '<td class="muted">' + formatData(d.data) + '</td>' +
+        '<td class="green">R$ ' + formatMoeda(d.valorLiquido) + '</td>' +
+        '<td>' + tagRegiao(d.regiao) + '</td>' +
+        '<td><button onclick="deletarVenda(' + i + ',this)" style="background:none;border:1px solid var(--border);color:var(--muted);padding:3px 9px;border-radius:6px;cursor:pointer;font-size:11px;transition:all 0.2s" onmouseover="this.style.borderColor=\'var(--red)\';this.style.color=\'var(--red)\'" onmouseout="this.style.borderColor=\'var(--border)\';this.style.color=\'var(--muted)\'">🗑 Apagar</button></td>' +
+      '</tr>'
+    ).join('');
 
-    document.getElementById('modalBody').innerHTML = `
-      <div style="padding:12px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
-        <span style="font-size:12px;color:var(--muted)" id="modalCount">${dados.length} vendas encontradas</span>
-        <span style="font-size:14px;font-weight:600;color:var(--green);font-family:'JetBrains Mono',monospace" id="modalTotal">${formatMoeda(totalModal)}</span>
-      </div>
-      <table>
-        <thead>
-          <tr>
-            <th>Nome</th><th>Telefone</th><th>Data</th><th>Valor</th><th>Região</th><th></th>
-          </tr>
-        </thead>
-        <tbody>${rows}</tbody>
-      </table>`;
+    document.getElementById('modalVendasBody').innerHTML =
+      '<div style="padding:12px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">' +
+        '<span style="font-size:12px;color:var(--muted)" id="modalCount">' + dados.length + ' vendas encontradas</span>' +
+        '<span style="font-size:14px;font-weight:700;color:var(--green)" id="modalTotal">R$ ' + formatMoeda(totalModal) + '</span>' +
+      '</div>' +
+      '<table><thead><tr><th>Nome</th><th>Telefone</th><th>Data</th><th>Valor</th><th>Região</th><th></th></tr></thead>' +
+      '<tbody>' + rows + '</tbody></table>';
+
   } catch(e) {
-    document.getElementById('modalBody').innerHTML =
-      `<div class="empty"><strong>Erro ao carregar vendas</strong>${e.message}</div>`;
+    document.getElementById('modalVendasBody').innerHTML =
+      '<div class="empty"><strong>Erro ao carregar</strong>' + e.message + '</div>';
   }
 }
 
 async function deletarVenda(idx, btn) {
   const venda = window._vendasModal[idx];
   if (!venda) return;
-
-  const senha = prompt(`Apagar a venda de ${venda.nome} (${formatMoeda(venda.valorLiquido)})?\n\nDigite a senha para confirmar:`);
+  const senha = prompt('Apagar a venda de ' + venda.nome + ' (R$ ' + formatMoeda(venda.valorLiquido) + ')?\n\nDigite a senha para confirmar:');
   if (!senha) return;
-
-  btn.disabled = true;
-  btn.textContent = '...';
-
+  btn.disabled = true; btn.textContent = '...';
   try {
-    const payload = {
-      tipo:         "delete_venda",
-      senha:        senha,
-      prontuario:   venda.prontuario,
-      data:         venda.data,
-      valorLiquido: venda.valorLiquido.toString(),
-    };
-
-    const res  = await fetch(API_URL, {
-      method:  "post",
-      headers: { "Content-Type": "text/plain" },
-      body:    JSON.stringify(payload),
-    });
+    const res  = await fetch(API_URL, { method:'post', headers:{'Content-Type':'text/plain'}, body: JSON.stringify({ tipo:'delete_venda', senha, prontuario:venda.prontuario, data:venda.data, valorLiquido:venda.valorLiquido.toString() }) });
     const resp = await res.json();
-
-    if (resp.status === "ok") {
-      const row = document.getElementById('venda-row-' + idx);
+    if (resp.status === 'ok') {
+      const row = document.getElementById('vr-' + idx);
       if (row) row.style.opacity = '0.3';
-      btn.textContent = '✓ Apagado';
-      btn.style.color = 'var(--green)';
-      btn.style.borderColor = 'var(--green)';
-
+      btn.textContent = '✓ Apagado'; btn.style.color = 'var(--green)'; btn.style.borderColor = 'var(--green)';
       window._vendasModal[idx]._deleted = true;
-      const restantes = window._vendasModal.filter(v => !v._deleted);
-      const novoTotal = restantes.reduce((s, v) => s + (v.valorLiquido || 0), 0);
-      const countEl = document.getElementById('modalCount');
-      const totalEl = document.getElementById('modalTotal');
-      if (countEl) countEl.textContent = restantes.length + ' vendas encontradas';
-      if (totalEl) totalEl.textContent = formatMoeda(novoTotal);
-
-    } else if (resp.msg === "Senha incorreta") {
-      alert("Senha incorreta!");
-      btn.disabled = false;
-      btn.textContent = '🗑 Apagar';
-    } else {
-      alert("Erro: " + resp.msg);
-      btn.disabled = false;
-      btn.textContent = '🗑 Apagar';
-    }
-  } catch(e) {
-    alert("Erro ao apagar: " + e.message);
-    btn.disabled = false;
-    btn.textContent = '🗑 Apagar';
-  }
+      const rest = window._vendasModal.filter(v => !v._deleted);
+      const ct = document.getElementById('modalCount'), tt = document.getElementById('modalTotal');
+      if (ct) ct.textContent = rest.length + ' vendas encontradas';
+      if (tt) tt.textContent = 'R$ ' + formatMoeda(rest.reduce((s,v) => s + (v.valorLiquido||0), 0));
+    } else { alert(resp.msg === 'Senha incorreta' ? 'Senha incorreta!' : 'Erro: ' + resp.msg); btn.disabled = false; btn.textContent = '🗑 Apagar'; }
+  } catch(e) { alert('Erro ao apagar: ' + e.message); btn.disabled = false; btn.textContent = '🗑 Apagar'; }
 }
 
-function fecharModal(e) {
-  if (!e || e.target === document.getElementById('modalOverlay')) {
-    document.getElementById('modalOverlay').classList.remove('open');
-  }
+function fecharModalVendas(e) {
+  if (!e || e.target === document.getElementById('modalVendas'))
+    document.getElementById('modalVendas').classList.remove('open');
 }
 
-document.addEventListener('keydown', e => { if (e.key === 'Escape') fecharModal(); });
-
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { fecharModalVendas(); fecharModalMetas(); } });
 document.getElementById('filtroVendedor').addEventListener('change', renderizar);
 document.getElementById('filtroPeriodo').addEventListener('change', renderizar);
-document.getElementById('metaConversao').addEventListener('input', renderizar);
 
 carregarDados();
 </script>
