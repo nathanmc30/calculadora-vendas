@@ -368,9 +368,18 @@
           </div>
         </div>
       </div>
-      <div style="padding:16px 24px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px">
+      <!-- Campo de senha integrado -->
+      <div style="padding:14px 24px;border-top:1px solid var(--border);display:flex;align-items:center;gap:10px">
+        <span style="font-size:12px;color:var(--muted2);white-space:nowrap">Senha:</span>
+        <input type="password" id="metaSenha" placeholder="Digite a senha para salvar"
+          style="flex:1;height:34px;padding:0 12px;background:var(--surface3);border:1px solid var(--border2);
+                 color:var(--text);border-radius:var(--radius-sm);font-size:13px;outline:none;font-family:'Inter',sans-serif;"
+          onkeydown="if(event.key==='Enter') aplicarMetas()">
+        <div id="metaMsgErro" style="font-size:12px;color:var(--red);display:none;white-space:nowrap"></div>
+      </div>
+      <div style="padding:12px 24px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px">
         <button class="btn btn-ghost" onclick="fecharModalMetas()">Cancelar</button>
-        <button class="btn btn-primary" onclick="aplicarMetas()">Aplicar</button>
+        <button class="btn btn-primary" id="btnAplicarMetas" onclick="aplicarMetas()">Salvar metas</button>
       </div>
     </div>
   </div>
@@ -617,13 +626,29 @@ function abrirModalMetas() {
   document.getElementById('meta_meta').value     = metas.meta_meta;
   document.getElementById('meta_disparo').value  = metas.meta_disparo;
   document.getElementById('meta_organico').value = metas.meta_organico;
+  document.getElementById('metaSenha').value     = '';
+  document.getElementById('metaMsgErro').style.display = 'none';
+  document.getElementById('btnAplicarMetas').textContent = 'Salvar metas';
+  document.getElementById('btnAplicarMetas').disabled = false;
   document.getElementById('modalMetas').classList.add('open');
+  setTimeout(() => document.getElementById('metaSenha').focus(), 100);
 }
 function fecharModalMetas(e) {
   if (!e || e.target === document.getElementById('modalMetas'))
     document.getElementById('modalMetas').classList.remove('open');
 }
 async function aplicarMetas() {
+  const senha = document.getElementById('metaSenha').value.trim();
+  const erro  = document.getElementById('metaMsgErro');
+  const btn   = document.getElementById('btnAplicarMetas');
+
+  if (!senha) {
+    erro.textContent = 'Digite a senha';
+    erro.style.display = 'block';
+    document.getElementById('metaSenha').focus();
+    return;
+  }
+
   const read = id => { const v = parseFloat(document.getElementById(id).value); return isNaN(v) ? 20 : Math.max(0, Math.min(100, v)); };
   metas.meta_bh       = read('meta_bh');
   metas.meta_interior = read('meta_interior');
@@ -632,31 +657,36 @@ async function aplicarMetas() {
   metas.meta_disparo  = read('meta_disparo');
   metas.meta_organico = read('meta_organico');
 
-  // Salva na planilha (compartilhado para todos)
-  const btnAplicar = document.querySelector('#modalMetas .btn-primary');
-  const textoOriginal = btnAplicar.textContent;
-  btnAplicar.textContent = 'Salvando...';
-  btnAplicar.disabled = true;
+  btn.textContent = 'Salvando...';
+  btn.disabled = true;
+  erro.style.display = 'none';
 
   try {
-    const senha = prompt('Digite a senha para salvar as metas:');
-    if (!senha) { btnAplicar.textContent = textoOriginal; btnAplicar.disabled = false; return; }
     const resp = await salvarConfigRemoto(senha);
     if (resp.status !== 'ok') {
-      alert('Erro: ' + (resp.msg || 'Não foi possível salvar'));
-      btnAplicar.textContent = textoOriginal; btnAplicar.disabled = false;
+      erro.textContent = resp.msg === 'Senha incorreta' ? 'Senha incorreta' : (resp.msg || 'Erro ao salvar');
+      erro.style.display = 'block';
+      btn.textContent = 'Salvar metas';
+      btn.disabled = false;
+      document.getElementById('metaSenha').value = '';
+      document.getElementById('metaSenha').focus();
       return;
     }
   } catch(e) {
-    alert('Erro ao salvar: ' + e.message);
-    btnAplicar.textContent = textoOriginal; btnAplicar.disabled = false;
+    erro.textContent = 'Erro de conexão';
+    erro.style.display = 'block';
+    btn.textContent = 'Salvar metas';
+    btn.disabled = false;
     return;
   }
 
-  btnAplicar.textContent = textoOriginal;
-  btnAplicar.disabled = false;
-  document.getElementById('modalMetas').classList.remove('open');
-  renderizar();
+  btn.textContent = '✓ Salvo!';
+  setTimeout(() => {
+    document.getElementById('modalMetas').classList.remove('open');
+    btn.textContent = 'Salvar metas';
+    btn.disabled = false;
+    renderizar();
+  }, 800);
 }
 
 // ── MODAL VENDAS ──
