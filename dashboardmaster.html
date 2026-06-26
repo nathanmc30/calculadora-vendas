@@ -381,8 +381,29 @@ const API_URL = "https://script.google.com/macros/s/AKfycbwzzvjTdpjpFV9QrBG0bIL1
 
 let dadosGlobais = [];
 
-// Metas por canal (independentes)
-const metas = { bh: 20, interior: 20, fora: 20, meta: 20, disparo: 20, organico: 20 };
+// Metas por canal — carregadas da planilha (aba config), compartilhadas entre todos
+let metas = { meta_bh: 20, meta_interior: 20, meta_fora: 20, meta_meta: 20, meta_disparo: 20, meta_organico: 20 };
+
+async function carregarConfig() {
+  try {
+    const res  = await fetch(API_URL + '?acao=config');
+    const data = await res.json();
+    if (data && typeof data === 'object') {
+      metas = { ...metas, ...Object.fromEntries(
+        Object.entries(data).map(([k, v]) => [k, Number(v) || 20])
+      )};
+    }
+  } catch(e) { console.warn('Erro ao carregar config:', e.message); }
+}
+
+async function salvarConfigRemoto(senha) {
+  const res  = await fetch(API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain' },
+    body: JSON.stringify({ tipo: 'config', senha, metas }),
+  });
+  return await res.json();
+}
 
 // ── FORMATOS ──
 function formatMoeda(v) {
@@ -424,8 +445,12 @@ async function carregarDados() {
   document.getElementById('mainContent').innerHTML =
     '<div class="loading"><div class="spinner"></div><span>Carregando dados...</span></div>';
   try {
-    const res  = await fetch(API_URL + '?acao=dashboard');
-    const data = await res.json();
+    // Carrega metas e dados em paralelo
+    const [resData] = await Promise.all([
+      fetch(API_URL + '?acao=dashboard'),
+      carregarConfig(),
+    ]);
+    const data = await resData.json();
     dadosGlobais = data;
     document.getElementById('lastUpdated').textContent = 'atualizado às ' + new Date().toLocaleTimeString('pt-BR');
 
@@ -502,8 +527,6 @@ function barRow(label, pctVal, fillClass, vendas, leads, metaVal) {
     '</div>'
   ].join('');
 }
-
-// ── RENDERIZA ──
 function renderizar() {
   const filtrados = dadosFiltrados();
   if (!filtrados.length) {
@@ -561,15 +584,15 @@ function renderizar() {
           '</div>',
           '<div class="conv-block">',
             '<div class="conv-block-title">Conversão por Região</div>',
-            barRow('BH',             convB, 'fill-bh',       v.vendas_bh,       v.leads_bh,       metas.bh),
-            barRow('Interior MG',    convI, 'fill-interior', v.vendas_interior,  v.leads_interior,  metas.interior),
-            barRow('Fora do Estado', convF, 'fill-fora',     v.vendas_fora,      v.leads_fora,      metas.fora),
+            barRow('BH',             convB, 'fill-bh',       v.vendas_bh,       v.leads_bh,       metas.meta_bh),
+            barRow('Interior MG',    convI, 'fill-interior', v.vendas_interior,  v.leads_interior,  metas.meta_interior),
+            barRow('Fora do Estado', convF, 'fill-fora',     v.vendas_fora,      v.leads_fora,      metas.meta_fora),
           '</div>',
           '<div class="conv-block">',
             '<div class="conv-block-title">Conversão por Origem</div>',
-            barRow('Meta ADS', convM, 'fill-meta',     v.vendas_meta,     v.leads_meta,     metas.meta),
-            barRow('Disparo',  convD, 'fill-disparo',  v.vendas_disparo,  v.leads_disparo,  metas.disparo),
-            barRow('Orgânico', convO, 'fill-organico', v.vendas_organico, v.leads_organico, metas.organico),
+            barRow('Meta ADS', convM, 'fill-meta',     v.vendas_meta,     v.leads_meta,     metas.meta_meta),
+            barRow('Disparo',  convD, 'fill-disparo',  v.vendas_disparo,  v.leads_disparo,  metas.meta_disparo),
+            barRow('Orgânico', convO, 'fill-organico', v.vendas_organico, v.leads_organico, metas.meta_organico),
           '</div>',
         '</div>',
         '<div class="vendedor-footer">',
@@ -588,26 +611,50 @@ function renderizar() {
 
 // ── MODAL METAS ──
 function abrirModalMetas() {
-  document.getElementById('meta_bh').value       = metas.bh;
-  document.getElementById('meta_interior').value = metas.interior;
-  document.getElementById('meta_fora').value     = metas.fora;
-  document.getElementById('meta_meta').value     = metas.meta;
-  document.getElementById('meta_disparo').value  = metas.disparo;
-  document.getElementById('meta_organico').value = metas.organico;
+  document.getElementById('meta_bh').value       = metas.meta_bh;
+  document.getElementById('meta_interior').value = metas.meta_interior;
+  document.getElementById('meta_fora').value     = metas.meta_fora;
+  document.getElementById('meta_meta').value     = metas.meta_meta;
+  document.getElementById('meta_disparo').value  = metas.meta_disparo;
+  document.getElementById('meta_organico').value = metas.meta_organico;
   document.getElementById('modalMetas').classList.add('open');
 }
 function fecharModalMetas(e) {
   if (!e || e.target === document.getElementById('modalMetas'))
     document.getElementById('modalMetas').classList.remove('open');
 }
-function aplicarMetas() {
+async function aplicarMetas() {
   const read = id => { const v = parseFloat(document.getElementById(id).value); return isNaN(v) ? 20 : Math.max(0, Math.min(100, v)); };
-  metas.bh       = read('meta_bh');
-  metas.interior = read('meta_interior');
-  metas.fora     = read('meta_fora');
-  metas.meta     = read('meta_meta');
-  metas.disparo  = read('meta_disparo');
-  metas.organico = read('meta_organico');
+  metas.meta_bh       = read('meta_bh');
+  metas.meta_interior = read('meta_interior');
+  metas.meta_fora     = read('meta_fora');
+  metas.meta_meta     = read('meta_meta');
+  metas.meta_disparo  = read('meta_disparo');
+  metas.meta_organico = read('meta_organico');
+
+  // Salva na planilha (compartilhado para todos)
+  const btnAplicar = document.querySelector('#modalMetas .btn-primary');
+  const textoOriginal = btnAplicar.textContent;
+  btnAplicar.textContent = 'Salvando...';
+  btnAplicar.disabled = true;
+
+  try {
+    const senha = prompt('Digite a senha para salvar as metas:');
+    if (!senha) { btnAplicar.textContent = textoOriginal; btnAplicar.disabled = false; return; }
+    const resp = await salvarConfigRemoto(senha);
+    if (resp.status !== 'ok') {
+      alert('Erro: ' + (resp.msg || 'Não foi possível salvar'));
+      btnAplicar.textContent = textoOriginal; btnAplicar.disabled = false;
+      return;
+    }
+  } catch(e) {
+    alert('Erro ao salvar: ' + e.message);
+    btnAplicar.textContent = textoOriginal; btnAplicar.disabled = false;
+    return;
+  }
+
+  btnAplicar.textContent = textoOriginal;
+  btnAplicar.disabled = false;
   document.getElementById('modalMetas').classList.remove('open');
   renderizar();
 }
@@ -627,10 +674,14 @@ async function abrirVendas(vendedor, mesAno) {
 
     const res  = await fetch(url);
     const text = await res.text(); // lê como texto primeiro para debug
+    console.log('[abrirVendas] URL:', url);
+    console.log('[abrirVendas] Status:', res.status);
+    console.log('[abrirVendas] Resposta bruta:', text.substring(0, 300));
 
     let dados;
     try {
       const parsed = JSON.parse(text);
+      console.log('[abrirVendas] Parsed:', parsed);
       // O Script C pode retornar o array diretamente ou dentro de { data: [...] }
       if (Array.isArray(parsed)) {
         dados = parsed;
@@ -656,7 +707,10 @@ async function abrirVendas(vendedor, mesAno) {
 
     if (!dados || !dados.length) {
       document.getElementById('modalVendasBody').innerHTML =
-        '<div class="empty"><strong>Nenhuma venda encontrada</strong>para este período.</div>';
+        '<div class="empty"><strong>Nenhuma venda encontrada</strong>' +
+        '<span style="display:block;margin-top:8px">para este período.</span>' +
+        '<details style="margin-top:16px;text-align:left"><summary style="font-size:11px;color:var(--muted);cursor:pointer">Debug (resposta do servidor)</summary>' +
+        '<pre style="margin-top:8px;font-size:10px;color:var(--muted2);white-space:pre-wrap;word-break:break-all">' + text.substring(0, 800) + '</pre></details></div>';
       return;
     }
 
