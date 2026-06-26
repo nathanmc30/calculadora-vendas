@@ -162,6 +162,7 @@
   .fill-meta     { background: linear-gradient(90deg,#c0197a,#f736a8); }
   .fill-disparo  { background: linear-gradient(90deg,#c45a1a,#ff7a30); }
   .fill-organico { background: linear-gradient(90deg,#5e35b1,#9b59f7); }
+  .fill-outros   { background: linear-gradient(90deg,#374151,#6b7280); }
   .meta-marker {
     position: absolute; top: -3px; width: 2px; height: 18px;
     background: rgba(255,255,255,0.45); border-radius: 2px;
@@ -366,6 +367,10 @@
             <span class="meta-row-label"><span class="meta-color-dot" style="background:#9b59f7"></span>Orgânico</span>
             <div class="meta-input-wrap"><input type="number" class="meta-input" id="meta_organico" value="20" min="0" max="100"><div class="meta-suffix-sm">%</div></div>
           </div>
+          <div class="meta-row">
+            <span class="meta-row-label"><span class="meta-color-dot" style="background:#6b7280"></span>Desconhecida</span>
+            <div class="meta-input-wrap"><input type="number" class="meta-input" id="meta_outros" value="20" min="0" max="100"><div class="meta-suffix-sm">%</div></div>
+          </div>
         </div>
       </div>
       <!-- Campo de senha integrado -->
@@ -391,7 +396,7 @@ const API_URL = "https://script.google.com/macros/s/AKfycbwzzvjTdpjpFV9QrBG0bIL1
 let dadosGlobais = [];
 
 // Metas por canal — carregadas da planilha (aba config), compartilhadas entre todos
-let metas = { meta_bh: 20, meta_interior: 20, meta_fora: 20, meta_meta: 20, meta_disparo: 20, meta_organico: 20 };
+let metas = { meta_bh: 20, meta_interior: 20, meta_fora: 20, meta_meta: 20, meta_disparo: 20, meta_organico: 20, meta_outros: 20 };
 
 async function carregarConfig() {
   try {
@@ -494,22 +499,32 @@ function dadosFiltrados() {
 }
 function agregar(rows) {
   return rows.reduce((a, d) => {
-    a.num_vendas      += +d.num_vendas      || 0;
-    a.valor_vendido   += +d.valor_vendido   || 0;
-    a.leads_bh        += +d.leads_bh        || 0;
-    a.leads_interior  += +d.leads_interior  || 0;
-    a.leads_fora      += +d.leads_fora      || 0;
-    a.vendas_bh       += +d.vendas_bh       || 0;
-    a.vendas_interior += +d.vendas_interior || 0;
-    a.vendas_fora     += +d.vendas_fora     || 0;
-    a.leads_meta      += +d.leads_meta      || 0;
-    a.leads_disparo   += +d.leads_disparo   || 0;
-    a.leads_organico  += +d.leads_organico  || 0;
-    a.vendas_meta     += +d.vendas_meta     || 0;
-    a.vendas_disparo  += +d.vendas_disparo  || 0;
-    a.vendas_organico += +d.vendas_organico || 0;
+    a.num_vendas           += +d.num_vendas           || 0;
+    a.valor_vendido        += +d.valor_vendido        || 0;
+    a.num_vendas_qualif    += +d.num_vendas_qualif    || 0;
+    a.valor_vendido_qualif += +d.valor_vendido_qualif || 0;
+    a.leads_bh             += +d.leads_bh             || 0;
+    a.leads_interior       += +d.leads_interior       || 0;
+    a.leads_fora           += +d.leads_fora           || 0;
+    a.vendas_bh            += +d.vendas_bh            || 0;
+    a.vendas_interior      += +d.vendas_interior      || 0;
+    a.vendas_fora          += +d.vendas_fora          || 0;
+    a.leads_meta           += +d.leads_meta           || 0;
+    a.leads_disparo        += +d.leads_disparo        || 0;
+    a.leads_organico       += +d.leads_organico       || 0;
+    a.leads_outros_origem  += +d.leads_outros_origem  || 0;
+    a.vendas_meta          += +d.vendas_meta          || 0;
+    a.vendas_disparo       += +d.vendas_disparo       || 0;
+    a.vendas_organico      += +d.vendas_organico      || 0;
+    a.vendas_outros_origem += +d.vendas_outros_origem || 0;
     return a;
-  }, { num_vendas:0, valor_vendido:0, leads_bh:0, leads_interior:0, leads_fora:0, vendas_bh:0, vendas_interior:0, vendas_fora:0, leads_meta:0, leads_disparo:0, leads_organico:0, vendas_meta:0, vendas_disparo:0, vendas_organico:0 });
+  }, {
+    num_vendas:0, valor_vendido:0, num_vendas_qualif:0, valor_vendido_qualif:0,
+    leads_bh:0, leads_interior:0, leads_fora:0,
+    vendas_bh:0, vendas_interior:0, vendas_fora:0,
+    leads_meta:0, leads_disparo:0, leads_organico:0, leads_outros_origem:0,
+    vendas_meta:0, vendas_disparo:0, vendas_organico:0, vendas_outros_origem:0,
+  });
 }
 function pct(v, l) { return l > 0 ? (v / l * 100) : 0; }
 
@@ -543,16 +558,18 @@ function renderizar() {
       '<div class="empty"><strong>Nenhum dado encontrado</strong>Ajuste os filtros e tente novamente.</div>';
     return;
   }
-  const tot   = agregar(filtrados);
+  const tot        = agregar(filtrados);
   const totalLeads = tot.leads_bh + tot.leads_interior + tot.leads_fora;
-  const ticket = tot.num_vendas > 0 ? tot.valor_vendido / tot.num_vendas : 0;
-  const convG  = pct(tot.num_vendas, totalLeads);
+  // Ticket médio e conversão usam apenas vendas qualificadas (>= R$2.000)
+  const ticketQualif = tot.num_vendas_qualif > 0 ? tot.valor_vendido_qualif / tot.num_vendas_qualif : 0;
+  const convG        = pct(tot.num_vendas_qualif, totalLeads);
 
   const kpiHtml = '<div class="kpi-grid">' + [
-    { label:'Valor Vendido',   value:'<span class="cur">R$</span>' + formatMoeda(tot.valor_vendido), sub: tot.num_vendas + ' vendas realizadas', color:'var(--green)' },
-    { label:'Ticket Médio',    value:'<span class="cur">R$</span>' + formatMoeda(ticket),            sub: 'por venda',                           color:'var(--accent)' },
-    { label:'Total de Leads',  value: totalLeads.toLocaleString('pt-BR'),                             sub: 'BH: ' + tot.leads_bh + ' · Interior: ' + tot.leads_interior + ' · Fora: ' + tot.leads_fora, color:'var(--purple)' },
-    { label:'Conversão Geral', value: formatPct(convG),                                               sub: 'leads → vendas',                       color:'var(--yellow)' },
+    { label:'Valor Vendido',      value:'<span class="cur">R$</span>' + formatMoeda(tot.valor_vendido),   sub: tot.num_vendas + ' vendas realizadas',        color:'var(--green)'  },
+    { label:'Vendas ≥ R$2.000',   value: tot.num_vendas_qualif.toLocaleString('pt-BR'),                   sub: 'R$ ' + formatMoeda(tot.valor_vendido_qualif), color:'var(--purple)' },
+    { label:'Ticket Médio Qualif',value:'<span class="cur">R$</span>' + formatMoeda(ticketQualif),        sub: 'vendas ≥ R$2.000',                            color:'var(--accent)' },
+    { label:'Total de Leads',     value: totalLeads.toLocaleString('pt-BR'),                               sub: 'BH: ' + tot.leads_bh + ' · Interior: ' + tot.leads_interior + ' · Fora: ' + tot.leads_fora, color:'var(--yellow)' },
+    { label:'Conversão Geral',    value: formatPct(convG),                                                 sub: 'vendas qualif. ÷ leads',                      color:'var(--orange)' },
   ].map(k => [
     '<div class="kpi-card" style="--kpi-color:' + k.color + '">',
       '<span class="kpi-label">' + k.label + '</span>',
@@ -571,13 +588,14 @@ function renderizar() {
 
   const cardsHtml = ordenados.map(v => {
     const totalL = v.leads_bh + v.leads_interior + v.leads_fora;
-    const ticket  = v.num_vendas > 0 ? v.valor_vendido / v.num_vendas : 0;
-    const convB  = pct(v.vendas_bh,       v.leads_bh);
-    const convI  = pct(v.vendas_interior,  v.leads_interior);
-    const convF  = pct(v.vendas_fora,      v.leads_fora);
-    const convM  = pct(v.vendas_meta,      v.leads_meta);
-    const convD  = pct(v.vendas_disparo,   v.leads_disparo);
-    const convO  = pct(v.vendas_organico,  v.leads_organico);
+    const ticketQualif = v.num_vendas_qualif > 0 ? v.valor_vendido_qualif / v.num_vendas_qualif : 0;
+    const convB  = pct(v.vendas_bh,            v.leads_bh);
+    const convI  = pct(v.vendas_interior,       v.leads_interior);
+    const convF  = pct(v.vendas_fora,           v.leads_fora);
+    const convM  = pct(v.vendas_meta,           v.leads_meta);
+    const convD  = pct(v.vendas_disparo,        v.leads_disparo);
+    const convO  = pct(v.vendas_organico,       v.leads_organico);
+    const convX  = pct(v.vendas_outros_origem,  v.leads_outros_origem);
 
     return [
       '<div class="vendedor-card" data-vendedor="' + v.nome.replace(/"/g,'&quot;') + '" data-periodo="' + filtroP + '" onclick="abrirVendas(this.dataset.vendedor, this.dataset.periodo)">',
@@ -588,25 +606,26 @@ function renderizar() {
         '<div class="vendedor-body">',
           '<div class="stat-row">',
             '<div class="stat-item"><span class="stat-label">Faturamento</span><div class="stat-value green">' + moedaHtml(v.valor_vendido) + '</div></div>',
-            '<div class="stat-item"><span class="stat-label">Ticket Médio</span><div class="stat-value accent">' + moedaHtml(ticket) + '</div></div>',
+            '<div class="stat-item"><span class="stat-label">Ticket Qualif.</span><div class="stat-value accent">' + moedaHtml(ticketQualif) + '</div></div>',
             '<div class="stat-item"><span class="stat-label">Leads</span><div class="stat-value">' + totalL.toLocaleString('pt-BR') + '</div></div>',
           '</div>',
           '<div class="conv-block">',
             '<div class="conv-block-title">Conversão por Região</div>',
-            barRow('BH',             convB, 'fill-bh',       v.vendas_bh,       v.leads_bh,       metas.meta_bh),
-            barRow('Interior MG',    convI, 'fill-interior', v.vendas_interior,  v.leads_interior,  metas.meta_interior),
-            barRow('Fora do Estado', convF, 'fill-fora',     v.vendas_fora,      v.leads_fora,      metas.meta_fora),
+            barRow('BH',             convB, 'fill-bh',       v.vendas_bh,            v.leads_bh,            metas.meta_bh),
+            barRow('Interior MG',    convI, 'fill-interior', v.vendas_interior,       v.leads_interior,       metas.meta_interior),
+            barRow('Fora do Estado', convF, 'fill-fora',     v.vendas_fora,           v.leads_fora,           metas.meta_fora),
           '</div>',
           '<div class="conv-block">',
             '<div class="conv-block-title">Conversão por Origem</div>',
-            barRow('Meta ADS', convM, 'fill-meta',     v.vendas_meta,     v.leads_meta,     metas.meta_meta),
-            barRow('Disparo',  convD, 'fill-disparo',  v.vendas_disparo,  v.leads_disparo,  metas.meta_disparo),
-            barRow('Orgânico', convO, 'fill-organico', v.vendas_organico, v.leads_organico, metas.meta_organico),
+            barRow('Meta ADS',      convM, 'fill-meta',     v.vendas_meta,          v.leads_meta,          metas.meta_meta),
+            barRow('Disparo',       convD, 'fill-disparo',  v.vendas_disparo,       v.leads_disparo,       metas.meta_disparo),
+            barRow('Orgânico',      convO, 'fill-organico', v.vendas_organico,      v.leads_organico,      metas.meta_organico),
+            barRow('Desconhecida',  convX, 'fill-outros',   v.vendas_outros_origem, v.leads_outros_origem, metas.meta_outros),
           '</div>',
         '</div>',
         '<div class="vendedor-footer">',
           '<span class="ver-vendas">Ver todas as vendas →</span>',
-          '<span class="footer-meta">' + totalL + ' leads · ' + v.num_vendas + ' vendas</span>',
+          '<span class="footer-meta">' + totalL + ' leads · ' + v.num_vendas_qualif + ' qualif.</span>',
         '</div>',
       '</div>'
     ].join('');
@@ -626,6 +645,7 @@ function abrirModalMetas() {
   document.getElementById('meta_meta').value     = metas.meta_meta;
   document.getElementById('meta_disparo').value  = metas.meta_disparo;
   document.getElementById('meta_organico').value = metas.meta_organico;
+  document.getElementById('meta_outros').value   = metas.meta_outros;
   document.getElementById('metaSenha').value     = '';
   document.getElementById('metaMsgErro').style.display = 'none';
   document.getElementById('btnAplicarMetas').textContent = 'Salvar metas';
@@ -656,6 +676,7 @@ async function aplicarMetas() {
   metas.meta_meta     = read('meta_meta');
   metas.meta_disparo  = read('meta_disparo');
   metas.meta_organico = read('meta_organico');
+  metas.meta_outros   = read('meta_outros');
 
   btn.textContent = 'Salvando...';
   btn.disabled = true;
