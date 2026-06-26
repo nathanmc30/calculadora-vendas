@@ -369,7 +369,7 @@
           </div>
           <div class="meta-row">
             <span class="meta-row-label"><span class="meta-color-dot" style="background:#6b7280"></span>Desconhecida</span>
-            <div class="meta-input-wrap"><input type="number" class="meta-input" id="meta_outros" value="20" min="0" max="100"><div class="meta-suffix-sm">%</div></div>
+            <div class="meta-input-wrap"><input type="number" class="meta-input" id="meta_outros" value="10" min="0" max="9999"><div class="meta-suffix-sm" style="min-width:52px;font-size:11px">vendas</div></div>
           </div>
         </div>
       </div>
@@ -396,7 +396,7 @@ const API_URL = "https://script.google.com/macros/s/AKfycbwzzvjTdpjpFV9QrBG0bIL1
 let dadosGlobais = [];
 
 // Metas por canal — carregadas da planilha (aba config), compartilhadas entre todos
-let metas = { meta_bh: 20, meta_interior: 20, meta_fora: 20, meta_meta: 20, meta_disparo: 20, meta_organico: 20, meta_outros: 20 };
+let metas = { meta_bh: 20, meta_interior: 20, meta_fora: 20, meta_meta: 20, meta_disparo: 20, meta_organico: 20, meta_outros: 10 };
 
 async function carregarConfig() {
   try {
@@ -528,15 +528,16 @@ function agregar(rows) {
 }
 function pct(v, l) { return l > 0 ? (v / l * 100) : 0; }
 
-// ── BARRA ──
-function barRow(label, pctVal, fillClass, vendas, leads, metaVal) {
+// ── BARRA PADRÃO (% conversão) — clicável por origem ──
+function barRow(label, pctVal, fillClass, vendas, leads, metaVal, vendedor, periodo, origem) {
   const escala     = Math.max(pctVal, metaVal, 1) * 1.25;
   const fillW      = Math.min((pctVal / escala) * 100, 100).toFixed(1);
   const markerLeft = Math.min((metaVal / escala) * 100, 100).toFixed(1);
+  const clickable  = origem ? 'style="cursor:pointer" onclick="event.stopPropagation();abrirVendasOrigem(\'' + vendedor.replace(/'/g,"\\'") + '\',\'' + periodo + '\',\'' + origem + '\')"' : '';
   return [
-    '<div class="conv-row">',
+    '<div class="conv-row" ' + clickable + '>',
       '<div class="conv-head">',
-        '<span class="conv-label">' + label + '</span>',
+        '<span class="conv-label">' + label + (origem ? ' <span style="font-size:9px;color:var(--accent);margin-left:4px">↗</span>' : '') + '</span>',
         '<div class="conv-right">',
           '<span class="conv-pct">' + formatPct(pctVal) + '</span>',
           '<span class="conv-ratio">' + vendas + '/' + leads + '</span>',
@@ -547,6 +548,31 @@ function barRow(label, pctVal, fillClass, vendas, leads, metaVal) {
           '<div class="bar-fill ' + fillClass + '" style="width:' + fillW + '%"></div>',
         '</div>',
         '<div class="meta-marker" style="left:' + markerLeft + '%" title="Meta: ' + metaVal + '%"></div>',
+      '</div>',
+    '</div>'
+  ].join('');
+}
+
+// ── BARRA ABSOLUTA (nº de vendas vs meta) — clicável ──
+function barRowAbsoluto(label, vendas, fillClass, metaVendas, vendedor, periodo, origem) {
+  const escala     = Math.max(vendas, metaVendas, 1) * 1.25;
+  const fillW      = Math.min((vendas / escala) * 100, 100).toFixed(1);
+  const markerLeft = Math.min((metaVendas / escala) * 100, 100).toFixed(1);
+  const clickable  = origem ? 'style="cursor:pointer" onclick="event.stopPropagation();abrirVendasOrigem(\'' + vendedor.replace(/'/g,"\\'") + '\',\'' + periodo + '\',\'' + origem + '\')"' : '';
+  return [
+    '<div class="conv-row" ' + clickable + '>',
+      '<div class="conv-head">',
+        '<span class="conv-label">' + label + (origem ? ' <span style="font-size:9px;color:var(--accent);margin-left:4px">↗</span>' : '') + '</span>',
+        '<div class="conv-right">',
+          '<span class="conv-pct">' + vendas + '</span>',
+          '<span class="conv-ratio">meta ' + metaVendas + '</span>',
+        '</div>',
+      '</div>',
+      '<div class="bar-wrap">',
+        '<div class="bar-bg">',
+          '<div class="bar-fill ' + fillClass + '" style="width:' + fillW + '%"></div>',
+        '</div>',
+        '<div class="meta-marker" style="left:' + markerLeft + '%" title="Meta: ' + metaVendas + ' vendas"></div>',
       '</div>',
     '</div>'
   ].join('');
@@ -611,16 +637,16 @@ function renderizar() {
           '</div>',
           '<div class="conv-block">',
             '<div class="conv-block-title">Conversão por Região</div>',
-            barRow('BH',             convB, 'fill-bh',       v.vendas_bh,            v.leads_bh,            metas.meta_bh),
-            barRow('Interior MG',    convI, 'fill-interior', v.vendas_interior,       v.leads_interior,       metas.meta_interior),
-            barRow('Fora do Estado', convF, 'fill-fora',     v.vendas_fora,           v.leads_fora,           metas.meta_fora),
+            barRow('BH',             convB, 'fill-bh',       v.vendas_bh,            v.leads_bh,            metas.meta_bh,       v.nome, filtroP, ''),
+            barRow('Interior MG',    convI, 'fill-interior', v.vendas_interior,       v.leads_interior,       metas.meta_interior, v.nome, filtroP, ''),
+            barRow('Fora do Estado', convF, 'fill-fora',     v.vendas_fora,           v.leads_fora,           metas.meta_fora,     v.nome, filtroP, ''),
           '</div>',
           '<div class="conv-block">',
             '<div class="conv-block-title">Conversão por Origem</div>',
-            barRow('Meta ADS',      convM, 'fill-meta',     v.vendas_meta,          v.leads_meta,          metas.meta_meta),
-            barRow('Disparo',       convD, 'fill-disparo',  v.vendas_disparo,       v.leads_disparo,       metas.meta_disparo),
-            barRow('Orgânico',      convO, 'fill-organico', v.vendas_organico,      v.leads_organico,      metas.meta_organico),
-            barRow('Desconhecida',  convX, 'fill-outros',   v.vendas_outros_origem, v.leads_outros_origem, metas.meta_outros),
+            barRow('Meta ADS',      convM, 'fill-meta',     v.vendas_meta,          v.leads_meta,          metas.meta_meta,     v.nome, filtroP, 'Meta ADS'),
+            barRow('Disparo',       convD, 'fill-disparo',  v.vendas_disparo,       v.leads_disparo,       metas.meta_disparo,  v.nome, filtroP, 'Disparo'),
+            barRow('Orgânico',      convO, 'fill-organico', v.vendas_organico,      v.leads_organico,      metas.meta_organico, v.nome, filtroP, 'Orgânico'),
+            barRowAbsoluto('Desconhecida', v.vendas_outros_origem, 'fill-outros', metas.meta_outros, v.nome, filtroP, 'Desconhecida'),
           '</div>',
         '</div>',
         '<div class="vendedor-footer">',
@@ -710,7 +736,21 @@ async function aplicarMetas() {
   }, 800);
 }
 
-// ── MODAL VENDAS ──
+// ── MODAL VENDAS POR ORIGEM ──
+function abrirVendasOrigem(vendedor, mesAno, origem) {
+  document.getElementById('modalVendasTitle').textContent = vendedor + ' — ' + origem;
+  document.getElementById('modalVendasSub').textContent   = mesAno === 'todos' ? 'Todo o período' : formatMesAno(mesAno);
+  document.getElementById('modalVendasBody').innerHTML    =
+    '<div class="loading"><div class="spinner"></div><span>Carregando vendas...</span></div>';
+  document.getElementById('modalVendas').classList.add('open');
+
+  let url = API_URL + '?acao=vendas_detalhe&vendedor=' + encodeURIComponent(vendedor) + '&origem=' + encodeURIComponent(origem);
+  if (mesAno && mesAno !== 'todos') url += '&mes_ano=' + encodeURIComponent(mesAno);
+
+  _carregarModalVendas(url);
+}
+
+// ── MODAL VENDAS (todas) ──
 async function abrirVendas(vendedor, mesAno) {
   document.getElementById('modalVendasTitle').textContent = vendedor;
   document.getElementById('modalVendasSub').textContent   = mesAno === 'todos' ? 'Todo o período' : formatMesAno(mesAno);
@@ -718,11 +758,14 @@ async function abrirVendas(vendedor, mesAno) {
     '<div class="loading"><div class="spinner"></div><span>Carregando vendas...</span></div>';
   document.getElementById('modalVendas').classList.add('open');
 
-  try {
-    let url = API_URL + '?acao=vendas_detalhe&vendedor=' + encodeURIComponent(vendedor);
-    // Só adiciona mes_ano se for um mês específico (não "todos")
-    if (mesAno && mesAno !== 'todos') url += '&mes_ano=' + encodeURIComponent(mesAno);
+  let url = API_URL + '?acao=vendas_detalhe&vendedor=' + encodeURIComponent(vendedor);
+  if (mesAno && mesAno !== 'todos') url += '&mes_ano=' + encodeURIComponent(mesAno);
 
+  _carregarModalVendas(url);
+}
+
+async function _carregarModalVendas(url) {
+  try {
     const res  = await fetch(url);
     const text = await res.text(); // lê como texto primeiro para debug
     console.log('[abrirVendas] URL:', url);
