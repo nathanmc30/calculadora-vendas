@@ -548,7 +548,7 @@ function renderizar() {
     const convO  = pct(v.vendas_organico,  v.leads_organico);
 
     return [
-      '<div class="vendedor-card" onclick="abrirVendas(\'' + v.nome + '\', \'' + filtroP + '\')">',
+      '<div class="vendedor-card" data-vendedor="' + v.nome.replace(/"/g,'&quot;') + '" data-periodo="' + filtroP + '" onclick="abrirVendas(this.dataset.vendedor, this.dataset.periodo)">',
         '<div class="vendedor-header">',
           '<span class="vendedor-name">' + v.nome + '</span>',
           '<span class="vendedor-badge">' + v.num_vendas + ' vendas</span>',
@@ -622,11 +622,37 @@ async function abrirVendas(vendedor, mesAno) {
 
   try {
     let url = API_URL + '?acao=vendas_detalhe&vendedor=' + encodeURIComponent(vendedor);
-    // FIX: só adiciona mes_ano se for um mês específico (não "todos")
+    // Só adiciona mes_ano se for um mês específico (não "todos")
     if (mesAno && mesAno !== 'todos') url += '&mes_ano=' + encodeURIComponent(mesAno);
 
-    const res   = await fetch(url);
-    const dados = await res.json();
+    const res  = await fetch(url);
+    const text = await res.text(); // lê como texto primeiro para debug
+
+    let dados;
+    try {
+      const parsed = JSON.parse(text);
+      // O Script C pode retornar o array diretamente ou dentro de { data: [...] }
+      if (Array.isArray(parsed)) {
+        dados = parsed;
+      } else if (parsed && Array.isArray(parsed.data)) {
+        dados = parsed.data;
+      } else if (parsed && parsed.status === 'error') {
+        throw new Error(parsed.msg || 'Erro retornado pelo servidor');
+      } else {
+        // Resposta inesperada — mostra para debug
+        document.getElementById('modalVendasBody').innerHTML =
+          '<div class="empty"><strong>Resposta inesperada do servidor</strong>' +
+          '<pre style="margin-top:12px;font-size:11px;color:var(--muted2);text-align:left;white-space:pre-wrap;word-break:break-all">' +
+          text.substring(0, 500) + '</pre></div>';
+        return;
+      }
+    } catch(parseErr) {
+      document.getElementById('modalVendasBody').innerHTML =
+        '<div class="empty"><strong>Erro ao interpretar resposta</strong>' +
+        '<pre style="margin-top:12px;font-size:11px;color:var(--muted2);text-align:left;white-space:pre-wrap;word-break:break-all">' +
+        text.substring(0, 500) + '</pre></div>';
+      return;
+    }
 
     if (!dados || !dados.length) {
       document.getElementById('modalVendasBody').innerHTML =
