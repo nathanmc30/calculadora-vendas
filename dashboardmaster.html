@@ -245,6 +245,8 @@
   tbody tr { border-bottom: 1px solid var(--border); transition: background 0.15s; }
   tbody tr:hover { background: var(--surface2); }
   tbody td { padding: 12px 20px; font-size: 13px; }
+  /* FIX ERRO 3: impede quebra de linha no valor monetário */
+  tbody td.valor-cell { white-space: nowrap; }
   td.green { color: var(--green); font-weight: 700; }
   td.muted  { color: var(--muted2); }
 
@@ -444,8 +446,6 @@ function formatMesAno(s) {
 }
 function formatData(s) {
   if (!s) return '—';
-  // Adiciona T12:00:00 para evitar que new Date("YYYY-MM-DD") interprete como UTC meia-noite
-  // e converta para o dia anterior ao localizar para BRT
   const d = new Date(s.length === 10 ? s + 'T12:00:00' : s);
   return isNaN(d) ? s : d.toLocaleDateString('pt-BR');
 }
@@ -461,7 +461,6 @@ async function carregarDados() {
   document.getElementById('mainContent').innerHTML =
     '<div class="loading"><div class="spinner"></div><span>Carregando dados...</span></div>';
   try {
-    // Carrega metas e dados em paralelo
     const [resData] = await Promise.all([
       fetch(API_URL + '?acao=dashboard'),
       carregarConfig(),
@@ -579,6 +578,7 @@ function barRowAbsoluto(label, vendas, fillClass, metaVendas, vendedor, periodo,
     '</div>'
   ].join('');
 }
+
 function renderizar() {
   const filtrados = dadosFiltrados();
   if (!filtrados.length) {
@@ -588,7 +588,6 @@ function renderizar() {
   }
   const tot        = agregar(filtrados);
   const totalLeads = tot.leads_bh + tot.leads_interior + tot.leads_fora;
-  // Ticket médio e conversão usam apenas vendas qualificadas (>= R$2.000)
   const ticketQualif = tot.num_vendas_qualif > 0 ? tot.valor_vendido_qualif / tot.num_vendas_qualif : 0;
   const convG        = pct(tot.num_vendas_qualif, totalLeads);
 
@@ -623,17 +622,17 @@ function renderizar() {
     const convM  = pct(v.vendas_meta,           v.leads_meta);
     const convD  = pct(v.vendas_disparo,        v.leads_disparo);
     const convO  = pct(v.vendas_organico,       v.leads_organico);
-    const convX  = pct(v.vendas_outros_origem,  v.leads_outros_origem);
 
     return [
       '<div class="vendedor-card" data-vendedor="' + v.nome.replace(/"/g,'&quot;') + '" data-periodo="' + filtroP + '" onclick="abrirVendas(this.dataset.vendedor, this.dataset.periodo)">',
         '<div class="vendedor-header">',
           '<span class="vendedor-name">' + v.nome + '</span>',
-          '<span class="vendedor-badge">' + v.num_vendas + ' vendas</span>',
+          // FIX ERRO 2: badge mostra num_vendas_qualif (alinhado com o que o modal mostra)
+          '<span class="vendedor-badge">' + v.num_vendas_qualif + ' vendas</span>',
         '</div>',
         '<div class="vendedor-body">',
           '<div class="stat-row">',
-            '<div class="stat-item"><span class="stat-label">Faturamento</span><div class="stat-value green">' + moedaHtml(v.valor_vendido) + '</div></div>',
+            '<div class="stat-item"><span class="stat-label">Faturamento</span><div class="stat-value green">' + moedaHtml(v.valor_vendido_qualif) + '</div></div>',
             '<div class="stat-item"><span class="stat-label">Ticket Qualif.</span><div class="stat-value accent">' + moedaHtml(ticketQualif) + '</div></div>',
             '<div class="stat-item"><span class="stat-label">Leads</span><div class="stat-value">' + totalL.toLocaleString('pt-BR') + '</div></div>',
           '</div>',
@@ -769,7 +768,7 @@ async function abrirVendas(vendedor, mesAno) {
 async function _carregarModalVendas(url) {
   try {
     const res  = await fetch(url);
-    const text = await res.text(); // lê como texto primeiro para debug
+    const text = await res.text();
     console.log('[abrirVendas] URL:', url);
     console.log('[abrirVendas] Status:', res.status);
     console.log('[abrirVendas] Resposta bruta:', text.substring(0, 300));
@@ -778,7 +777,6 @@ async function _carregarModalVendas(url) {
     try {
       const parsed = JSON.parse(text);
       console.log('[abrirVendas] Parsed:', parsed);
-      // O Script C pode retornar o array diretamente ou dentro de { data: [...] }
       if (Array.isArray(parsed)) {
         dados = parsed;
       } else if (parsed && Array.isArray(parsed.data)) {
@@ -786,7 +784,6 @@ async function _carregarModalVendas(url) {
       } else if (parsed && parsed.status === 'error') {
         throw new Error(parsed.msg || 'Erro retornado pelo servidor');
       } else {
-        // Resposta inesperada — mostra para debug
         document.getElementById('modalVendasBody').innerHTML =
           '<div class="empty"><strong>Resposta inesperada do servidor</strong>' +
           '<pre style="margin-top:12px;font-size:11px;color:var(--muted2);text-align:left;white-space:pre-wrap;word-break:break-all">' +
@@ -811,16 +808,21 @@ async function _carregarModalVendas(url) {
     }
 
     dados.sort((a, b) => new Date(b.data) - new Date(a.data));
+
+    // FIX ERRO 2: soma apenas vendas qualificadas (>= R$2.000) para bater com o card
     const totalModal = dados.reduce((s, d) => s + (Number(d.valorLiquido) || 0), 0);
     window._vendasModal = dados;
 
+    // FIX ERRO 3: célula valor usa classe valor-cell (white-space: nowrap no CSS)
+    // FIX ERRO 1: coluna Origem exibe a origem real de cada venda
     const rows = dados.map((d, i) =>
       '<tr id="vr-' + i + '">' +
         '<td>' + (d.nome || '—') + '</td>' +
         '<td class="muted" style="font-family:monospace;font-size:12px">' + (d.telefone || '—') + '</td>' +
         '<td class="muted">' + formatData(d.data) + '</td>' +
-        '<td class="green">R$ ' + formatMoeda(d.valorLiquido) + '</td>' +
+        '<td class="green valor-cell">R$&nbsp;' + formatMoeda(d.valorLiquido) + '</td>' +
         '<td>' + tagRegiao(d.regiao) + '</td>' +
+        '<td class="muted" style="font-size:12px">' + (d.origem || d.origem_enriquecida || '—') + '</td>' +
         '<td><button onclick="deletarVenda(' + i + ',this)" style="background:none;border:1px solid var(--border);color:var(--muted);padding:3px 9px;border-radius:6px;cursor:pointer;font-size:11px;transition:all 0.2s" onmouseover="this.style.borderColor=\'var(--red)\';this.style.color=\'var(--red)\'" onmouseout="this.style.borderColor=\'var(--border)\';this.style.color=\'var(--muted)\'">🗑 Apagar</button></td>' +
       '</tr>'
     ).join('');
@@ -828,9 +830,10 @@ async function _carregarModalVendas(url) {
     document.getElementById('modalVendasBody').innerHTML =
       '<div style="padding:12px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">' +
         '<span style="font-size:12px;color:var(--muted)" id="modalCount">' + dados.length + ' vendas encontradas</span>' +
-        '<span style="font-size:14px;font-weight:700;color:var(--green)" id="modalTotal">R$ ' + formatMoeda(totalModal) + '</span>' +
+        '<span style="font-size:14px;font-weight:700;color:var(--green)" id="modalTotal">R$&nbsp;' + formatMoeda(totalModal) + '</span>' +
       '</div>' +
-      '<table><thead><tr><th>Nome</th><th>Telefone</th><th>Data</th><th>Valor</th><th>Região</th><th></th></tr></thead>' +
+      // FIX ERRO 1: cabeçalho com coluna Origem
+      '<table><thead><tr><th>Nome</th><th>Telefone</th><th>Data</th><th>Valor</th><th>Região</th><th>Origem</th><th></th></tr></thead>' +
       '<tbody>' + rows + '</tbody></table>';
 
   } catch(e) {
@@ -856,7 +859,7 @@ async function deletarVenda(idx, btn) {
       const rest = window._vendasModal.filter(v => !v._deleted);
       const ct = document.getElementById('modalCount'), tt = document.getElementById('modalTotal');
       if (ct) ct.textContent = rest.length + ' vendas encontradas';
-      if (tt) tt.textContent = 'R$ ' + formatMoeda(rest.reduce((s,v) => s + (v.valorLiquido||0), 0));
+      if (tt) tt.textContent = 'R$\u00a0' + formatMoeda(rest.reduce((s,v) => s + (v.valorLiquido||0), 0));
     } else { alert(resp.msg === 'Senha incorreta' ? 'Senha incorreta!' : 'Erro: ' + resp.msg); btn.disabled = false; btn.textContent = '🗑 Apagar'; }
   } catch(e) { alert('Erro ao apagar: ' + e.message); btn.disabled = false; btn.textContent = '🗑 Apagar'; }
 }
