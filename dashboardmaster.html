@@ -1132,6 +1132,21 @@ function c2Mediana(dias) {
   return Math.round(med);
 }
 
+// Remove os outliers extremos (> 2x a mediana DO GRUPO RECEBIDO) de uma
+// lista de dias. Usado apenas para as MÉDIAS — a mediana e a contagem de
+// outliers continuam usando a lista completa (com outliers incluídos),
+// porque a mediana é justamente o critério usado para IDENTIFICAR quem é
+// outlier; filtrar antes de calcular a mediana mudaria o próprio critério.
+function c2RemoverOutliers(dias) {
+  const mediana = c2Mediana(dias);
+  if (mediana === null || mediana === 0) return dias;
+  return dias.filter(d => d <= mediana * 2);
+}
+
+function c2Media(dias) {
+  return dias.length ? Math.round(dias.reduce((a,b) => a+b, 0) / dias.length) : null;
+}
+
 // Moda = valor de ciclo (em dias, arredondado) que mais se repete.
 // Em caso de empate, retorna o menor valor entre os empatados.
 // Em dados contínuos como "dias até fechar", repetição exata é rara —
@@ -1157,39 +1172,55 @@ function c2Moda(dias) {
   return modaFreq >= 3 ? { valor: modaValor, freq: modaFreq } : null;
 }
 
-// Média ponderada por vendedor: calcula a média de ciclo de CADA vendedor
-// separadamente, e depois tira a média DESSAS médias — cada vendedor conta
-// como 1 voto, não importa se ele fechou 1 venda ou 50.
+// Média ponderada — adaptativa conforme o filtro de vendedor ativo:
 //
-// IMPORTANTE: o peso de cada vendedor NÃO pode ser o volume de vendas dele.
-// Se peso = número de vendas do vendedor, o cálculo (média_vendedor × peso)
-// simplifica de volta para (soma_dias_do_vendedor), e ao somar isso para
-// todos os vendedores e dividir pela soma dos pesos (= total de vendas),
-// o resultado final é algebricamente idêntico à média simples — o volume
-// se cancela no numerador e no denominador. É por isso que "ponderar pelo
-// próprio volume" sempre dá o mesmo número que a média comum, não importa
-// os dados: não é bug de cálculo, é a fórmula que se anula sozinha.
+// COM 2+ vendedores no grupo: pondera POR VENDEDOR. Calcula a média de
+// ciclo de cada vendedor separadamente (já excluindo outliers de cada
+// um), e tira a média dessas médias — cada vendedor conta como 1 voto,
+// não importa se fechou 1 venda ou 50.
 //
-// Por isso aqui o peso é constante (1 por vendedor): um vendedor com 1
-// venda atípica de 300 dias conta igual a um vendedor com 50 vendas de
-// 15 dias — isso é o que de fato reduz a distorção que um caso isolado
-// causaria numa média simples de todas as vendas juntas.
+// COM exatamente 1 vendedor no grupo (filtro de vendedor ativo): pondera
+// por vendedor não faz sentido (só haveria 1 voto, e o resultado sempre
+// colapsaria para a própria média daquele vendedor). Nesse caso, pondera
+// POR ORIGEM daquele vendedor (Meta ADS, Disparo, Orgânico) — cada origem
+// conta como 1 voto, independente de quantas vendas teve naquela origem.
+//
+// IMPORTANTE sobre o peso: em ambos os casos o peso é CONSTANTE (1 por
+// grupo), nunca proporcional ao volume do próprio grupo. Se o peso fosse
+// o volume de vendas do grupo que está sendo pesado, a fórmula se
+// cancelaria algebricamente e sempre devolveria a média simples — esse
+// foi um bug já corrigido nesta mesma função (ver documentação).
 function c2MediaPonderada(arr, campoData) {
-  const porVendedor = {};
-  arr.forEach(v => {
-    const vend = v.responsavel || '—';
-    if (!porVendedor[vend]) porVendedor[vend] = [];
-    porVendedor[vend].push(v);
-  });
-  const mediasPorVendedor = [];
-  Object.values(porVendedor).forEach(vendasDoVendedor => {
-    const dias = c2ExtrairDias(vendasDoVendedor, campoData);
+  const vendedoresUnicos = [...new Set(arr.map(v => v.responsavel || '—'))];
+
+  // Define o eixo de agrupamento: por vendedor (caso normal) ou por
+  // origem (caso especial de 1 vendedor só no filtro)
+  const porGrupo = {};
+  if (vendedoresUnicos.length <= 1) {
+    arr.forEach(v => {
+      const grupo = c2OrigKey(v);
+      if (!porGrupo[grupo]) porGrupo[grupo] = [];
+      porGrupo[grupo].push(v);
+    });
+  } else {
+    arr.forEach(v => {
+      const grupo = v.responsavel || '—';
+      if (!porGrupo[grupo]) porGrupo[grupo] = [];
+      porGrupo[grupo].push(v);
+    });
+  }
+
+  const mediasPorGrupo = [];
+  Object.values(porGrupo).forEach(vendasDoGrupo => {
+    const dias = c2ExtrairDias(vendasDoGrupo, campoData);
     if (!dias.length) return;
-    const mediaVendedor = dias.reduce((a,b) => a+b, 0) / dias.length;
-    mediasPorVendedor.push(mediaVendedor); // 1 entrada por vendedor, peso igual
+    const diasSemOutliers = c2RemoverOutliers(dias);
+    if (!diasSemOutliers.length) return;
+    const mediaGrupo = diasSemOutliers.reduce((a,b) => a+b, 0) / diasSemOutliers.length;
+    mediasPorGrupo.push(mediaGrupo); // 1 entrada por grupo, peso igual
   });
-  if (!mediasPorVendedor.length) return null;
-  const mediaDasMedias = mediasPorVendedor.reduce((a,b) => a+b, 0) / mediasPorVendedor.length;
+  if (!mediasPorGrupo.length) return null;
+  const mediaDasMedias = mediasPorGrupo.reduce((a,b) => a+b, 0) / mediasPorGrupo.length;
   return Math.round(mediaDasMedias);
 }
 
@@ -1202,16 +1233,25 @@ function c2ContarOutliers(dias) {
 }
 
 // Empacota média + mediana + moda + média ponderada + outliers de uma vez,
-// para um grupo de vendas
+// para um grupo de vendas.
+//
+// A MÉDIA exclui outliers (> 2x a mediana do próprio grupo) antes de
+// calcular — decisão tomada para que o número represente o comportamento
+// típico das vendas, sem ser distorcido por casos extremos isolados.
+// A MEDIANA e a CONTAGEM de outliers continuam usando todos os dados,
+// porque são elas que definem o próprio critério de quem é outlier —
+// filtrar antes mudaria o critério de detecção.
 function c2StatsCiclo(arr, campoData) {
   const dias = c2ExtrairDias(arr, campoData);
+  const diasSemOutliers = c2RemoverOutliers(dias);
   return {
-    media:         dias.length ? Math.round(dias.reduce((a,b) => a+b, 0) / dias.length) : null,
+    media:         c2Media(diasSemOutliers),
     mediana:       c2Mediana(dias),
     moda:          c2Moda(dias),
     mediaPonderada: c2MediaPonderada(arr, campoData),
     outliers:      c2ContarOutliers(dias),
     n:             dias.length,
+    nSemOutliers:  diasSemOutliers.length,
   };
 }
 
@@ -1490,10 +1530,10 @@ function renderCiclos() {
         '<div class="c2-panel-title">Ciclo médio por origem</div>',
         cicloOrigemHtml,
         '<div class="c2-legend">',
-          '<div class="c2-legend-item"><div class="c2-legend-dot" style="background:rgba(0,208,132,0.3);border:1px solid var(--green)"></div>média (criação negócio)</div>',
+          '<div class="c2-legend-item"><div class="c2-legend-dot" style="background:rgba(0,208,132,0.3);border:1px solid var(--green)"></div>média sem outliers (criação negócio)</div>',
           '<div class="c2-legend-item"><div class="c2-legend-dot" style="background:rgba(255,184,0,0.3);border:1px solid var(--yellow)"></div>mediana</div>',
           '<div class="c2-legend-item"><div class="c2-legend-dot" style="background:rgba(155,89,247,0.3);border:1px solid var(--purple)"></div>moda</div>',
-          '<div class="c2-legend-item"><div class="c2-legend-dot" style="background:rgba(247,54,168,0.3);border:1px solid var(--pink)"></div>média ponderada (por vendedor)</div>',
+          '<div class="c2-legend-item"><div class="c2-legend-dot" style="background:rgba(247,54,168,0.3);border:1px solid var(--pink)"></div>média ponderada (por vendedor, ou por origem com 1 vendedor filtrado)</div>',
         '</div>',
       '</div>',
       // Ciclo por região
@@ -1526,7 +1566,7 @@ function renderCiclos() {
         '<div class="c2-outlier-item"><span class="c2-outlier-num">' + outliersOrigemTotal + '</span><span class="c2-outlier-label">somando todas as origens</span></div>',
         '<div class="c2-outlier-item"><span class="c2-outlier-num">' + outliersRegiaoTotal + '</span><span class="c2-outlier-label">somando todas as regiões</span></div>',
       '</div>',
-      '<div class="c2-outlier-note">Outlier extremo = venda cujo ciclo (lead → fechamento) é mais que o dobro da mediana do próprio grupo. O limite é recalculado para cada origem/região — não é um número fixo de dias. A moda só é exibida quando pelo menos 3 vendas compartilham o mesmo número de dias (abaixo disso o valor não é representativo). A média ponderada calcula a média de cada vendedor separadamente e depois tira a média dessas médias, com cada vendedor contando igual (1 voto cada) — assim um vendedor com poucas vendas atípicas não pesa nem mais nem menos do que um vendedor com volume alto.</div>',
+      '<div class="c2-outlier-note">Outlier extremo = venda cujo ciclo (lead → fechamento) é mais que o dobro da mediana do próprio grupo. O limite é recalculado para cada origem/região — não é um número fixo de dias. Todas as médias desta aba (geral, por origem, por região e ponderada) excluem os outliers extremos do próprio grupo antes de calcular — a mediana e a contagem de outliers continuam usando todos os dados, já que são elas que definem o critério de quem é outlier. A moda só é exibida quando pelo menos 3 vendas compartilham o mesmo número de dias. A média ponderada pondera por vendedor (1 voto cada) quando há 2+ vendedores no filtro; com exatamente 1 vendedor filtrado, pondera pelas origens daquele vendedor (1 voto cada origem), já que ponderar por vendedor não faria sentido com um único vendedor selecionado.</div>',
     '</div>',
   ].join('');
 
