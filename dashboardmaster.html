@@ -314,14 +314,16 @@
   /* Barra de origem */
   .c2-orig-row { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
   .c2-orig-row:last-child { margin-bottom: 0; }
-  .c2-orig-name { font-size: 13px; color: var(--text2); width: 86px; flex-shrink: 0; font-weight: 500; }
+  .c2-orig-name { font-size: 13px; color: var(--text2); width: 86px; flex-shrink: 0; font-weight: 500; display: flex; flex-direction: column; gap: 2px; }
   .c2-bar-track { flex: 1; background: var(--surface3); border-radius: 6px; height: 9px; overflow: hidden; }
   .c2-bar-fill  { height: 100%; border-radius: 6px; transition: width .6s cubic-bezier(.4,0,.2,1); }
-  .c2-tags { display: flex; gap: 6px; flex-shrink: 0; }
+  .c2-tags { display: flex; gap: 6px; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; max-width: 220px; }
   .c2-tag { border-radius: 20px; padding: 2px 9px; font-size: 11px; font-weight: 600; white-space: nowrap; }
   .c2-tag-days { background: rgba(0,208,132,0.15); color: var(--green); }
+  .c2-tag-med  { background: rgba(255,184,0,0.15); color: var(--yellow); }
   .c2-tag-conv { background: rgba(79,128,255,0.15); color: var(--accent); }
   .c2-tag-na   { background: rgba(90,99,128,0.12); color: var(--muted2); }
+  .c2-orig-outlier { font-size: 9px; color: var(--red); font-weight: 600; }
 
   /* Região */
   .c2-reg-row { margin-bottom: 16px; }
@@ -330,9 +332,11 @@
   .c2-reg-left { display: flex; align-items: center; gap: 8px; }
   .c2-reg-dot  { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
   .c2-reg-info {}
-  .c2-reg-name { font-size: 13px; font-weight: 600; color: var(--text); }
+  .c2-reg-name { font-size: 13px; font-weight: 600; color: var(--text); display: flex; align-items: center; gap: 6px; }
   .c2-reg-sub  { font-size: 11px; color: var(--muted); margin-top: 1px; }
   .c2-reg-days { font-size: 15px; font-weight: 800; color: var(--text); }
+  .c2-reg-med  { font-size: 11px; color: var(--yellow); margin-top: 1px; }
+  .c2-reg-outlier { font-size: 9px; color: var(--red); font-weight: 600; }
 
   /* Conversão */
   .c2-conv-row { display: flex; align-items: center; gap: 8px; margin-bottom: 11px; }
@@ -351,11 +355,19 @@
   .c2-table td.c2-td-num { font-weight: 700; color: var(--text); }
   .c2-table td.c2-td-green { font-weight: 700; color: var(--green); }
   .c2-table td.c2-td-accent { font-weight: 700; color: var(--accent); }
+  .c2-table td.c2-td-muted { color: var(--muted2); }
 
   /* Legenda */
-  .c2-legend { display: flex; gap: 16px; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border); }
+  .c2-legend { display: flex; gap: 16px; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border); flex-wrap: wrap; }
   .c2-legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--muted2); }
   .c2-legend-dot  { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+
+  /* Painel de outliers extremos */
+  .c2-outlier-summary { display: flex; gap: 28px; margin-bottom: 14px; flex-wrap: wrap; }
+  .c2-outlier-item { display: flex; flex-direction: column; gap: 2px; }
+  .c2-outlier-num   { font-size: 28px; font-weight: 800; color: var(--red); line-height: 1; }
+  .c2-outlier-label { font-size: 12px; color: var(--muted); }
+  .c2-outlier-note  { font-size: 12px; color: var(--muted2); line-height: 1.5; padding-top: 12px; border-top: 1px solid var(--border); }
 
   @media (max-width: 640px) {
     .header, .filters, .main, .c2-main { padding-left: 16px; padding-right: 16px; }
@@ -1005,15 +1017,48 @@ function c2FiltraVendas() {
 
 // campoData: 'data_criacao_deal' (ciclo por origem) ou
 //            'data_criacao_contato' (ciclo por região / ciclo geral)
-function c2CicloMedio(arr, campoData) {
-  const dias = arr.map(v => {
+// Retorna a lista bruta de dias (lead → fechamento), sem agregação —
+// base reutilizada por média, mediana e contagem de outliers.
+function c2ExtrairDias(arr, campoData) {
+  return arr.map(v => {
     const dv = v.data              ? new Date(v.data.slice(0,10)                 + 'T12:00:00') : null;
     const dc = v[campoData]        ? new Date(v[campoData].toString().slice(0,10) + 'T12:00:00') : null;
     if (!dv || !dc || isNaN(dv) || isNaN(dc)) return null;
     const d = (dv - dc) / 86400000;
     return d >= 0 ? d : null;
   }).filter(d => d !== null);
+}
+
+function c2CicloMedio(arr, campoData) {
+  const dias = c2ExtrairDias(arr, campoData);
   return dias.length ? Math.round(dias.reduce((a,b) => a+b, 0) / dias.length) : null;
+}
+
+function c2Mediana(dias) {
+  if (!dias.length) return null;
+  const s = [...dias].sort((a,b) => a-b);
+  const meio = Math.floor(s.length / 2);
+  const med = s.length % 2 ? s[meio] : (s[meio-1] + s[meio]) / 2;
+  return Math.round(med);
+}
+
+// Outlier extremo = ciclo > 2x a mediana DO PRÓPRIO GRUPO (dinâmico —
+// recalculado para cada origem/região/geral, não um número fixo)
+function c2ContarOutliers(dias) {
+  const mediana = c2Mediana(dias);
+  if (mediana === null || mediana === 0) return 0;
+  return dias.filter(d => d > mediana * 2).length;
+}
+
+// Empacota média + mediana + outliers de uma vez, para um grupo de vendas
+function c2StatsCiclo(arr, campoData) {
+  const dias = c2ExtrairDias(arr, campoData);
+  return {
+    media:    dias.length ? Math.round(dias.reduce((a,b) => a+b, 0) / dias.length) : null,
+    mediana:  c2Mediana(dias),
+    outliers: c2ContarOutliers(dias),
+    n:        dias.length,
+  };
 }
 
 // 'outros' = sem origem real associada (não existe leads "Desconhecida" —
@@ -1082,69 +1127,88 @@ function renderCiclos() {
   // Ciclo por ORIGEM usa "Criação negócio" (data_criacao_deal).
   // 'outros' não tem negócio associado a uma origem real — usa
   // "Criação contato" (data_criacao_contato) como única data disponível.
+  // Cada grupo agora carrega média + mediana + contagem de outliers
+  // (outlier = ciclo > 2x a mediana DO PRÓPRIO GRUPO, dinâmico).
   const origData = {};
   ORIG_KEYS_COM_CONV.forEach(k => {
-    const ciclo = c2CicloMedio(gO[k], 'data_criacao_deal');
+    const stats = c2StatsCiclo(gO[k], 'data_criacao_deal');
     const conv  = leadsO[k] > 0 ? (gO[k].length / leadsO[k] * 100) : 0;
-    origData[k] = { ciclo, conv, vendas: gO[k].length, leads: leadsO[k] };
+    origData[k] = { ...stats, conv, vendas: gO[k].length, leads: leadsO[k] };
   });
-  const outrosData = {
-    ciclo:  c2CicloMedio(gO.outros, 'data_criacao_contato'),
-    vendas: gO.outros.length,
-  };
+  const outrosStats = c2StatsCiclo(gO.outros, 'data_criacao_contato');
+  const outrosData = { ...outrosStats, vendas: gO.outros.length };
 
   // Ciclo por REGIÃO usa "Criação contato" (data_criacao_contato)
   const regData = {};
   Object.keys(gR).forEach(k => {
-    regData[k] = { ciclo: c2CicloMedio(gR[k], 'data_criacao_contato'), leads: leadsR[k], vendas: gR[k].length };
+    const stats = c2StatsCiclo(gR[k], 'data_criacao_contato');
+    regData[k] = { ...stats, leads: leadsR[k], vendas: gR[k].length };
   });
 
   // ── KPIs ──
   // Ciclo GERAL usa "Criação contato" — mesma base que região
-  const cicloGeral = c2CicloMedio(vendas, 'data_criacao_contato');
+  const geralStats = c2StatsCiclo(vendas, 'data_criacao_contato');
+  const cicloGeral   = geralStats.media;
+  const medianaGeral = geralStats.mediana;
+  const outliersGeral = geralStats.outliers;
   const totalLeads = leadsO.meta + leadsO.disparo + leadsO.organico;
   const totalVendasComOrigem = ORIG_KEYS_COM_CONV.reduce((s,k) => s + gO[k].length, 0);
   const convGeral  = totalLeads > 0 ? (totalVendasComOrigem / totalLeads * 100) : 0;
 
-  const origComCiclo = ORIG_KEYS_COM_CONV.filter(k => origData[k].ciclo !== null)
-    .sort((a,b) => origData[a].ciclo - origData[b].ciclo);
+  const origComCiclo = ORIG_KEYS_COM_CONV.filter(k => origData[k].media !== null)
+    .sort((a,b) => origData[a].media - origData[b].media);
   const melhorCicloKey  = origComCiclo[0] || null;
-  const melhorConvKey   = ORIG_KEYS_COM_CONV.slice().sort((a,b) => origData[b].conv - origData[a].conv)[0];
+
+  // Total de outliers extremos em todos os grupos (origem + região), para o painel de investigação
+  const outliersOrigemTotal = ORIG_KEYS_COM_CONV.reduce((s,k) => s + origData[k].outliers, 0) + outrosData.outliers;
+  const outliersRegiaoTotal = Object.keys(regData).reduce((s,k) => s + regData[k].outliers, 0);
 
   // ── Barras ciclo por origem (inclui 'outros' só com dias, sem % conversão) ──
   const todasOrigKeys = [...ORIG_KEYS_COM_CONV, 'outros'];
   const maxCiclo = Math.max(
-    ...ORIG_KEYS_COM_CONV.map(k => origData[k].ciclo || 0),
-    outrosData.ciclo || 0, 1
+    ...ORIG_KEYS_COM_CONV.map(k => origData[k].media || 0),
+    outrosData.media || 0, 1
   );
   const cicloOrigemHtml = todasOrigKeys.map(k => {
     const d = k === 'outros' ? outrosData : origData[k];
-    const w = d.ciclo !== null ? Math.min((d.ciclo / maxCiclo) * 100, 100).toFixed(1) : 0;
-    const daysTag = d.ciclo !== null
-      ? '<span class="c2-tag c2-tag-days">' + d.ciclo + ' dias</span>'
+    const w = d.media !== null ? Math.min((d.media / maxCiclo) * 100, 100).toFixed(1) : 0;
+    const daysTag = d.media !== null
+      ? '<span class="c2-tag c2-tag-days">' + d.media + ' dias</span>'
       : '<span class="c2-tag c2-tag-na">N/A</span>';
+    const medTag = d.mediana !== null
+      ? '<span class="c2-tag c2-tag-med">med ' + d.mediana + 'd</span>'
+      : '';
     const convTag = k === 'outros'
       ? '<span class="c2-tag c2-tag-na">' + d.vendas + ' vendas</span>'
       : '<span class="c2-tag c2-tag-conv">' + d.conv.toFixed(1) + '%</span>';
+    const outlierNote = d.outliers > 0
+      ? '<span class="c2-orig-outlier">' + d.outliers + ' outlier' + (d.outliers > 1 ? 's' : '') + '</span>'
+      : '';
     return '<div class="c2-orig-row">' +
-      '<span class="c2-orig-name">' + ORIG_LABELS[k] + '</span>' +
+      '<span class="c2-orig-name">' + ORIG_LABELS[k] + outlierNote + '</span>' +
       '<div class="c2-bar-track"><div class="c2-bar-fill ' + ORIG_FILLS[k] + '" style="width:' + w + '%"></div></div>' +
-      '<div class="c2-tags">' + daysTag + convTag + '</div>' +
+      '<div class="c2-tags">' + daysTag + medTag + convTag + '</div>' +
       '</div>';
   }).join('');
 
   // ── Barras ciclo por região ──
-  const maxCicloReg = Math.max(...Object.keys(regData).map(k => regData[k].ciclo || 0), 1);
+  const maxCicloReg = Math.max(...Object.keys(regData).map(k => regData[k].media || 0), 1);
   const cicloRegiaoHtml = Object.keys(regData).map(k => {
     const d = regData[k];
-    const w = d.ciclo !== null ? Math.min((d.ciclo / maxCicloReg) * 100, 100).toFixed(1) : 0;
+    const w = d.media !== null ? Math.min((d.media / maxCicloReg) * 100, 100).toFixed(1) : 0;
+    const outlierNote = d.outliers > 0
+      ? '<span class="c2-reg-outlier">' + d.outliers + ' outlier' + (d.outliers > 1 ? 's' : '') + '</span>'
+      : '';
     return '<div class="c2-reg-row">' +
       '<div class="c2-reg-head">' +
         '<div class="c2-reg-left">' +
           '<div class="c2-reg-dot" style="background:' + REG_CORES[k] + '"></div>' +
-          '<div class="c2-reg-info"><div class="c2-reg-name">' + REG_LABELS[k] + '</div><div class="c2-reg-sub">' + REG_SUBS[k] + ' · ' + d.leads + ' leads</div></div>' +
+          '<div class="c2-reg-info"><div class="c2-reg-name">' + REG_LABELS[k] + outlierNote + '</div><div class="c2-reg-sub">' + REG_SUBS[k] + ' · ' + d.leads + ' leads</div></div>' +
         '</div>' +
-        '<div class="c2-reg-days">' + (d.ciclo !== null ? d.ciclo + ' dias' : 'N/A') + '</div>' +
+        '<div style="text-align:right">' +
+          '<div class="c2-reg-days">' + (d.media !== null ? d.media + ' dias' : 'N/A') + '</div>' +
+          '<div class="c2-reg-med">' + (d.mediana !== null ? 'mediana ' + d.mediana + 'd' : '') + '</div>' +
+        '</div>' +
       '</div>' +
       '<div class="c2-bar-track" style="height:7px;"><div class="c2-bar-fill ' + REG_FILLS[k] + '" style="width:' + w + '%"></div></div>' +
       '</div>';
@@ -1175,7 +1239,9 @@ function renderCiclos() {
         '<td class="c2-td-num">' + d.leads + '</td>' +
         '<td class="c2-td-num">' + d.vendas + '</td>' +
         '<td class="c2-td-accent">' + d.conv.toFixed(1) + '%</td>' +
-        '<td class="c2-td-green">' + (d.ciclo !== null ? d.ciclo + 'd' : 'N/A') + '</td>' +
+        '<td class="c2-td-green">' + (d.media !== null ? d.media + 'd' : 'N/A') + '</td>' +
+        '<td class="c2-td-muted">' + (d.mediana !== null ? d.mediana + 'd' : '—') + '</td>' +
+        '<td class="c2-td-muted">' + (d.outliers > 0 ? d.outliers : '—') + '</td>' +
         '</tr>';
     }).join('');
   const detalheRowOutros =
@@ -1184,7 +1250,9 @@ function renderCiclos() {
       '<td class="c2-td-num" style="color:var(--muted)">—</td>' +
       '<td class="c2-td-num">' + outrosData.vendas + '</td>' +
       '<td class="c2-td-accent" style="color:var(--muted)">—</td>' +
-      '<td class="c2-td-green">' + (outrosData.ciclo !== null ? outrosData.ciclo + 'd' : 'N/A') + '</td>' +
+      '<td class="c2-td-green">' + (outrosData.media !== null ? outrosData.media + 'd' : 'N/A') + '</td>' +
+      '<td class="c2-td-muted">' + (outrosData.mediana !== null ? outrosData.mediana + 'd' : '—') + '</td>' +
+      '<td class="c2-td-muted">' + (outrosData.outliers > 0 ? outrosData.outliers : '—') + '</td>' +
     '</tr>';
   const detalheRows = detalheRowsConv + detalheRowOutros;
 
@@ -1198,7 +1266,7 @@ function renderCiclos() {
       '</div>',
       '<div class="c2-kpi" style="--ck:var(--accent)">',
         '<div class="c2-kpi-label">Melhor ciclo</div>',
-        '<div class="c2-kpi-value" style="color:var(--green)">' + (melhorCicloKey ? origData[melhorCicloKey].ciclo + ' dias' : 'N/A') + '</div>',
+        '<div class="c2-kpi-value" style="color:var(--green)">' + (melhorCicloKey ? origData[melhorCicloKey].media + ' dias' : 'N/A') + '</div>',
         '<div class="c2-kpi-sub">' + (melhorCicloKey ? ORIG_LABELS[melhorCicloKey] : '—') + '</div>',
       '</div>',
       '<div class="c2-kpi" style="--ck:var(--purple)">',
@@ -1207,9 +1275,9 @@ function renderCiclos() {
         '<div class="c2-kpi-sub">Meta ADS + Disparo + Orgânico</div>',
       '</div>',
       '<div class="c2-kpi" style="--ck:var(--pink)">',
-        '<div class="c2-kpi-label">Canal mais eficiente</div>',
-        '<div class="c2-kpi-value" style="color:var(--accent)">' + (melhorConvKey ? ORIG_LABELS[melhorConvKey] : '—') + '</div>',
-        '<div class="c2-kpi-sub">' + (melhorConvKey ? origData[melhorConvKey].conv.toFixed(1) + '% conversão' : '') + '</div>',
+        '<div class="c2-kpi-label">Mediana geral</div>',
+        '<div class="c2-kpi-value" style="color:var(--accent)">' + (medianaGeral !== null ? medianaGeral + ' dias' : 'N/A') + '</div>',
+        '<div class="c2-kpi-sub">' + (outliersGeral > 0 ? outliersGeral + ' outlier' + (outliersGeral > 1 ? 's' : '') + ' extremo' + (outliersGeral > 1 ? 's' : '') : 'sem outliers extremos') + '</div>',
       '</div>',
     '</div>',
     // Grid 2 colunas
@@ -1219,7 +1287,8 @@ function renderCiclos() {
         '<div class="c2-panel-title">Ciclo médio por origem</div>',
         cicloOrigemHtml,
         '<div class="c2-legend">',
-          '<div class="c2-legend-item"><div class="c2-legend-dot" style="background:rgba(0,208,132,0.3);border:1px solid var(--green)"></div>dias até fechar (criação negócio)</div>',
+          '<div class="c2-legend-item"><div class="c2-legend-dot" style="background:rgba(0,208,132,0.3);border:1px solid var(--green)"></div>média (dias até fechar, criação negócio)</div>',
+          '<div class="c2-legend-item"><div class="c2-legend-dot" style="background:rgba(255,184,0,0.3);border:1px solid var(--yellow)"></div>mediana</div>',
           '<div class="c2-legend-item"><div class="c2-legend-dot" style="background:rgba(79,128,255,0.3);border:1px solid var(--accent)"></div>conversão %</div>',
         '</div>',
       '</div>',
@@ -1240,11 +1309,21 @@ function renderCiclos() {
         '<div class="c2-panel-title">Detalhamento — leads × vendas</div>',
         '<div style="overflow:auto">',
           '<table class="c2-table">',
-            '<thead><tr><th>Origem</th><th>Leads</th><th>Vendas</th><th>Conv.</th><th>Ciclo</th></tr></thead>',
+            '<thead><tr><th>Origem</th><th>Leads</th><th>Vendas</th><th>Conv.</th><th>Média</th><th>Mediana</th><th>Outliers</th></tr></thead>',
             '<tbody>' + detalheRows + '</tbody>',
           '</table>',
         '</div>',
       '</div>',
+    '</div>',
+    // Painel de investigação — outliers extremos (>2x mediana do grupo)
+    '<div class="c2-panel">',
+      '<div class="c2-panel-title">Outliers extremos (ciclo &gt; 2× a mediana do grupo)</div>',
+      '<div class="c2-outlier-summary">',
+        '<div class="c2-outlier-item"><span class="c2-outlier-num">' + outliersGeral + '</span><span class="c2-outlier-label">no ciclo geral</span></div>',
+        '<div class="c2-outlier-item"><span class="c2-outlier-num">' + outliersOrigemTotal + '</span><span class="c2-outlier-label">somando todas as origens</span></div>',
+        '<div class="c2-outlier-item"><span class="c2-outlier-num">' + outliersRegiaoTotal + '</span><span class="c2-outlier-label">somando todas as regiões</span></div>',
+      '</div>',
+      '<div class="c2-outlier-note">Outlier extremo = venda cujo ciclo (lead → fechamento) é mais que o dobro da mediana do próprio grupo. O limite é recalculado para cada origem/região — não é um número fixo de dias.</div>',
     '</div>',
   ].join('');
 }
