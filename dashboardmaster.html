@@ -1003,10 +1003,12 @@ function c2FiltraVendas() {
   });
 }
 
-function c2CicloMedio(arr) {
+// campoData: 'data_criacao_deal' (ciclo por origem) ou
+//            'data_criacao_contato' (ciclo por região / ciclo geral)
+function c2CicloMedio(arr, campoData) {
   const dias = arr.map(v => {
-    const dv = v.data          ? new Date(v.data.slice(0,10)          + 'T12:00:00') : null;
-    const dc = v.data_criacao  ? new Date(v.data_criacao.slice(0,10)  + 'T12:00:00') : null;
+    const dv = v.data              ? new Date(v.data.slice(0,10)                 + 'T12:00:00') : null;
+    const dc = v[campoData]        ? new Date(v[campoData].toString().slice(0,10) + 'T12:00:00') : null;
     if (!dv || !dc || isNaN(dv) || isNaN(dc)) return null;
     const d = (dv - dc) / 86400000;
     return d >= 0 ? d : null;
@@ -1014,6 +1016,8 @@ function c2CicloMedio(arr) {
   return dias.length ? Math.round(dias.reduce((a,b) => a+b, 0) / dias.length) : null;
 }
 
+// 'outros' = sem origem real associada (não existe leads "Desconhecida" —
+// não comparamos com base de leads, só mostramos vendas e ciclo via contato)
 function c2OrigKey(v) {
   const o = (v.origem_enriquecida || v.origem || '').toLowerCase();
   if (o.includes('meta')) return 'meta';
@@ -1035,20 +1039,22 @@ function renderCiclos() {
 
   const vendas = c2FiltraVendas();
 
-  // Leads por origem/região — usa dashboard_data como fonte de verdade
+  // Leads por origem/região — usa dashboard_data como fonte de verdade.
+  // 'outros' (Desconhecida) NÃO tem base de leads própria — não é uma
+  // origem real, é só o que sobra de vendas sem origem nomeada. Por isso
+  // ela nunca entra nos cálculos de conversão, só em vendas/ciclo.
   const mes  = document.getElementById('c2FiltroPeriodo').value;
   const vend = document.getElementById('c2FiltroVendedor').value;
   let dashRows = dadosGlobais.filter(d =>
     (mes  === 'todos' || d.mes_ano === mes) &&
     (vend === 'todos' || d.vendedor === vend)
   );
-  const leadsO = { meta:0, disparo:0, organico:0, outros:0 };
+  const leadsO = { meta:0, disparo:0, organico:0 };
   const leadsR = { bh:0, interior:0, fora:0 };
   dashRows.forEach(r => {
     leadsO.meta      += +r.leads_meta          || 0;
     leadsO.disparo   += +r.leads_disparo       || 0;
     leadsO.organico  += +r.leads_organico      || 0;
-    leadsO.outros    += +r.leads_outros_origem || 0;
     leadsR.bh        += +r.leads_bh            || 0;
     leadsR.interior  += +r.leads_interior      || 0;
     leadsR.fora      += +r.leads_fora          || 0;
@@ -1064,6 +1070,7 @@ function renderCiclos() {
     if (rk) gR[rk].push(v);
   });
 
+  const ORIG_KEYS_COM_CONV = ['meta', 'disparo', 'organico']; // têm base de leads
   const ORIG_LABELS = { meta:'Meta ADS', disparo:'Disparo', organico:'Orgânico', outros:'Desconhecida' };
   const ORIG_CORES  = { meta:'#f736a8', disparo:'#ff7a30', organico:'#9b59f7', outros:'#6b7280' };
   const ORIG_FILLS  = { meta:'fill-meta', disparo:'fill-disparo', organico:'fill-organico', outros:'fill-outros' };
@@ -1072,42 +1079,57 @@ function renderCiclos() {
   const REG_FILLS   = { bh:'fill-bh', interior:'fill-interior', fora:'fill-fora' };
   const REG_SUBS    = { bh:'DDD 31', interior:'DDDs 30, 32–39', fora:'outros DDDs' };
 
-  // Calcular ciclos e conversões por origem
+  // Ciclo por ORIGEM usa "Criação negócio" (data_criacao_deal).
+  // 'outros' não tem negócio associado a uma origem real — usa
+  // "Criação contato" (data_criacao_contato) como única data disponível.
   const origData = {};
-  Object.keys(gO).forEach(k => {
-    const ciclo = c2CicloMedio(gO[k]);
+  ORIG_KEYS_COM_CONV.forEach(k => {
+    const ciclo = c2CicloMedio(gO[k], 'data_criacao_deal');
     const conv  = leadsO[k] > 0 ? (gO[k].length / leadsO[k] * 100) : 0;
     origData[k] = { ciclo, conv, vendas: gO[k].length, leads: leadsO[k] };
   });
+  const outrosData = {
+    ciclo:  c2CicloMedio(gO.outros, 'data_criacao_contato'),
+    vendas: gO.outros.length,
+  };
 
-  // Ciclos por região
+  // Ciclo por REGIÃO usa "Criação contato" (data_criacao_contato)
   const regData = {};
   Object.keys(gR).forEach(k => {
-    regData[k] = { ciclo: c2CicloMedio(gR[k]), leads: leadsR[k], vendas: gR[k].length };
+    regData[k] = { ciclo: c2CicloMedio(gR[k], 'data_criacao_contato'), leads: leadsR[k], vendas: gR[k].length };
   });
 
   // ── KPIs ──
-  const cicloGeral = c2CicloMedio(vendas);
-  const totalLeads = leadsO.meta + leadsO.disparo + leadsO.organico + leadsO.outros;
-  const convGeral  = totalLeads > 0 ? (vendas.length / totalLeads * 100) : 0;
+  // Ciclo GERAL usa "Criação contato" — mesma base que região
+  const cicloGeral = c2CicloMedio(vendas, 'data_criacao_contato');
+  const totalLeads = leadsO.meta + leadsO.disparo + leadsO.organico;
+  const totalVendasComOrigem = ORIG_KEYS_COM_CONV.reduce((s,k) => s + gO[k].length, 0);
+  const convGeral  = totalLeads > 0 ? (totalVendasComOrigem / totalLeads * 100) : 0;
 
-  const origComCiclo = Object.keys(origData).filter(k => origData[k].ciclo !== null)
+  const origComCiclo = ORIG_KEYS_COM_CONV.filter(k => origData[k].ciclo !== null)
     .sort((a,b) => origData[a].ciclo - origData[b].ciclo);
   const melhorCicloKey  = origComCiclo[0] || null;
-  const melhorConvKey   = Object.keys(origData).sort((a,b) => origData[b].conv - origData[a].conv)[0];
+  const melhorConvKey   = ORIG_KEYS_COM_CONV.slice().sort((a,b) => origData[b].conv - origData[a].conv)[0];
 
-  // ── Barras ciclo por origem ──
-  const maxCiclo = Math.max(...Object.keys(origData).map(k => origData[k].ciclo || 0), 1);
-  const cicloOrigemHtml = Object.keys(origData).map(k => {
-    const d = origData[k];
+  // ── Barras ciclo por origem (inclui 'outros' só com dias, sem % conversão) ──
+  const todasOrigKeys = [...ORIG_KEYS_COM_CONV, 'outros'];
+  const maxCiclo = Math.max(
+    ...ORIG_KEYS_COM_CONV.map(k => origData[k].ciclo || 0),
+    outrosData.ciclo || 0, 1
+  );
+  const cicloOrigemHtml = todasOrigKeys.map(k => {
+    const d = k === 'outros' ? outrosData : origData[k];
     const w = d.ciclo !== null ? Math.min((d.ciclo / maxCiclo) * 100, 100).toFixed(1) : 0;
     const daysTag = d.ciclo !== null
       ? '<span class="c2-tag c2-tag-days">' + d.ciclo + ' dias</span>'
       : '<span class="c2-tag c2-tag-na">N/A</span>';
+    const convTag = k === 'outros'
+      ? '<span class="c2-tag c2-tag-na">' + d.vendas + ' vendas</span>'
+      : '<span class="c2-tag c2-tag-conv">' + d.conv.toFixed(1) + '%</span>';
     return '<div class="c2-orig-row">' +
       '<span class="c2-orig-name">' + ORIG_LABELS[k] + '</span>' +
       '<div class="c2-bar-track"><div class="c2-bar-fill ' + ORIG_FILLS[k] + '" style="width:' + w + '%"></div></div>' +
-      '<div class="c2-tags">' + daysTag + '<span class="c2-tag c2-tag-conv">' + d.conv.toFixed(1) + '%</span></div>' +
+      '<div class="c2-tags">' + daysTag + convTag + '</div>' +
       '</div>';
   }).join('');
 
@@ -1128,9 +1150,9 @@ function renderCiclos() {
       '</div>';
   }).join('');
 
-  // ── Barras conversão por origem ──
-  const maxConv = Math.max(...Object.keys(origData).map(k => origData[k].conv), 1);
-  const convOrigemHtml = Object.keys(origData)
+  // ── Barras conversão por origem — apenas origens com base de leads ──
+  const maxConv = Math.max(...ORIG_KEYS_COM_CONV.map(k => origData[k].conv), 1);
+  const convOrigemHtml = ORIG_KEYS_COM_CONV
     .slice().sort((a,b) => origData[b].conv - origData[a].conv)
     .map(k => {
       const d = origData[k];
@@ -1143,8 +1165,8 @@ function renderCiclos() {
         '</div>';
     }).join('');
 
-  // ── Tabela detalhe ──
-  const detalheRows = Object.keys(origData)
+  // ── Tabela detalhe — origens com conversão primeiro, 'outros' por último sem % ──
+  const detalheRowsConv = ORIG_KEYS_COM_CONV
     .slice().sort((a,b) => origData[b].conv - origData[a].conv)
     .map(k => {
       const d = origData[k];
@@ -1156,6 +1178,15 @@ function renderCiclos() {
         '<td class="c2-td-green">' + (d.ciclo !== null ? d.ciclo + 'd' : 'N/A') + '</td>' +
         '</tr>';
     }).join('');
+  const detalheRowOutros =
+    '<tr>' +
+      '<td><span class="tag" style="background:' + ORIG_CORES.outros + '22;color:' + ORIG_CORES.outros + '">Desconhecida</span></td>' +
+      '<td class="c2-td-num" style="color:var(--muted)">—</td>' +
+      '<td class="c2-td-num">' + outrosData.vendas + '</td>' +
+      '<td class="c2-td-accent" style="color:var(--muted)">—</td>' +
+      '<td class="c2-td-green">' + (outrosData.ciclo !== null ? outrosData.ciclo + 'd' : 'N/A') + '</td>' +
+    '</tr>';
+  const detalheRows = detalheRowsConv + detalheRowOutros;
 
   document.getElementById('c2Content').innerHTML = [
     // KPIs
@@ -1163,7 +1194,7 @@ function renderCiclos() {
       '<div class="c2-kpi" style="--ck:var(--green)">',
         '<div class="c2-kpi-label">Ciclo médio geral</div>',
         '<div class="c2-kpi-value">' + (cicloGeral !== null ? cicloGeral + ' dias' : 'N/A') + '</div>',
-        '<div class="c2-kpi-sub">lead → fechamento</div>',
+        '<div class="c2-kpi-sub">contato → fechamento</div>',
       '</div>',
       '<div class="c2-kpi" style="--ck:var(--accent)">',
         '<div class="c2-kpi-label">Melhor ciclo</div>',
@@ -1173,7 +1204,7 @@ function renderCiclos() {
       '<div class="c2-kpi" style="--ck:var(--purple)">',
         '<div class="c2-kpi-label">Conversão geral</div>',
         '<div class="c2-kpi-value">' + convGeral.toFixed(1) + '%</div>',
-        '<div class="c2-kpi-sub">todos os canais</div>',
+        '<div class="c2-kpi-sub">Meta ADS + Disparo + Orgânico</div>',
       '</div>',
       '<div class="c2-kpi" style="--ck:var(--pink)">',
         '<div class="c2-kpi-label">Canal mais eficiente</div>',
@@ -1188,7 +1219,7 @@ function renderCiclos() {
         '<div class="c2-panel-title">Ciclo médio por origem</div>',
         cicloOrigemHtml,
         '<div class="c2-legend">',
-          '<div class="c2-legend-item"><div class="c2-legend-dot" style="background:rgba(0,208,132,0.3);border:1px solid var(--green)"></div>dias até fechar</div>',
+          '<div class="c2-legend-item"><div class="c2-legend-dot" style="background:rgba(0,208,132,0.3);border:1px solid var(--green)"></div>dias até fechar (criação negócio)</div>',
           '<div class="c2-legend-item"><div class="c2-legend-dot" style="background:rgba(79,128,255,0.3);border:1px solid var(--accent)"></div>conversão %</div>',
         '</div>',
       '</div>',
