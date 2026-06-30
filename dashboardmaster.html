@@ -55,6 +55,24 @@
   .header-right { display: flex; align-items: center; gap: 10px; }
   .last-updated { font-size: 12px; color: var(--muted); }
 
+  /* ── TABS ── */
+  .tabs-nav {
+    display: flex; gap: 0;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 32px;
+  }
+  .tab-nav-btn {
+    padding: 0 20px; height: 44px; background: none; border: none;
+    color: var(--muted2); font-family: 'Inter', sans-serif; font-size: 13px;
+    font-weight: 500; cursor: pointer; border-bottom: 2px solid transparent;
+    transition: color .15s, border-color .15s; white-space: nowrap;
+  }
+  .tab-nav-btn:hover { color: var(--text2); }
+  .tab-nav-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
   /* ── FILTERS BAR ── */
   .filters {
     display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end;
@@ -133,7 +151,6 @@
   .vendedor-name { font-weight: 700; font-size: 15px; }
   .vendedor-badge { font-size: 11px; padding: 3px 10px; border-radius: 20px; background: rgba(79,128,255,0.15); color: var(--accent); font-weight: 600; }
 
-  /* Stats row */
   .vendedor-body { padding: 16px 18px; display: flex; flex-direction: column; gap: 16px; flex: 1; }
   .stat-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
   .stat-item { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
@@ -143,7 +160,6 @@
   .stat-value.green { color: var(--green); }
   .stat-value.accent { color: var(--accent); }
 
-  /* ── CONV BARS ── */
   .conv-block { display: flex; flex-direction: column; gap: 9px; }
   .conv-block-title { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; font-weight: 600; }
   .conv-row { display: flex; flex-direction: column; gap: 4px; }
@@ -181,7 +197,7 @@
   .ver-vendas { font-size: 12px; color: var(--accent); font-weight: 600; display: flex; align-items: center; gap: 4px; }
   .footer-meta { font-size: 11px; color: var(--muted); }
 
-  /* ── MODAL CONVERSÕES ── */
+  /* ── MODAL ── */
   .modal-overlay {
     display: none; position: fixed; inset: 0;
     background: rgba(0,0,0,0.75); z-index: 1000;
@@ -208,7 +224,6 @@
   .modal-close:hover { color: var(--text); background: var(--surface3); }
   .modal-body { overflow-y: auto; flex: 1; }
 
-  /* Modal conversões — grid */
   .meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
   .meta-group { padding: 20px 24px; }
   .meta-group:first-child { border-right: 1px solid var(--border); }
@@ -235,7 +250,6 @@
     display: flex; align-items: center; font-size: 12px; color: var(--muted2);
   }
 
-  /* Tabela vendas */
   table { width: 100%; border-collapse: collapse; }
   thead th {
     padding: 12px 20px; text-align: left; font-size: 10px; color: var(--muted);
@@ -245,7 +259,6 @@
   tbody tr { border-bottom: 1px solid var(--border); transition: background 0.15s; }
   tbody tr:hover { background: var(--surface2); }
   tbody td { padding: 12px 20px; font-size: 13px; }
-  /* FIX ERRO 3: impede quebra de linha no valor monetário */
   tbody td.valor-cell { white-space: nowrap; }
   td.green { color: var(--green); font-weight: 700; }
   td.muted  { color: var(--muted2); }
@@ -256,15 +269,97 @@
   .tag-fora     { background: rgba(255,184,0,0.15); color: var(--yellow); }
   .tag-outros   { background: rgba(90,99,128,0.15); color: var(--muted2); }
 
-  /* Loading */
   .loading { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; padding: 80px; color: var(--muted); }
   .spinner { width: 30px; height: 30px; border: 2.5px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.75s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
   .empty { text-align: center; padding: 60px; color: var(--muted); }
   .empty strong { display: block; font-size: 16px; margin-bottom: 8px; color: var(--muted2); }
 
+  /* ═══════════════════════════════════════════════
+     ABA 2 — CICLOS & CONVERSÕES
+     ═══════════════════════════════════════════════ */
+  .c2-main { padding: 28px 32px; display: flex; flex-direction: column; gap: 20px; }
+
+  /* KPIs */
+  .c2-kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; }
+  .c2-kpi {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px 22px;
+    display: flex; flex-direction: column; gap: 6px;
+    position: relative; overflow: hidden;
+    transition: border-color .2s, transform .15s;
+  }
+  .c2-kpi::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: var(--ck, var(--accent));
+    border-radius: var(--radius) var(--radius) 0 0;
+  }
+  .c2-kpi:hover { border-color: var(--ck, var(--accent)); transform: translateY(-2px); }
+  .c2-kpi-label { font-size: 11px; color: var(--muted2); text-transform: uppercase; letter-spacing: 0.9px; font-weight: 600; }
+  .c2-kpi-value { font-size: 26px; font-weight: 800; color: var(--text); line-height: 1; letter-spacing: -1px; }
+  .c2-kpi-sub   { font-size: 12px; color: var(--muted); }
+
+  /* Painéis 2 colunas */
+  .c2-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 700px) { .c2-grid2 { grid-template-columns: 1fr; } }
+  .c2-panel {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px 22px;
+  }
+  .c2-panel-title {
+    font-size: 11px; font-weight: 700; color: var(--muted2);
+    text-transform: uppercase; letter-spacing: 1px; margin-bottom: 18px;
+  }
+
+  /* Barra de origem */
+  .c2-orig-row { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+  .c2-orig-row:last-child { margin-bottom: 0; }
+  .c2-orig-name { font-size: 13px; color: var(--text2); width: 86px; flex-shrink: 0; font-weight: 500; }
+  .c2-bar-track { flex: 1; background: var(--surface3); border-radius: 6px; height: 9px; overflow: hidden; }
+  .c2-bar-fill  { height: 100%; border-radius: 6px; transition: width .6s cubic-bezier(.4,0,.2,1); }
+  .c2-tags { display: flex; gap: 6px; flex-shrink: 0; }
+  .c2-tag { border-radius: 20px; padding: 2px 9px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+  .c2-tag-days { background: rgba(0,208,132,0.15); color: var(--green); }
+  .c2-tag-conv { background: rgba(79,128,255,0.15); color: var(--accent); }
+  .c2-tag-na   { background: rgba(90,99,128,0.12); color: var(--muted2); }
+
+  /* Região */
+  .c2-reg-row { margin-bottom: 16px; }
+  .c2-reg-row:last-child { margin-bottom: 0; }
+  .c2-reg-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+  .c2-reg-left { display: flex; align-items: center; gap: 8px; }
+  .c2-reg-dot  { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .c2-reg-info {}
+  .c2-reg-name { font-size: 13px; font-weight: 600; color: var(--text); }
+  .c2-reg-sub  { font-size: 11px; color: var(--muted); margin-top: 1px; }
+  .c2-reg-days { font-size: 15px; font-weight: 800; color: var(--text); }
+
+  /* Conversão */
+  .c2-conv-row { display: flex; align-items: center; gap: 8px; margin-bottom: 11px; }
+  .c2-conv-row:last-child { margin-bottom: 0; }
+  .c2-conv-dot  { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .c2-conv-name { font-size: 13px; color: var(--text2); width: 86px; flex-shrink: 0; }
+  .c2-conv-track { flex: 1; background: var(--surface3); border-radius: 6px; height: 8px; overflow: hidden; }
+  .c2-conv-bar   { height: 100%; border-radius: 6px; transition: width .6s cubic-bezier(.4,0,.2,1); }
+  .c2-conv-pct   { font-size: 13px; font-weight: 700; color: var(--text); width: 44px; text-align: right; }
+
+  /* Tabela detalhe */
+  .c2-table { width: 100%; border-collapse: collapse; }
+  .c2-table th { padding: 8px 12px; text-align: left; font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.9px; font-weight: 700; border-bottom: 1px solid var(--border); }
+  .c2-table td { padding: 10px 12px; font-size: 13px; border-bottom: 1px solid var(--border); }
+  .c2-table tr:last-child td { border-bottom: none; }
+  .c2-table td.c2-td-num { font-weight: 700; color: var(--text); }
+  .c2-table td.c2-td-green { font-weight: 700; color: var(--green); }
+  .c2-table td.c2-td-accent { font-weight: 700; color: var(--accent); }
+
+  /* Legenda */
+  .c2-legend { display: flex; gap: 16px; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border); }
+  .c2-legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--muted2); }
+  .c2-legend-dot  { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+
   @media (max-width: 640px) {
-    .header, .filters, .main { padding-left: 16px; padding-right: 16px; }
+    .header, .filters, .main, .c2-main { padding-left: 16px; padding-right: 16px; }
+    .tabs-nav { padding: 0 16px; }
     .meta-grid { grid-template-columns: 1fr; }
     .meta-group:first-child { border-right: none; border-bottom: 1px solid var(--border); }
   }
@@ -287,35 +382,71 @@
   </div>
 </div>
 
-<!-- FILTERS -->
-<div class="filters">
-  <div class="filter-group">
-    <span class="filter-label">Vendedor</span>
-    <select id="filtroVendedor"><option value="todos">Todos os vendedores</option></select>
-  </div>
-  <div class="filter-group">
-    <span class="filter-label">Período</span>
-    <select id="filtroPeriodo"><option value="todos">Todo o período</option></select>
-  </div>
-  <div class="filter-group" style="margin-left:auto">
-    <span class="filter-label">&nbsp;</span>
-    <div style="display:flex;gap:8px">
-      <button class="btn btn-ghost" onclick="abrirModalMetas()">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
-        Metas de Conversão
-      </button>
-      <button class="btn btn-primary" onclick="carregarDados()">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
-        Atualizar
-      </button>
-    </div>
-  </div>
+<!-- TABS NAV -->
+<div class="tabs-nav">
+  <button class="tab-nav-btn active" onclick="mudarAba('visao-geral', this)">Visão Geral</button>
+  <button class="tab-nav-btn" onclick="mudarAba('ciclos', this)">Ciclos &amp; Conversões</button>
 </div>
 
-<!-- MAIN -->
-<div class="main" id="mainContent">
-  <div class="loading"><div class="spinner"></div><span>Carregando dados...</span></div>
-</div>
+<!-- ═══════════════════════════════════════════
+     ABA 1 — VISÃO GERAL (original intacto)
+     ═══════════════════════════════════════════ -->
+<div class="tab-panel active" id="tab-visao-geral">
+
+  <!-- FILTERS -->
+  <div class="filters">
+    <div class="filter-group">
+      <span class="filter-label">Vendedor</span>
+      <select id="filtroVendedor"><option value="todos">Todos os vendedores</option></select>
+    </div>
+    <div class="filter-group">
+      <span class="filter-label">Período</span>
+      <select id="filtroPeriodo"><option value="todos">Todo o período</option></select>
+    </div>
+    <div class="filter-group" style="margin-left:auto">
+      <span class="filter-label">&nbsp;</span>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-ghost" onclick="abrirModalMetas()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+          Metas de Conversão
+        </button>
+        <button class="btn btn-primary" onclick="carregarDados()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+          Atualizar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main" id="mainContent">
+    <div class="loading"><div class="spinner"></div><span>Carregando dados...</span></div>
+  </div>
+
+</div><!-- /tab visão geral -->
+
+<!-- ═══════════════════════════════════════════
+     ABA 2 — CICLOS & CONVERSÕES
+     ═══════════════════════════════════════════ -->
+<div class="tab-panel" id="tab-ciclos">
+
+  <!-- FILTERS C2 -->
+  <div class="filters">
+    <div class="filter-group">
+      <span class="filter-label">Período (data da venda)</span>
+      <select id="c2FiltroPeriodo"><option value="todos">Todo o período</option></select>
+    </div>
+    <div class="filter-group">
+      <span class="filter-label">Vendedor</span>
+      <select id="c2FiltroVendedor"><option value="todos">Todos os vendedores</option></select>
+    </div>
+  </div>
+
+  <div class="c2-main" id="c2Content">
+    <div class="loading"><div class="spinner"></div><span>Aguardando dados...</span></div>
+  </div>
+
+</div><!-- /tab ciclos -->
 
 <!-- MODAL VENDAS -->
 <div class="modal-overlay" id="modalVendas" onclick="fecharModalVendas(event)">
@@ -375,7 +506,6 @@
           </div>
         </div>
       </div>
-      <!-- Campo de senha integrado -->
       <div style="padding:14px 24px;border-top:1px solid var(--border);display:flex;align-items:center;gap:10px">
         <span style="font-size:12px;color:var(--muted2);white-space:nowrap">Senha:</span>
         <input type="password" id="metaSenha" placeholder="Digite a senha para salvar"
@@ -396,10 +526,26 @@
 const API_URL = "https://script.google.com/macros/s/AKfycbwzzvjTdpjpFV9QrBG0bIL1NFaKYTkrPt4QeX-MktgGlWe5cSUAaGESSXt5Vhapucc0/exec";
 
 let dadosGlobais = [];
-
-// Metas por canal — carregadas da planilha (aba config), compartilhadas entre todos
 let metas = { meta_bh: 20, meta_interior: 20, meta_fora: 20, meta_meta: 20, meta_disparo: 20, meta_organico: 20, meta_outros: 10 };
 
+// Cache aba 2
+let c2Carregado = false;
+let c2Vendas    = [];
+
+/* ════════════════════════════════════
+   TROCA DE ABA
+   ════════════════════════════════════ */
+function mudarAba(id, btn) {
+  document.querySelectorAll('.tab-nav-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  if (id === 'ciclos') iniciarCiclos();
+}
+
+/* ════════════════════════════════════
+   FORMATOS (aba 1)
+   ════════════════════════════════════ */
 async function carregarConfig() {
   try {
     const res  = await fetch(API_URL + '?acao=config');
@@ -413,15 +559,13 @@ async function carregarConfig() {
 }
 
 async function salvarConfigRemoto(senha) {
-  const res  = await fetch(API_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'text/plain' },
+  const res = await fetch(API_URL, {
+    method: 'POST', headers: { 'Content-Type': 'text/plain' },
     body: JSON.stringify({ tipo: 'config', senha, metas }),
   });
   return await res.json();
 }
 
-// ── FORMATOS ──
 function formatMoeda(v) {
   if (v == null || v === '') return '—';
   const n = Number(v);
@@ -456,7 +600,9 @@ function tagRegiao(r) {
   return '<span class="tag tag-outros">—</span>';
 }
 
-// ── CARREGA ──
+/* ════════════════════════════════════
+   CARREGA DADOS — ABA 1
+   ════════════════════════════════════ */
 async function carregarDados() {
   document.getElementById('mainContent').innerHTML =
     '<div class="loading"><div class="spinner"></div><span>Carregando dados...</span></div>';
@@ -482,6 +628,14 @@ async function carregarDados() {
     selP.innerHTML = '<option value="todos">Todo o período</option>' +
       periodos.map(p => '<option value="' + p + '"' + (p === curP ? ' selected' : '') + '>' + formatMesAno(p) + '</option>').join('');
 
+    // Sincronizar selects da aba 2
+    const s2V = document.getElementById('c2FiltroVendedor');
+    const s2P = document.getElementById('c2FiltroPeriodo');
+    s2V.innerHTML = '<option value="todos">Todos os vendedores</option>' +
+      vendedores.map(v => '<option value="' + v + '">' + v + '</option>').join('');
+    s2P.innerHTML = '<option value="todos">Todo o período</option>' +
+      periodos.map(p => '<option value="' + p + '">' + formatMesAno(p) + '</option>').join('');
+
     renderizar();
   } catch(e) {
     document.getElementById('mainContent').innerHTML =
@@ -489,7 +643,9 @@ async function carregarDados() {
   }
 }
 
-// ── FILTRA / AGREGA ──
+/* ════════════════════════════════════
+   FILTRA / AGREGA — ABA 1
+   ════════════════════════════════════ */
 function dadosFiltrados() {
   const v = document.getElementById('filtroVendedor').value;
   const p = document.getElementById('filtroPeriodo').value;
@@ -529,7 +685,6 @@ function agregar(rows) {
 }
 function pct(v, l) { return l > 0 ? (v / l * 100) : 0; }
 
-// ── BARRA PADRÃO (% conversão) — clicável por origem ──
 function barRow(label, pctVal, fillClass, vendas, leads, metaVal, vendedor, periodo, origem) {
   const escala     = Math.max(pctVal, metaVal, 1) * 1.25;
   const fillW      = Math.min((pctVal / escala) * 100, 100).toFixed(1);
@@ -554,7 +709,6 @@ function barRow(label, pctVal, fillClass, vendas, leads, metaVal, vendedor, peri
   ].join('');
 }
 
-// ── BARRA ABSOLUTA (nº de vendas vs meta) — clicável ──
 function barRowAbsoluto(label, vendas, fillClass, metaVendas, vendedor, periodo, origem) {
   const escala     = Math.max(vendas, metaVendas, 1) * 1.25;
   const fillW      = Math.min((vendas / escala) * 100, 100).toFixed(1);
@@ -616,13 +770,12 @@ function renderizar() {
   const cardsHtml = ordenados.map(v => {
     const totalL = v.leads_bh + v.leads_interior + v.leads_fora;
     const ticketQualif = v.num_vendas_qualif > 0 ? v.valor_vendido_qualif / v.num_vendas_qualif : 0;
-    const convB  = pct(v.vendas_bh,            v.leads_bh);
-    const convI  = pct(v.vendas_interior,       v.leads_interior);
-    const convF  = pct(v.vendas_fora,           v.leads_fora);
-    const convM  = pct(v.vendas_meta,           v.leads_meta);
-    const convD  = pct(v.vendas_disparo,        v.leads_disparo);
-    const convO  = pct(v.vendas_organico,       v.leads_organico);
-
+    const convB = pct(v.vendas_bh,       v.leads_bh);
+    const convI = pct(v.vendas_interior, v.leads_interior);
+    const convF = pct(v.vendas_fora,     v.leads_fora);
+    const convM = pct(v.vendas_meta,     v.leads_meta);
+    const convD = pct(v.vendas_disparo,  v.leads_disparo);
+    const convO = pct(v.vendas_organico, v.leads_organico);
     return [
       '<div class="vendedor-card" data-vendedor="' + v.nome.replace(/"/g,'&quot;') + '" data-periodo="' + filtroP + '" onclick="abrirVendas(this.dataset.vendedor, this.dataset.periodo)">',
         '<div class="vendedor-header">',
@@ -643,9 +796,9 @@ function renderizar() {
           '</div>',
           '<div class="conv-block">',
             '<div class="conv-block-title">Conversão por Origem</div>',
-            barRow('Meta ADS',      convM, 'fill-meta',     v.vendas_meta,          v.leads_meta,          metas.meta_meta,     v.nome, filtroP, 'Meta ADS'),
-            barRow('Disparo',       convD, 'fill-disparo',  v.vendas_disparo,       v.leads_disparo,       metas.meta_disparo,  v.nome, filtroP, 'Disparo'),
-            barRow('Orgânico',      convO, 'fill-organico', v.vendas_organico,      v.leads_organico,      metas.meta_organico, v.nome, filtroP, 'Orgânico'),
+            barRow('Meta ADS',  convM, 'fill-meta',     v.vendas_meta,          v.leads_meta,          metas.meta_meta,     v.nome, filtroP, 'Meta ADS'),
+            barRow('Disparo',   convD, 'fill-disparo',  v.vendas_disparo,       v.leads_disparo,       metas.meta_disparo,  v.nome, filtroP, 'Disparo'),
+            barRow('Orgânico',  convO, 'fill-organico', v.vendas_organico,      v.leads_organico,      metas.meta_organico, v.nome, filtroP, 'Orgânico'),
             barRowAbsoluto('Desconhecida', v.vendas_outros_origem, 'fill-outros', metas.meta_outros, v.nome, filtroP, 'Desconhecida'),
           '</div>',
         '</div>',
@@ -663,7 +816,9 @@ function renderizar() {
     '<div class="vendedor-grid">' + cardsHtml + '</div></div>';
 }
 
-// ── MODAL METAS ──
+/* ════════════════════════════════════
+   MODAL METAS — ABA 1
+   ════════════════════════════════════ */
 function abrirModalMetas() {
   document.getElementById('meta_bh').value       = metas.meta_bh;
   document.getElementById('meta_interior').value = metas.meta_interior;
@@ -687,14 +842,7 @@ async function aplicarMetas() {
   const senha = document.getElementById('metaSenha').value.trim();
   const erro  = document.getElementById('metaMsgErro');
   const btn   = document.getElementById('btnAplicarMetas');
-
-  if (!senha) {
-    erro.textContent = 'Digite a senha';
-    erro.style.display = 'block';
-    document.getElementById('metaSenha').focus();
-    return;
-  }
-
+  if (!senha) { erro.textContent = 'Digite a senha'; erro.style.display = 'block'; document.getElementById('metaSenha').focus(); return; }
   const read = id => { const v = parseFloat(document.getElementById(id).value); return isNaN(v) ? 20 : Math.max(0, Math.min(100, v)); };
   metas.meta_bh       = read('meta_bh');
   metas.meta_interior = read('meta_interior');
@@ -703,67 +851,42 @@ async function aplicarMetas() {
   metas.meta_disparo  = read('meta_disparo');
   metas.meta_organico = read('meta_organico');
   metas.meta_outros   = read('meta_outros');
-
-  btn.textContent = 'Salvando...';
-  btn.disabled = true;
-  erro.style.display = 'none';
-
+  btn.textContent = 'Salvando...'; btn.disabled = true; erro.style.display = 'none';
   try {
     const resp = await salvarConfigRemoto(senha);
     if (resp.ok !== true) {
       erro.textContent = resp.erro ? resp.erro : 'Senha incorreta ou erro ao salvar';
-      erro.style.display = 'block';
-      btn.textContent = 'Salvar metas';
-      btn.disabled = false;
-      document.getElementById('metaSenha').value = '';
-      document.getElementById('metaSenha').focus();
-      return;
+      erro.style.display = 'block'; btn.textContent = 'Salvar metas'; btn.disabled = false;
+      document.getElementById('metaSenha').value = ''; document.getElementById('metaSenha').focus(); return;
     }
-  } catch(e) {
-    erro.textContent = 'Erro de conexão';
-    erro.style.display = 'block';
-    btn.textContent = 'Salvar metas';
-    btn.disabled = false;
-    return;
-  }
-
+  } catch(e) { erro.textContent = 'Erro de conexão'; erro.style.display = 'block'; btn.textContent = 'Salvar metas'; btn.disabled = false; return; }
   btn.textContent = '✓ Salvo!';
-  setTimeout(() => {
-    document.getElementById('modalMetas').classList.remove('open');
-    btn.textContent = 'Salvar metas';
-    btn.disabled = false;
-    renderizar();
-  }, 800);
+  setTimeout(() => { document.getElementById('modalMetas').classList.remove('open'); btn.textContent = 'Salvar metas'; btn.disabled = false; renderizar(); }, 800);
 }
 
-// ── MODAL VENDAS POR ORIGEM ──
+/* ════════════════════════════════════
+   MODAL VENDAS — ABA 1
+   ════════════════════════════════════ */
 function abrirVendasOrigem(vendedor, mesAno, origem) {
   document.getElementById('modalVendasTitle').textContent = vendedor + ' — ' + origem;
   document.getElementById('modalVendasSub').textContent   = mesAno === 'todos' ? 'Todo o período' : formatMesAno(mesAno);
   document.getElementById('modalVendasBody').innerHTML    =
     '<div class="loading"><div class="spinner"></div><span>Carregando vendas...</span></div>';
   document.getElementById('modalVendas').classList.add('open');
-
   let url = API_URL + '?acao=vendas_detalhe&vendedor=' + encodeURIComponent(vendedor) + '&origem=' + encodeURIComponent(origem);
   if (mesAno && mesAno !== 'todos') url += '&mes_ano=' + encodeURIComponent(mesAno);
-
   _carregarModalVendas(url);
 }
-
-// ── MODAL VENDAS (todas) ──
 async function abrirVendas(vendedor, mesAno) {
   document.getElementById('modalVendasTitle').textContent = vendedor;
   document.getElementById('modalVendasSub').textContent   = mesAno === 'todos' ? 'Todo o período' : formatMesAno(mesAno);
   document.getElementById('modalVendasBody').innerHTML    =
     '<div class="loading"><div class="spinner"></div><span>Carregando vendas...</span></div>';
   document.getElementById('modalVendas').classList.add('open');
-
   let url = API_URL + '?acao=vendas_detalhe&vendedor=' + encodeURIComponent(vendedor);
   if (mesAno && mesAno !== 'todos') url += '&mes_ano=' + encodeURIComponent(mesAno);
-
   _carregarModalVendas(url);
 }
-
 async function _carregarModalVendas(url) {
   try {
     const res  = await fetch(url);
@@ -771,32 +894,24 @@ async function _carregarModalVendas(url) {
     console.log('[abrirVendas] URL:', url);
     console.log('[abrirVendas] Status:', res.status);
     console.log('[abrirVendas] Resposta bruta:', text.substring(0, 300));
-
     let dados;
     try {
       const parsed = JSON.parse(text);
-      console.log('[abrirVendas] Parsed:', parsed);
-      if (Array.isArray(parsed)) {
-        dados = parsed;
-      } else if (parsed && Array.isArray(parsed.data)) {
-        dados = parsed.data;
-      } else if (parsed && parsed.status === 'error') {
-        throw new Error(parsed.msg || 'Erro retornado pelo servidor');
-      } else {
+      if (Array.isArray(parsed)) { dados = parsed; }
+      else if (parsed && Array.isArray(parsed.data)) { dados = parsed.data; }
+      else if (parsed && parsed.status === 'error') { throw new Error(parsed.msg || 'Erro retornado pelo servidor'); }
+      else {
         document.getElementById('modalVendasBody').innerHTML =
           '<div class="empty"><strong>Resposta inesperada do servidor</strong>' +
-          '<pre style="margin-top:12px;font-size:11px;color:var(--muted2);text-align:left;white-space:pre-wrap;word-break:break-all">' +
-          text.substring(0, 500) + '</pre></div>';
+          '<pre style="margin-top:12px;font-size:11px;color:var(--muted2);text-align:left;white-space:pre-wrap;word-break:break-all">' + text.substring(0, 500) + '</pre></div>';
         return;
       }
     } catch(parseErr) {
       document.getElementById('modalVendasBody').innerHTML =
         '<div class="empty"><strong>Erro ao interpretar resposta</strong>' +
-        '<pre style="margin-top:12px;font-size:11px;color:var(--muted2);text-align:left;white-space:pre-wrap;word-break:break-all">' +
-        text.substring(0, 500) + '</pre></div>';
+        '<pre style="margin-top:12px;font-size:11px;color:var(--muted2);text-align:left;white-space:pre-wrap;word-break:break-all">' + text.substring(0, 500) + '</pre></div>';
       return;
     }
-
     if (!dados || !dados.length) {
       document.getElementById('modalVendasBody').innerHTML =
         '<div class="empty"><strong>Nenhuma venda encontrada</strong>' +
@@ -805,15 +920,9 @@ async function _carregarModalVendas(url) {
         '<pre style="margin-top:8px;font-size:10px;color:var(--muted2);white-space:pre-wrap;word-break:break-all">' + text.substring(0, 800) + '</pre></details></div>';
       return;
     }
-
     dados.sort((a, b) => new Date(b.data) - new Date(a.data));
-
-    // FIX ERRO 2: soma apenas vendas qualificadas (>= R$2.000) para bater com o card
     const totalModal = dados.reduce((s, d) => s + (Number(d.valorLiquido) || 0), 0);
     window._vendasModal = dados;
-
-    // FIX ERRO 3: célula valor usa classe valor-cell (white-space: nowrap no CSS)
-    // FIX ERRO 1: coluna Origem exibe a origem real de cada venda
     const rows = dados.map((d, i) =>
       '<tr id="vr-' + i + '">' +
         '<td>' + (d.nome || '—') + '</td>' +
@@ -825,22 +934,18 @@ async function _carregarModalVendas(url) {
         '<td><button onclick="deletarVenda(' + i + ',this)" style="background:none;border:1px solid var(--border);color:var(--muted);padding:3px 9px;border-radius:6px;cursor:pointer;font-size:11px;transition:all 0.2s" onmouseover="this.style.borderColor=\'var(--red)\';this.style.color=\'var(--red)\'" onmouseout="this.style.borderColor=\'var(--border)\';this.style.color=\'var(--muted)\'">🗑 Apagar</button></td>' +
       '</tr>'
     ).join('');
-
     document.getElementById('modalVendasBody').innerHTML =
       '<div style="padding:12px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">' +
         '<span style="font-size:12px;color:var(--muted)" id="modalCount">' + dados.length + ' vendas encontradas</span>' +
         '<span style="font-size:14px;font-weight:700;color:var(--green)" id="modalTotal">R$&nbsp;' + formatMoeda(totalModal) + '</span>' +
       '</div>' +
-      // FIX ERRO 1: cabeçalho com coluna Origem
       '<table><thead><tr><th>Nome</th><th>Telefone</th><th>Data</th><th>Valor</th><th>Região</th><th>Origem</th><th></th></tr></thead>' +
       '<tbody>' + rows + '</tbody></table>';
-
   } catch(e) {
     document.getElementById('modalVendasBody').innerHTML =
       '<div class="empty"><strong>Erro ao carregar</strong>' + e.message + '</div>';
   }
 }
-
 async function deletarVenda(idx, btn) {
   const venda = window._vendasModal[idx];
   if (!venda) return;
@@ -862,15 +967,267 @@ async function deletarVenda(idx, btn) {
     } else { alert(resp.erro ? 'Erro: ' + resp.erro : 'Senha incorreta ou venda não encontrada.'); btn.disabled = false; btn.textContent = '🗑 Apagar'; }
   } catch(e) { alert('Erro ao apagar: ' + e.message); btn.disabled = false; btn.textContent = '🗑 Apagar'; }
 }
-
 function fecharModalVendas(e) {
   if (!e || e.target === document.getElementById('modalVendas'))
     document.getElementById('modalVendas').classList.remove('open');
 }
 
-document.addEventListener('keydown', e => { if (e.key === 'Escape') { fecharModalVendas(); fecharModalMetas(); } });
+/* ════════════════════════════════════
+   ABA 2 — CICLOS & CONVERSÕES
+   ════════════════════════════════════ */
+async function iniciarCiclos() {
+  if (c2Carregado) { renderCiclos(); return; }
+  document.getElementById('c2Content').innerHTML =
+    '<div class="loading"><div class="spinner"></div><span>Carregando vendas para análise de ciclos...</span></div>';
+  try {
+    const res = await fetch(API_URL + '?acao=vendas_detalhe');
+    c2Vendas    = await res.json();
+    c2Carregado = true;
+  } catch(e) {
+    document.getElementById('c2Content').innerHTML =
+      '<div class="empty"><strong>Erro ao carregar vendas</strong>' + e.message + '</div>';
+    return;
+  }
+  renderCiclos();
+}
+
+function c2FiltraVendas() {
+  const mes  = document.getElementById('c2FiltroPeriodo').value;
+  const vend = document.getElementById('c2FiltroVendedor').value;
+  return (c2Vendas || []).filter(v => {
+    // Filtro por data da venda
+    const mesV = v.data ? v.data.slice(0,7) : '';
+    if (mes  !== 'todos' && mesV !== mes) return false;
+    if (vend !== 'todos' && v.responsavel !== vend) return false;
+    return true;
+  });
+}
+
+function c2CicloMedio(arr) {
+  const dias = arr.map(v => {
+    const dv = v.data          ? new Date(v.data.slice(0,10)          + 'T12:00:00') : null;
+    const dc = v.data_criacao  ? new Date(v.data_criacao.slice(0,10)  + 'T12:00:00') : null;
+    if (!dv || !dc || isNaN(dv) || isNaN(dc)) return null;
+    const d = (dv - dc) / 86400000;
+    return d >= 0 ? d : null;
+  }).filter(d => d !== null);
+  return dias.length ? Math.round(dias.reduce((a,b) => a+b, 0) / dias.length) : null;
+}
+
+function c2OrigKey(v) {
+  const o = (v.origem_enriquecida || v.origem || '').toLowerCase();
+  if (o.includes('meta')) return 'meta';
+  if (o.includes('disparo')) return 'disparo';
+  if (o.includes('org')) return 'organico';
+  return 'outros';
+}
+
+function c2RegKey(v) {
+  const r = (v.regiao || '').toLowerCase();
+  if (r.includes('bh') || r === 'bh') return 'bh';
+  if (r.includes('interior')) return 'interior';
+  if (r.includes('fora')) return 'fora';
+  return null;
+}
+
+function renderCiclos() {
+  if (!c2Carregado) return;
+
+  const vendas = c2FiltraVendas();
+
+  // Leads por origem/região — usa dashboard_data como fonte de verdade
+  const mes  = document.getElementById('c2FiltroPeriodo').value;
+  const vend = document.getElementById('c2FiltroVendedor').value;
+  let dashRows = dadosGlobais.filter(d =>
+    (mes  === 'todos' || d.mes_ano === mes) &&
+    (vend === 'todos' || d.vendedor === vend)
+  );
+  const leadsO = { meta:0, disparo:0, organico:0, outros:0 };
+  const leadsR = { bh:0, interior:0, fora:0 };
+  dashRows.forEach(r => {
+    leadsO.meta      += +r.leads_meta          || 0;
+    leadsO.disparo   += +r.leads_disparo       || 0;
+    leadsO.organico  += +r.leads_organico      || 0;
+    leadsO.outros    += +r.leads_outros_origem || 0;
+    leadsR.bh        += +r.leads_bh            || 0;
+    leadsR.interior  += +r.leads_interior      || 0;
+    leadsR.fora      += +r.leads_fora          || 0;
+  });
+
+  // Agrupa vendas por origem e região
+  const gO = { meta:[], disparo:[], organico:[], outros:[] };
+  const gR = { bh:[], interior:[], fora:[] };
+  vendas.forEach(v => {
+    const ok = c2OrigKey(v);
+    gO[ok].push(v);
+    const rk = c2RegKey(v);
+    if (rk) gR[rk].push(v);
+  });
+
+  const ORIG_LABELS = { meta:'Meta ADS', disparo:'Disparo', organico:'Orgânico', outros:'Desconhecida' };
+  const ORIG_CORES  = { meta:'#f736a8', disparo:'#ff7a30', organico:'#9b59f7', outros:'#6b7280' };
+  const ORIG_FILLS  = { meta:'fill-meta', disparo:'fill-disparo', organico:'fill-organico', outros:'fill-outros' };
+  const REG_LABELS  = { bh:'BH', interior:'Interior MG', fora:'Fora do estado' };
+  const REG_CORES   = { bh:'#4f80ff', interior:'#00d084', fora:'#ffb800' };
+  const REG_FILLS   = { bh:'fill-bh', interior:'fill-interior', fora:'fill-fora' };
+  const REG_SUBS    = { bh:'DDD 31', interior:'DDDs 30, 32–39', fora:'outros DDDs' };
+
+  // Calcular ciclos e conversões por origem
+  const origData = {};
+  Object.keys(gO).forEach(k => {
+    const ciclo = c2CicloMedio(gO[k]);
+    const conv  = leadsO[k] > 0 ? (gO[k].length / leadsO[k] * 100) : 0;
+    origData[k] = { ciclo, conv, vendas: gO[k].length, leads: leadsO[k] };
+  });
+
+  // Ciclos por região
+  const regData = {};
+  Object.keys(gR).forEach(k => {
+    regData[k] = { ciclo: c2CicloMedio(gR[k]), leads: leadsR[k], vendas: gR[k].length };
+  });
+
+  // ── KPIs ──
+  const cicloGeral = c2CicloMedio(vendas);
+  const totalLeads = leadsO.meta + leadsO.disparo + leadsO.organico + leadsO.outros;
+  const convGeral  = totalLeads > 0 ? (vendas.length / totalLeads * 100) : 0;
+
+  const origComCiclo = Object.keys(origData).filter(k => origData[k].ciclo !== null)
+    .sort((a,b) => origData[a].ciclo - origData[b].ciclo);
+  const melhorCicloKey  = origComCiclo[0] || null;
+  const melhorConvKey   = Object.keys(origData).sort((a,b) => origData[b].conv - origData[a].conv)[0];
+
+  // ── Barras ciclo por origem ──
+  const maxCiclo = Math.max(...Object.keys(origData).map(k => origData[k].ciclo || 0), 1);
+  const cicloOrigemHtml = Object.keys(origData).map(k => {
+    const d = origData[k];
+    const w = d.ciclo !== null ? Math.min((d.ciclo / maxCiclo) * 100, 100).toFixed(1) : 0;
+    const daysTag = d.ciclo !== null
+      ? '<span class="c2-tag c2-tag-days">' + d.ciclo + ' dias</span>'
+      : '<span class="c2-tag c2-tag-na">N/A</span>';
+    return '<div class="c2-orig-row">' +
+      '<span class="c2-orig-name">' + ORIG_LABELS[k] + '</span>' +
+      '<div class="c2-bar-track"><div class="c2-bar-fill ' + ORIG_FILLS[k] + '" style="width:' + w + '%"></div></div>' +
+      '<div class="c2-tags">' + daysTag + '<span class="c2-tag c2-tag-conv">' + d.conv.toFixed(1) + '%</span></div>' +
+      '</div>';
+  }).join('');
+
+  // ── Barras ciclo por região ──
+  const maxCicloReg = Math.max(...Object.keys(regData).map(k => regData[k].ciclo || 0), 1);
+  const cicloRegiaoHtml = Object.keys(regData).map(k => {
+    const d = regData[k];
+    const w = d.ciclo !== null ? Math.min((d.ciclo / maxCicloReg) * 100, 100).toFixed(1) : 0;
+    return '<div class="c2-reg-row">' +
+      '<div class="c2-reg-head">' +
+        '<div class="c2-reg-left">' +
+          '<div class="c2-reg-dot" style="background:' + REG_CORES[k] + '"></div>' +
+          '<div class="c2-reg-info"><div class="c2-reg-name">' + REG_LABELS[k] + '</div><div class="c2-reg-sub">' + REG_SUBS[k] + ' · ' + d.leads + ' leads</div></div>' +
+        '</div>' +
+        '<div class="c2-reg-days">' + (d.ciclo !== null ? d.ciclo + ' dias' : 'N/A') + '</div>' +
+      '</div>' +
+      '<div class="c2-bar-track" style="height:7px;"><div class="c2-bar-fill ' + REG_FILLS[k] + '" style="width:' + w + '%"></div></div>' +
+      '</div>';
+  }).join('');
+
+  // ── Barras conversão por origem ──
+  const maxConv = Math.max(...Object.keys(origData).map(k => origData[k].conv), 1);
+  const convOrigemHtml = Object.keys(origData)
+    .slice().sort((a,b) => origData[b].conv - origData[a].conv)
+    .map(k => {
+      const d = origData[k];
+      const w = (d.conv / maxConv * 100).toFixed(1);
+      return '<div class="c2-conv-row">' +
+        '<div class="c2-conv-dot" style="background:' + ORIG_CORES[k] + '"></div>' +
+        '<span class="c2-conv-name">' + ORIG_LABELS[k] + '</span>' +
+        '<div class="c2-conv-track"><div class="c2-conv-bar ' + ORIG_FILLS[k] + '" style="width:' + w + '%"></div></div>' +
+        '<span class="c2-conv-pct">' + d.conv.toFixed(1) + '%</span>' +
+        '</div>';
+    }).join('');
+
+  // ── Tabela detalhe ──
+  const detalheRows = Object.keys(origData)
+    .slice().sort((a,b) => origData[b].conv - origData[a].conv)
+    .map(k => {
+      const d = origData[k];
+      return '<tr>' +
+        '<td><span class="tag" style="background:' + ORIG_CORES[k] + '22;color:' + ORIG_CORES[k] + '">' + ORIG_LABELS[k] + '</span></td>' +
+        '<td class="c2-td-num">' + d.leads + '</td>' +
+        '<td class="c2-td-num">' + d.vendas + '</td>' +
+        '<td class="c2-td-accent">' + d.conv.toFixed(1) + '%</td>' +
+        '<td class="c2-td-green">' + (d.ciclo !== null ? d.ciclo + 'd' : 'N/A') + '</td>' +
+        '</tr>';
+    }).join('');
+
+  document.getElementById('c2Content').innerHTML = [
+    // KPIs
+    '<div class="c2-kpi-grid">',
+      '<div class="c2-kpi" style="--ck:var(--green)">',
+        '<div class="c2-kpi-label">Ciclo médio geral</div>',
+        '<div class="c2-kpi-value">' + (cicloGeral !== null ? cicloGeral + ' dias' : 'N/A') + '</div>',
+        '<div class="c2-kpi-sub">lead → fechamento</div>',
+      '</div>',
+      '<div class="c2-kpi" style="--ck:var(--accent)">',
+        '<div class="c2-kpi-label">Melhor ciclo</div>',
+        '<div class="c2-kpi-value" style="color:var(--green)">' + (melhorCicloKey ? origData[melhorCicloKey].ciclo + ' dias' : 'N/A') + '</div>',
+        '<div class="c2-kpi-sub">' + (melhorCicloKey ? ORIG_LABELS[melhorCicloKey] : '—') + '</div>',
+      '</div>',
+      '<div class="c2-kpi" style="--ck:var(--purple)">',
+        '<div class="c2-kpi-label">Conversão geral</div>',
+        '<div class="c2-kpi-value">' + convGeral.toFixed(1) + '%</div>',
+        '<div class="c2-kpi-sub">todos os canais</div>',
+      '</div>',
+      '<div class="c2-kpi" style="--ck:var(--pink)">',
+        '<div class="c2-kpi-label">Canal mais eficiente</div>',
+        '<div class="c2-kpi-value" style="color:var(--accent)">' + (melhorConvKey ? ORIG_LABELS[melhorConvKey] : '—') + '</div>',
+        '<div class="c2-kpi-sub">' + (melhorConvKey ? origData[melhorConvKey].conv.toFixed(1) + '% conversão' : '') + '</div>',
+      '</div>',
+    '</div>',
+    // Grid 2 colunas
+    '<div class="c2-grid2">',
+      // Ciclo por origem
+      '<div class="c2-panel">',
+        '<div class="c2-panel-title">Ciclo médio por origem</div>',
+        cicloOrigemHtml,
+        '<div class="c2-legend">',
+          '<div class="c2-legend-item"><div class="c2-legend-dot" style="background:rgba(0,208,132,0.3);border:1px solid var(--green)"></div>dias até fechar</div>',
+          '<div class="c2-legend-item"><div class="c2-legend-dot" style="background:rgba(79,128,255,0.3);border:1px solid var(--accent)"></div>conversão %</div>',
+        '</div>',
+      '</div>',
+      // Ciclo por região
+      '<div class="c2-panel">',
+        '<div class="c2-panel-title">Ciclo médio por região</div>',
+        cicloRegiaoHtml,
+      '</div>',
+    '</div>',
+    '<div class="c2-grid2">',
+      // Conversão por origem
+      '<div class="c2-panel">',
+        '<div class="c2-panel-title">Conversão por origem</div>',
+        convOrigemHtml,
+      '</div>',
+      // Tabela
+      '<div class="c2-panel">',
+        '<div class="c2-panel-title">Detalhamento — leads × vendas</div>',
+        '<div style="overflow:auto">',
+          '<table class="c2-table">',
+            '<thead><tr><th>Origem</th><th>Leads</th><th>Vendas</th><th>Conv.</th><th>Ciclo</th></tr></thead>',
+            '<tbody>' + detalheRows + '</tbody>',
+          '</table>',
+        '</div>',
+      '</div>',
+    '</div>',
+  ].join('');
+}
+
+/* ════════════════════════════════════
+   LISTENERS GLOBAIS
+   ════════════════════════════════════ */
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { fecharModalVendas(); fecharModalMetas(); }
+});
 document.getElementById('filtroVendedor').addEventListener('change', renderizar);
 document.getElementById('filtroPeriodo').addEventListener('change', renderizar);
+document.getElementById('c2FiltroPeriodo').addEventListener('change', renderCiclos);
+document.getElementById('c2FiltroVendedor').addEventListener('change', renderCiclos);
 
 carregarDados();
 </script>
