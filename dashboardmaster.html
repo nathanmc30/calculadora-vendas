@@ -1373,12 +1373,27 @@ function renderCiclos() {
   });
 
   // ── KPIs ──
-  // Ciclo GERAL usa "Criação contato" — mesma base que região
+  // Os 4 cards do cabeçalho (Ciclo médio geral, Melhor ciclo, Mediana
+  // geral, Média ponderada geral) usam SEMPRE "Criação contato" — decisão
+  // tomada para simplificar: evitar que o cabeçalho misture dois campos
+  // de data diferentes (negócio vs contato) e fique confuso de explicar.
+  // Tudo abaixo do cabeçalho (painéis de origem, região, histogramas,
+  // moda) continua usando o critério original: negócio para origem,
+  // contato para região — essa parte NÃO foi alterada.
   const geralStats = c2StatsCiclo(vendas, 'data_criacao_contato');
 
-  const origComMedia = ORIG_KEYS.filter(k => k !== 'outros' && origData[k].media !== null)
-    .sort((a,b) => origData[a].media - origData[b].media);
-  const melhorCicloKey = origComMedia[0] || null;
+  // "Melhor ciclo" agora é calculado independente das origens (que usam
+  // negócio) — recalcula a média por origem usando CONTATO só para achar
+  // qual delas tem o menor ciclo, sem reutilizar origData (que é negócio).
+  const origStatsContato = {};
+  ORIG_KEYS.forEach(k => {
+    if (k === 'outros') return; // Desconhecida não compete por "melhor ciclo"
+    origStatsContato[k] = c2StatsCiclo(gO[k], 'data_criacao_contato');
+  });
+  const origComMediaContato = ORIG_KEYS.filter(k => k !== 'outros' && origStatsContato[k] && origStatsContato[k].media !== null)
+    .sort((a,b) => origStatsContato[a].media - origStatsContato[b].media);
+  const melhorCicloKey = origComMediaContato[0] || null;
+  const melhorCicloValor = melhorCicloKey ? origStatsContato[melhorCicloKey].media : null;
 
   // Total de outliers extremos em todos os grupos (origem + região), para o painel de investigação
   const outliersOrigemTotal = ORIG_KEYS.reduce((s,k) => s + origData[k].outliers, 0);
@@ -1507,7 +1522,7 @@ function renderCiclos() {
       '</div>',
       '<div class="c2-kpi" style="--ck:var(--accent)">',
         '<div class="c2-kpi-label">Melhor ciclo</div>',
-        '<div class="c2-kpi-value" style="color:var(--green)">' + (melhorCicloKey ? origData[melhorCicloKey].media + ' dias' : 'N/A') + '</div>',
+        '<div class="c2-kpi-value" style="color:var(--green)">' + (melhorCicloKey ? melhorCicloValor + ' dias' : 'N/A') + '</div>',
         '<div class="c2-kpi-sub">' + (melhorCicloKey ? ORIG_LABELS[melhorCicloKey] : '—') + '</div>',
       '</div>',
       '<div class="c2-kpi" style="--ck:var(--yellow)">',
@@ -1566,7 +1581,7 @@ function renderCiclos() {
         '<div class="c2-outlier-item"><span class="c2-outlier-num">' + outliersOrigemTotal + '</span><span class="c2-outlier-label">somando todas as origens</span></div>',
         '<div class="c2-outlier-item"><span class="c2-outlier-num">' + outliersRegiaoTotal + '</span><span class="c2-outlier-label">somando todas as regiões</span></div>',
       '</div>',
-      '<div class="c2-outlier-note">Outlier extremo = venda cujo ciclo (lead → fechamento) é mais que o dobro da mediana do próprio grupo. O limite é recalculado para cada origem/região — não é um número fixo de dias. Todas as médias desta aba (geral, por origem, por região e ponderada) excluem os outliers extremos do próprio grupo antes de calcular — a mediana e a contagem de outliers continuam usando todos os dados, já que são elas que definem o critério de quem é outlier. A moda só é exibida quando pelo menos 3 vendas compartilham o mesmo número de dias. A média ponderada pondera por vendedor (1 voto cada) quando há 2+ vendedores no filtro; com exatamente 1 vendedor filtrado, pondera pelas origens daquele vendedor (1 voto cada origem), já que ponderar por vendedor não faria sentido com um único vendedor selecionado.</div>',
+      '<div class="c2-outlier-note">Outlier extremo = venda cujo ciclo (lead → fechamento) é mais que o dobro da mediana do próprio grupo. O limite é recalculado para cada origem/região — não é um número fixo de dias. Todas as médias desta aba (geral, por origem, por região e ponderada) excluem os outliers extremos do próprio grupo antes de calcular — a mediana e a contagem de outliers continuam usando todos os dados, já que são elas que definem o critério de quem é outlier. A moda só é exibida quando pelo menos 3 vendas compartilham o mesmo número de dias. Os 4 cards do cabeçalho (ciclo médio geral, melhor ciclo, mediana geral, média ponderada geral) usam sempre Criação contato como referência de data, em qualquer situação de filtro — inclusive com 1 vendedor selecionado. A média ponderada do cabeçalho pondera por vendedor (1 voto cada) quando há 2+ vendedores no filtro; com exatamente 1 vendedor filtrado, pondera pelas origens daquele vendedor (1 voto cada origem, ainda usando contato), já que ponderar por vendedor não faria sentido com um único vendedor selecionado. Os painéis abaixo do cabeçalho (ciclo por origem, por região, histogramas, tabela) continuam usando o critério original: Criação negócio para origem, Criação contato para região.</div>',
     '</div>',
   ].join('');
 
