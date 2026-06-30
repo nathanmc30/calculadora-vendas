@@ -379,6 +379,7 @@
     .meta-group:first-child { border-right: none; border-bottom: 1px solid var(--border); }
   }
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 </head>
 <body>
 
@@ -570,6 +571,12 @@ let metas = { meta_bh: 20, meta_interior: 20, meta_fora: 20, meta_meta: 20, meta
 // Cache aba 2
 let c2Carregado = false;
 let c2Vendas    = [];
+
+// Histogramas: bins calculados na última renderCiclos() (chaveados por
+// 'geral', 'orig_meta', 'reg_bh' etc.) e instâncias Chart.js ativas, para
+// destruir antes de redesenhar quando o filtro muda.
+let c2HistogramasAtuais = {};
+let c2ChartInstancias   = {};
 
 /* ════════════════════════════════════
    TROCA DE ABA
@@ -994,6 +1001,53 @@ async function _carregarModalVendas(url) {
       '<div class="empty"><strong>Erro ao carregar</strong>' + e.message + '</div>';
   }
 }
+
+// Abre o modal de vendas a partir de uma faixa do histograma (dados já em
+// memória, sem nova chamada à API). campoData indica qual data de criação
+// foi usada para calcular os dias daquela faixa (negócio ou contato),
+// necessário para mostrar a coluna "Dias até fechar" corretamente.
+function abrirVendasFaixa(titulo, subtitulo, vendasDaFaixa, campoData) {
+  document.getElementById('modalVendasTitle').textContent = titulo;
+  document.getElementById('modalVendasSub').textContent   = subtitulo;
+  document.getElementById('modalVendas').classList.add('open');
+
+  const dados = [...vendasDaFaixa].sort((a, b) => new Date(b.data) - new Date(a.data));
+  const totalModal = dados.reduce((s, d) => s + (Number(d.valorLiquido) || 0), 0);
+  window._vendasModal = dados;
+
+  const rows = dados.map((d, i) => {
+    const dv = d.data       ? new Date(d.data.slice(0,10)                 + 'T12:00:00') : null;
+    const dc = d[campoData] ? new Date(d[campoData].toString().slice(0,10) + 'T12:00:00') : null;
+    const diasTxt = (dv && dc && !isNaN(dv) && !isNaN(dc))
+      ? Math.round((dv - dc) / 86400000) + 'd'
+      : '—';
+    return '<tr id="vr-' + i + '">' +
+      '<td>' + (d.nome || '—') + '</td>' +
+      '<td class="muted" style="font-family:monospace;font-size:12px">' + (d.telefone || '—') + '</td>' +
+      '<td class="muted">' + formatData(d.data) + '</td>' +
+      '<td class="green valor-cell">R$&nbsp;' + formatMoeda(d.valorLiquido) + '</td>' +
+      '<td>' + tagRegiao(d.regiao) + '</td>' +
+      '<td class="muted" style="font-size:12px">' + (d.origem || d.origem_enriquecida || '—') + '</td>' +
+      '<td class="muted" style="font-weight:700;color:var(--accent)">' + diasTxt + '</td>' +
+      '<td><button onclick="deletarVenda(' + i + ',this)" style="background:none;border:1px solid var(--border);color:var(--muted);padding:3px 9px;border-radius:6px;cursor:pointer;font-size:11px;transition:all 0.2s" onmouseover="this.style.borderColor=\'var(--red)\';this.style.color=\'var(--red)\'" onmouseout="this.style.borderColor=\'var(--border)\';this.style.color=\'var(--muted)\'">🗑 Apagar</button></td>' +
+    '</tr>';
+  }).join('');
+
+  if (dados.length === 0) {
+    document.getElementById('modalVendasBody').innerHTML =
+      '<div class="empty"><strong>Nenhuma venda nessa faixa</strong></div>';
+    return;
+  }
+
+  document.getElementById('modalVendasBody').innerHTML =
+    '<div style="padding:12px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">' +
+      '<span style="font-size:12px;color:var(--muted)" id="modalCount">' + dados.length + ' vendas encontradas</span>' +
+      '<span style="font-size:14px;font-weight:700;color:var(--green)" id="modalTotal">R$&nbsp;' + formatMoeda(totalModal) + '</span>' +
+    '</div>' +
+    '<table><thead><tr><th>Nome</th><th>Telefone</th><th>Data</th><th>Valor</th><th>Região</th><th>Origem</th><th>Dias até fechar</th><th></th></tr></thead>' +
+    '<tbody>' + rows + '</tbody></table>';
+}
+
 async function deletarVenda(idx, btn) {
   const venda = window._vendasModal[idx];
   if (!venda) return;
@@ -1103,12 +1157,23 @@ function c2Moda(dias) {
   return modaFreq >= 3 ? { valor: modaValor, freq: modaFreq } : null;
 }
 
-// Média ponderada por vendedor: cada vendedor contribui com sua própria
-// média de ciclo, pesada pelo número de vendas dele no grupo — assim um
-// vendedor com 1 venda de 300 dias não pesa igual a um com 20 vendas de
-// 15 dias. Sem isso, a média simples trata cada venda como peso igual,
-// o que deixa vendedores com poucas vendas (e por isso mais ruidosos)
-// com a mesma influência que vendedores com volume alto.
+// Média ponderada por vendedor: calcula a média de ciclo de CADA vendedor
+// separadamente, e depois tira a média DESSAS médias — cada vendedor conta
+// como 1 voto, não importa se ele fechou 1 venda ou 50.
+//
+// IMPORTANTE: o peso de cada vendedor NÃO pode ser o volume de vendas dele.
+// Se peso = número de vendas do vendedor, o cálculo (média_vendedor × peso)
+// simplifica de volta para (soma_dias_do_vendedor), e ao somar isso para
+// todos os vendedores e dividir pela soma dos pesos (= total de vendas),
+// o resultado final é algebricamente idêntico à média simples — o volume
+// se cancela no numerador e no denominador. É por isso que "ponderar pelo
+// próprio volume" sempre dá o mesmo número que a média comum, não importa
+// os dados: não é bug de cálculo, é a fórmula que se anula sozinha.
+//
+// Por isso aqui o peso é constante (1 por vendedor): um vendedor com 1
+// venda atípica de 300 dias conta igual a um vendedor com 50 vendas de
+// 15 dias — isso é o que de fato reduz a distorção que um caso isolado
+// causaria numa média simples de todas as vendas juntas.
 function c2MediaPonderada(arr, campoData) {
   const porVendedor = {};
   arr.forEach(v => {
@@ -1116,16 +1181,16 @@ function c2MediaPonderada(arr, campoData) {
     if (!porVendedor[vend]) porVendedor[vend] = [];
     porVendedor[vend].push(v);
   });
-  let somaPonderada = 0, somaPesos = 0;
+  const mediasPorVendedor = [];
   Object.values(porVendedor).forEach(vendasDoVendedor => {
     const dias = c2ExtrairDias(vendasDoVendedor, campoData);
     if (!dias.length) return;
     const mediaVendedor = dias.reduce((a,b) => a+b, 0) / dias.length;
-    const peso = dias.length; // peso = volume de vendas válidas do vendedor
-    somaPonderada += mediaVendedor * peso;
-    somaPesos     += peso;
+    mediasPorVendedor.push(mediaVendedor); // 1 entrada por vendedor, peso igual
   });
-  return somaPesos > 0 ? Math.round(somaPonderada / somaPesos) : null;
+  if (!mediasPorVendedor.length) return null;
+  const mediaDasMedias = mediasPorVendedor.reduce((a,b) => a+b, 0) / mediasPorVendedor.length;
+  return Math.round(mediaDasMedias);
 }
 
 // Outlier extremo = ciclo > 2x a mediana DO PRÓPRIO GRUPO (dinâmico —
@@ -1148,6 +1213,63 @@ function c2StatsCiclo(arr, campoData) {
     outliers:      c2ContarOutliers(dias),
     n:             dias.length,
   };
+}
+
+// Histograma — regra de Sturges para escolher o número de faixas (bins)
+// automaticamente conforme o volume de dados: k = ceil(log2(n) + 1).
+// Funciona bem tanto com poucas vendas (k pequeno, faixas largas) quanto
+// com muitas (k maior, faixas mais finas) sem precisar configurar nada.
+// Cada faixa retorna não só a contagem, mas a LISTA das vendas que caem
+// nela — necessário para o clique abrir o modal filtrado por faixa.
+function c2CalcularBins(arr, campoData) {
+  // Extrai pares {dias, venda} preservando a referência ao objeto original
+  const pares = arr.map(v => {
+    const dv = v.data       ? new Date(v.data.slice(0,10)                 + 'T12:00:00') : null;
+    const dc = v[campoData] ? new Date(v[campoData].toString().slice(0,10) + 'T12:00:00') : null;
+    if (!dv || !dc || isNaN(dv) || isNaN(dc)) return null;
+    const d = (dv - dc) / 86400000;
+    return d >= 0 ? { dias: d, venda: v } : null;
+  }).filter(p => p !== null);
+
+  if (pares.length === 0) return { bins: [], n: 0 };
+
+  const valores = pares.map(p => p.dias);
+  const min = Math.min(...valores);
+  const max = Math.max(...valores);
+
+  // Sturges: k = ceil(log2(n) + 1), mínimo de 1 faixa
+  const n = pares.length;
+  let k = Math.max(1, Math.ceil(Math.log2(n) + 1));
+
+  // Se todos os valores são iguais (range 0), uma única faixa basta
+  const range = max - min;
+  if (range === 0) {
+    return { bins: [{ inicio: min, fim: max, label: Math.round(min) + 'd', vendas: pares.map(p => p.venda) }], n };
+  }
+
+  const largura = range / k;
+  const bins = [];
+  for (let i = 0; i < k; i++) {
+    const inicio = min + i * largura;
+    const fim    = i === k - 1 ? max : min + (i + 1) * largura;
+    bins.push({ inicio, fim, vendas: [] });
+  }
+
+  pares.forEach(p => {
+    // último bin é inclusivo no limite superior; os demais são [inicio, fim)
+    let idx = Math.floor((p.dias - min) / largura);
+    if (idx >= k) idx = k - 1;
+    if (idx < 0) idx = 0;
+    bins[idx].vendas.push(p.venda);
+  });
+
+  bins.forEach(b => {
+    const i = Math.round(b.inicio);
+    const f = Math.round(b.fim);
+    b.label = i === f ? (i + 'd') : (i + '-' + f + 'd');
+  });
+
+  return { bins, n };
 }
 
 // 'outros' = sem origem real associada (não existe leads "Desconhecida" —
@@ -1221,6 +1343,49 @@ function renderCiclos() {
   // Total de outliers extremos em todos os grupos (origem + região), para o painel de investigação
   const outliersOrigemTotal = ORIG_KEYS.reduce((s,k) => s + origData[k].outliers, 0);
   const outliersRegiaoTotal = Object.keys(regData).reduce((s,k) => s + regData[k].outliers, 0);
+
+  // ── Histogramas — geral + por origem + por região (clicáveis) ──
+  // Reaproveita os mesmos agrupamentos (gO, gR) já calculados acima.
+  // Guarda os bins em variável de módulo para o clique nas barras acessar
+  // depois (Chart.js não permite passar arrays grandes via onClick inline).
+  c2HistogramasAtuais = {};
+  c2HistogramasAtuais.geral = c2CalcularBins(vendas, 'data_criacao_contato');
+  ORIG_KEYS.forEach(k => {
+    const campo = k === 'outros' ? 'data_criacao_contato' : 'data_criacao_deal';
+    c2HistogramasAtuais['orig_' + k] = c2CalcularBins(gO[k], campo);
+  });
+  Object.keys(gR).forEach(k => {
+    c2HistogramasAtuais['reg_' + k] = c2CalcularBins(gR[k], 'data_criacao_contato');
+  });
+
+  const histPanelHtml = (chaveHist, titulo, canvasId) => {
+    const h = c2HistogramasAtuais[chaveHist];
+    const temDados = h && h.bins.length > 0;
+    return '<div class="c2-panel">' +
+      '<div class="c2-panel-title">' + titulo + '</div>' +
+      (temDados
+        ? '<div style="position:relative;height:200px;"><canvas id="' + canvasId + '" role="img" aria-label="Histograma de distribuição do ciclo de vendas em dias para ' + titulo + '"></canvas></div>' +
+          '<div style="font-size:11px;color:var(--muted);margin-top:8px;">clique numa barra para ver as vendas daquela faixa</div>'
+        : '<div style="font-size:12px;color:var(--muted);padding:20px 0;text-align:center;">sem dados suficientes para o histograma</div>')
+      + '</div>';
+  };
+
+  const histogramasOrigemHtml = '<div class="c2-grid2">' +
+    histPanelHtml('orig_meta', 'Distribuição — Meta ADS', 'histOrigMeta') +
+    histPanelHtml('orig_disparo', 'Distribuição — Disparo', 'histOrigDisparo') +
+  '</div>' +
+  '<div class="c2-grid2">' +
+    histPanelHtml('orig_organico', 'Distribuição — Orgânico', 'histOrigOrganico') +
+    histPanelHtml('orig_outros', 'Distribuição — Desconhecida', 'histOrigOutros') +
+  '</div>';
+
+  const histogramasRegiaoHtml = '<div class="c2-grid2">' +
+    histPanelHtml('reg_bh', 'Distribuição — BH', 'histRegBh') +
+    histPanelHtml('reg_interior', 'Distribuição — Interior MG', 'histRegInterior') +
+  '</div>' +
+  '<div class="c2-grid2" style="grid-template-columns:1fr;">' +
+    histPanelHtml('reg_fora', 'Distribuição — Fora do estado', 'histRegFora') +
+  '</div>';
 
   // ── Barras ciclo por origem ──
   const maxCiclo = Math.max(...ORIG_KEYS.map(k => origData[k].media || 0), 1);
@@ -1316,6 +1481,8 @@ function renderCiclos() {
         '<div class="c2-kpi-sub">ponderada por vendedor</div>',
       '</div>',
     '</div>',
+    // Histograma geral — visão panorâmica da distribuição completa
+    histPanelHtml('geral', 'Distribuição do ciclo geral', 'histGeral'),
     // Grid 2 colunas
     '<div class="c2-grid2">',
       // Ciclo por origem
@@ -1345,6 +1512,12 @@ function renderCiclos() {
         '</table>',
       '</div>',
     '</div>',
+    // Histogramas por origem
+    '<div class="c2-panel-title" style="margin:8px 0 -4px;">Distribuição do ciclo por origem</div>',
+    histogramasOrigemHtml,
+    // Histogramas por região
+    '<div class="c2-panel-title" style="margin:8px 0 -4px;">Distribuição do ciclo por região</div>',
+    histogramasRegiaoHtml,
     // Painel de investigação — outliers extremos (>2x mediana do grupo)
     '<div class="c2-panel">',
       '<div class="c2-panel-title">Outliers extremos (ciclo &gt; 2× a mediana do grupo)</div>',
@@ -1353,9 +1526,93 @@ function renderCiclos() {
         '<div class="c2-outlier-item"><span class="c2-outlier-num">' + outliersOrigemTotal + '</span><span class="c2-outlier-label">somando todas as origens</span></div>',
         '<div class="c2-outlier-item"><span class="c2-outlier-num">' + outliersRegiaoTotal + '</span><span class="c2-outlier-label">somando todas as regiões</span></div>',
       '</div>',
-      '<div class="c2-outlier-note">Outlier extremo = venda cujo ciclo (lead → fechamento) é mais que o dobro da mediana do próprio grupo. O limite é recalculado para cada origem/região — não é um número fixo de dias. A moda só é exibida quando pelo menos 3 vendas compartilham o mesmo número de dias (abaixo disso o valor não é representativo). A média ponderada pesa pelo volume de vendas de cada vendedor, evitando que um vendedor com 1 venda atípica distorça o número tanto quanto um vendedor com volume alto.</div>',
+      '<div class="c2-outlier-note">Outlier extremo = venda cujo ciclo (lead → fechamento) é mais que o dobro da mediana do próprio grupo. O limite é recalculado para cada origem/região — não é um número fixo de dias. A moda só é exibida quando pelo menos 3 vendas compartilham o mesmo número de dias (abaixo disso o valor não é representativo). A média ponderada calcula a média de cada vendedor separadamente e depois tira a média dessas médias, com cada vendedor contando igual (1 voto cada) — assim um vendedor com poucas vendas atípicas não pesa nem mais nem menos do que um vendedor com volume alto.</div>',
     '</div>',
   ].join('');
+
+  // Os <canvas> só existem no DOM após o innerHTML acima ser aplicado —
+  // por isso o desenho dos gráficos é uma chamada separada, depois.
+  c2DesenharHistogramas();
+}
+
+// Desenha (ou redesenha) todos os histogramas da aba Ciclos usando os bins
+// calculados em c2HistogramasAtuais. Destrói instâncias Chart.js antigas
+// primeiro — necessário porque renderCiclos() roda de novo a cada troca de
+// filtro, e o innerHTML já apagou os <canvas> anteriores sem que o Chart.js
+// soubesse disso (vazamento de memória / canvases fantasmas se não destruir).
+function c2DesenharHistogramas() {
+  Object.values(c2ChartInstancias).forEach(chart => { try { chart.destroy(); } catch(e) {} });
+  c2ChartInstancias = {};
+
+  const isDark = (typeof matchMedia === 'function') && matchMedia('(prefers-color-scheme: dark)').matches;
+  const corBarra = '#4f80ff';
+  const corGrid  = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
+  const corTexto = '#8892b0';
+
+  const specs = [
+    { chave: 'geral',         canvasId: 'histGeral',        titulo: 'Ciclo geral',                  campoData: 'data_criacao_contato' },
+    { chave: 'orig_meta',     canvasId: 'histOrigMeta',     titulo: 'Meta ADS',                     campoData: 'data_criacao_deal' },
+    { chave: 'orig_disparo',  canvasId: 'histOrigDisparo',  titulo: 'Disparo',                      campoData: 'data_criacao_deal' },
+    { chave: 'orig_organico', canvasId: 'histOrigOrganico', titulo: 'Orgânico',                     campoData: 'data_criacao_deal' },
+    { chave: 'orig_outros',   canvasId: 'histOrigOutros',   titulo: 'Desconhecida',                 campoData: 'data_criacao_contato' },
+    { chave: 'reg_bh',        canvasId: 'histRegBh',        titulo: 'BH',                           campoData: 'data_criacao_contato' },
+    { chave: 'reg_interior',  canvasId: 'histRegInterior',  titulo: 'Interior MG',                  campoData: 'data_criacao_contato' },
+    { chave: 'reg_fora',      canvasId: 'histRegFora',      titulo: 'Fora do estado',                campoData: 'data_criacao_contato' },
+  ];
+
+  specs.forEach(spec => {
+    const h = c2HistogramasAtuais[spec.chave];
+    const canvas = document.getElementById(spec.canvasId);
+    if (!h || !h.bins.length || !canvas) return;
+
+    const labels = h.bins.map(b => b.label);
+    const contagens = h.bins.map(b => b.vendas.length);
+
+    const chart = new Chart(canvas, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{
+          data: contagens,
+          backgroundColor: corBarra,
+          borderRadius: 4,
+          barThickness: 'flex',
+          maxBarThickness: 48,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: (ctx) => ctx.parsed.y + ' venda' + (ctx.parsed.y === 1 ? '' : 's')
+            }
+          }
+        },
+        scales: {
+          x: { grid: { display: false }, ticks: { color: corTexto, font: { size: 10 } } },
+          y: { grid: { color: corGrid, drawBorder: false }, ticks: { color: corTexto, font: { size: 10 }, stepSize: 1, precision: 0 }, beginAtZero: true }
+        },
+        onClick: (evt, elements) => {
+          if (!elements.length) return;
+          const idx = elements[0].index;
+          const bin = h.bins[idx];
+          if (!bin || !bin.vendas.length) return;
+          abrirVendasFaixa(
+            'Distribuição — ' + spec.titulo,
+            'Faixa ' + bin.label + ' · ' + bin.vendas.length + ' venda' + (bin.vendas.length === 1 ? '' : 's'),
+            bin.vendas,
+            spec.campoData
+          );
+        }
+      }
+    });
+
+    canvas.style.cursor = 'pointer';
+    c2ChartInstancias[spec.canvasId] = chart;
+  });
 }
 
 /* ════════════════════════════════════
