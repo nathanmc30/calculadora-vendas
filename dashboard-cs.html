@@ -379,16 +379,23 @@
 
   function parseCSV(text) {
     var lines = text.trim().split('\n');
+    var header = lines[0].split(',').map(function(h) { return h.trim().toLowerCase().replace(/[^a-z_]/g, ''); });
+    var iId  = header.indexOf('deal_id');
+    var iNom = header.indexOf('nome_cliente');
+    var iRes = header.indexOf('responsavel');
+    var iPip = header.indexOf('pipe');
+    var iMin = header.indexOf('minutos_parado');
     var rows = [];
     for (var i = 1; i < lines.length; i++) {
       var cols = lines[i].split(',');
-      if (!cols[0] || cols[0].trim() === '') continue;
+      var id = iId >= 0 && cols[iId] ? cols[iId].trim() : '';
+      if (!id) continue;
       rows.push([
-        cols[0] ? cols[0].trim() : '',
-        cols[1] ? cols[1].trim() : '',
-        cols[2] ? cols[2].trim() : '',
-        cols[3] ? cols[3].trim() : '',
-        cols[4] ? parseInt(cols[4].trim()) || 0 : 0,
+        id,
+        iNom >= 0 && cols[iNom] ? cols[iNom].trim() : '',
+        iRes >= 0 && cols[iRes] ? cols[iRes].trim() : '',
+        iPip >= 0 && cols[iPip] ? cols[iPip].trim() : '',
+        iMin >= 0 && cols[iMin] ? parseInt(cols[iMin].trim()) || 0 : 0,
       ]);
     }
     return rows;
