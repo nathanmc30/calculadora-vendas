@@ -379,7 +379,9 @@
 
   function parseCSV(text) {
     var lines = text.trim().split('\n');
-    var header = lines[0].split(',').map(function(h) { return h.trim().toLowerCase().replace(/[^a-z_]/g, ''); });
+    var header = lines[0].split(',').map(function(h) { return h.trim().toLowerCase().replace(/[^a-z_]/g, '').replace(/\s/g,''); });
+    // debug: mostra cabeçalho no console
+    console.log('CSV header:', header);
     var iId  = header.indexOf('deal_id');
     var iNom = header.indexOf('nome_cliente');
     var iRes = header.indexOf('responsavel');
