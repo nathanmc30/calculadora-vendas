@@ -231,8 +231,7 @@
 </div>
 
 <script>
-  var SHEET_ID = '15p2VsETzppsowo68n9PuDyxVyTfiMxkGhvHaGIU0atU';
-  var SHEET_URL = 'https://docs.google.com/spreadsheets/d/' + SHEET_ID + '/gviz/tq?tqx=out:json&sheet=dados';
+  var SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTViT8etAa8gkyY7eeCMg3KDzdqPLb1iAZPWzayWuBM_HJuKZxRtS-8bdYkHr79jJXlJs4EHUzDsKV7/pub?gid=0&single=true&output=csv';
 
   var AVATAR_COLORS = [
     { bg: '#1e0f3a', border: '#4a2a8a', color: '#a78bfa' },
@@ -378,24 +377,28 @@
     document.getElementById('loading').classList.add('hidden');
   }
 
+  function parseCSV(text) {
+    var lines = text.trim().split('\n');
+    var rows = [];
+    for (var i = 1; i < lines.length; i++) {
+      var cols = lines[i].split(',');
+      if (!cols[0] || cols[0].trim() === '') continue;
+      rows.push([
+        cols[0] ? cols[0].trim() : '',
+        cols[1] ? cols[1].trim() : '',
+        cols[2] ? cols[2].trim() : '',
+        cols[3] ? cols[3].trim() : '',
+        cols[4] ? parseInt(cols[4].trim()) || 0 : 0,
+      ]);
+    }
+    return rows;
+  }
+
   function loadData() {
     fetch(SHEET_URL + '&t=' + Date.now())
       .then(function(r) { return r.text(); })
       .then(function(text) {
-        var json = JSON.parse(text.replace(/^[^{]+/, '').replace(/;$/, ''));
-        var rows = [];
-        if (json.table && json.table.rows) {
-          json.table.rows.forEach(function(row) {
-            if (!row.c || !row.c[0] || !row.c[0].v) return;
-            rows.push([
-              row.c[0] ? (row.c[0].v || '') : '',
-              row.c[1] ? (row.c[1].v || '') : '',
-              row.c[2] ? (row.c[2].v || '') : '',
-              row.c[3] ? (row.c[3].v || '') : '',
-              row.c[4] ? (row.c[4].v || 0)  : 0,
-            ]);
-          });
-        }
+        var rows = parseCSV(text);
         processar(rows);
       })
       .catch(function(e) {
