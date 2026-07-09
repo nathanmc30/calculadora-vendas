@@ -73,8 +73,8 @@
     }
     .at-nome { font-size: 12px; font-weight: 500; color: #e6edf3; }
     .at-ativos { font-size: 10px; color: #5a6a7a; margin-top: 1px; }
-    .at-pills { display: flex; gap: 4px; margin-top: 4px; flex-wrap: wrap; }
-    .pill { font-size: 9px; font-weight: 500; padding: 1px 6px; border-radius: 6px; }
+    .at-pills { display: flex; gap: 5px; margin-left: auto; flex-shrink: 0; }
+    .pill { font-size: 12px; font-weight: 500; padding: 3px 10px; border-radius: 6px; white-space: nowrap; }
     .pp1   { background: #160814; color: #f87171; border: 0.5px solid #4a1a1a; }
     .pp2   { background: #080e1e; border: 0.5px solid #1a3060; color: #60a5fa; }
     .pp3   { background: #051410; border: 0.5px solid #0e3828; color: #2dd4bf; }
@@ -301,8 +301,8 @@
           '<div>' +
             '<div class="at-nome">' + nome + '</div>' +
             '<div class="at-ativos">' + dados.total + ' ativo' + (dados.total !== 1 ? 's' : '') + '</div>' +
-            '<div class="at-pills">' + pills + '</div>' +
           '</div>' +
+          '<div class="at-pills">' + pills + '</div>' +
         '</div>';
     });
   }
