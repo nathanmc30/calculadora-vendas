@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Grupo Aspekto — CS Dashboard</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { width: 100%; height: 100%; overflow: hidden; background: #0d1117; }
+
+    #loading {
+      position: fixed; inset: 0; background: #0d1117;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 12px; z-index: 999; transition: opacity .4s;
+    }
+    #loading.hidden { opacity: 0; pointer-events: none; }
+    .spinner {
+      width: 28px; height: 28px;
+      border: 2px solid rgba(255,255,255,0.08);
+      border-top-color: #4fc3f7;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-txt { font-size: 12px; color: #3a4a5a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+
+    .tv {
+      width: 1920px; height: 1080px;
+      background: #0d1117;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      display: flex; flex-direction: column;
+      padding: 20px 26px 16px;
+      gap: 10px;
+    }
+
+    /* ── HEADER ── */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      padding-bottom: 14px;
+      border-bottom: 0.5px solid #1e2d3d;
+      flex-shrink: 0;
+    }
+    .header-brand { position: absolute; left: 0; display: flex; flex-direction: column; gap: 4px; }
+    .brand { font-size: 16px; font-weight: 500; color: #e6edf3; letter-spacing: -0.3px; }
+    .live-row { display: flex; align-items: center; gap: 6px; }
+    .live-dot { width: 6px; height: 6px; border-radius: 50%; background: #4ade80; flex-shrink: 0; }
+    .live-txt { font-size: 10px; color: #5a6a7a; }
+    .live-txt b { color: #4ade80; font-weight: 500; }
+
+    .kpis { display: flex; align-items: center; }
+    .kpi { padding: 0 32px; border-right: 0.5px solid #1e2d3d; text-align: center; }
+    .kpi:last-child { border-right: none; }
+    .kpi-val { font-size: 36px; font-weight: 500; line-height: 1; letter-spacing: -1.5px; color: #e6edf3; }
+    .kpi-val.danger { color: #f56b6b; }
+    .kpi-label { font-size: 10px; color: #5a6a7a; margin-top: 5px; text-transform: uppercase; letter-spacing: 0.7px; }
+
+    /* ── ATENDENTES ── */
+    .atendentes { display: flex; gap: 8px; flex-shrink: 0; }
+    .at-card {
+      flex: 1; background: #111827; border: 0.5px solid #1e2d3d;
+      border-radius: 8px; padding: 8px 14px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .at-avatar {
+      width: 30px; height: 30px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 10px; font-weight: 500; flex-shrink: 0;
+      background: #1e0f3a; border: 0.5px solid #4a2a8a; color: #a78bfa;
+    }
+    .at-nome { font-size: 12px; font-weight: 500; color: #e6edf3; }
+    .at-ativos { font-size: 10px; color: #5a6a7a; margin-top: 1px; }
+    .at-pills { display: flex; gap: 4px; margin-top: 4px; flex-wrap: wrap; }
+    .pill { font-size: 9px; font-weight: 500; padding: 1px 6px; border-radius: 6px; }
+    .pp1   { background: #160814; color: #f87171; border: 0.5px solid #4a1a1a; }
+    .pp2   { background: #080e1e; border: 0.5px solid #1a3060; color: #60a5fa; }
+    .pp3   { background: #051410; border: 0.5px solid #0e3828; color: #2dd4bf; }
+    .pcrit { background: #2a0808; color: #f56b6b; border: 0.5px solid #5a1010; }
+
+    /* ── GRID ── */
+    .main-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; flex: 1; min-height: 0; }
+    .col { display: flex; flex-direction: column; gap: 5px; min-height: 0; }
+
+    .col-head {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 8px 12px; border-radius: 7px; flex-shrink: 0;
+    }
+    .ch-p1   { background: #160808; border: 0.5px solid #3d1010; }
+    .ch-p2   { background: #080e1e; border: 0.5px solid #1a3060; }
+    .ch-p3   { background: #051410; border: 0.5px solid #0e3828; }
+    .ch-crit { background: #1a0505; border: 0.5px solid #5a0808; }
+    .col-head-left { display: flex; flex-direction: column; gap: 2px; }
+    .col-title { font-size: 10px; font-weight: 500; letter-spacing: 0.8px; text-transform: uppercase; }
+    .col-sub { font-size: 9px; color: #3a4a5a; }
+    .ct-p1   { color: #f87171; }
+    .ct-p2   { color: #60a5fa; }
+    .ct-p3   { color: #2dd4bf; }
+    .ct-crit { color: #f56b6b; }
+    .col-num { font-size: 24px; font-weight: 500; line-height: 1; letter-spacing: -0.5px; }
+    .cn-p1   { color: #f87171; }
+    .cn-p2   { color: #60a5fa; }
+    .cn-p3   { color: #2dd4bf; }
+    .cn-crit { color: #f56b6b; }
+
+    /* ── CARDS ── */
+    .cards { display: flex; flex-direction: column; gap: 3px; overflow: hidden; flex: 1; }
+    .ticket {
+      background: #111827; border: 0.5px solid #1e2938;
+      border-radius: 6px; padding: 7px 10px;
+      display: flex; align-items: center; justify-content: space-between; gap: 8px;
+      flex-shrink: 0;
+      transition: background 0.3s, border-color 0.3s;
+      animation: fadeIn 0.4s ease;
+    }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+    .ticket-crit { border-left: 2px solid #7a1010; background: #0e0808; }
+    .ticket-left { display: flex; flex-direction: column; gap: 1px; min-width: 0; flex: 1; }
+    .ticket-nome { font-size: 13px; font-weight: 500; color: #d0dae6; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .ticket-dono { font-size: 10px; color: #3a4a5a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .ticket-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+    .ticket-tempo { font-size: 12px; font-weight: 500; color: #e6edf3; white-space: nowrap; letter-spacing: -0.3px; }
+    .ticket-tempo.t-warn { color: #f5c542; }
+    .ticket-tempo.t-crit { color: #f56b6b; }
+    .sla { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .sla-ok   { background: #4ade80; }
+    .sla-warn { background: #f5c542; }
+    .sla-crit { background: #f56b6b; box-shadow: 0 0 7px #f56b6baa; }
+
+    /* ── LEGENDA ── */
+    .legenda {
+      display: flex; align-items: center; gap: 20px;
+      padding-top: 8px; border-top: 0.5px solid #1e2d3d; flex-shrink: 0;
+    }
+    .leg-label { font-size: 9px; color: #2a3a4a; text-transform: uppercase; letter-spacing: 0.8px; }
+    .leg-item { display: flex; align-items: center; gap: 5px; font-size: 9px; color: #4a5a6a; }
+    .leg-dot { width: 7px; height: 7px; border-radius: 50%; }
+  </style>
+</head>
+<body>
+
+<div id="loading">
+  <div class="spinner"></div>
+  <p class="loading-txt">Carregando dados...</p>
+</div>
+
+<div class="tv">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-brand">
+      <div class="brand">Grupo Aspekto — CS</div>
+      <div class="live-row">
+        <div class="live-dot"></div>
+        <div class="live-txt"><b>Ao vivo</b> &nbsp;·&nbsp; atualizado às <span id="update-time">--:--:--</span></div>
+      </div>
+    </div>
+    <div class="kpis">
+      <div class="kpi">
+        <div class="kpi-val" id="kpi-total">—</div>
+        <div class="kpi-label">Deals abertos</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-val" id="kpi-medio">—</div>
+        <div class="kpi-label">Tempo médio de abordagem</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-val danger" id="kpi-sla">—</div>
+        <div class="kpi-label">Acima do SLA</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ATENDENTES -->
+  <div class="atendentes" id="atendentes-container"></div>
+
+  <!-- CORPO -->
+  <div class="main-grid">
+    <div class="col" id="col-p1">
+      <div class="col-head ch-p1">
+        <div class="col-head-left">
+          <div class="col-title ct-p1">P1 — Alta</div>
+          <div class="col-sub">Alta prioridade</div>
+        </div>
+        <div class="col-num cn-p1" id="count-p1">0</div>
+      </div>
+      <div class="cards" id="cards-p1"></div>
+    </div>
+    <div class="col" id="col-p2">
+      <div class="col-head ch-p2">
+        <div class="col-head-left">
+          <div class="col-title ct-p2">P2 — Média</div>
+          <div class="col-sub">Média prioridade</div>
+        </div>
+        <div class="col-num cn-p2" id="count-p2">0</div>
+      </div>
+      <div class="cards" id="cards-p2"></div>
+    </div>
+    <div class="col" id="col-p3">
+      <div class="col-head ch-p3">
+        <div class="col-head-left">
+          <div class="col-title ct-p3">P3 — Baixa</div>
+          <div class="col-sub">Baixa prioridade</div>
+        </div>
+        <div class="col-num cn-p3" id="count-p3">0</div>
+      </div>
+      <div class="cards" id="cards-p3"></div>
+    </div>
+    <div class="col" id="col-crit">
+      <div class="col-head ch-crit">
+        <div class="col-head-left">
+          <div class="col-title ct-crit">Críticos</div>
+          <div class="col-sub">Acima do SLA</div>
+        </div>
+        <div class="col-num cn-crit" id="count-crit">0</div>
+      </div>
+      <div class="cards" id="cards-crit"></div>
+    </div>
+  </div>
+
+  <!-- LEGENDA -->
+  <div class="legenda">
+    <span class="leg-label">SLA</span>
+    <div class="leg-item"><div class="leg-dot" style="background:#4ade80;"></div>Até 1h30</div>
+    <div class="leg-item"><div class="leg-dot" style="background:#f5c542;"></div>1h30 – 3h</div>
+    <div class="leg-item"><div class="leg-dot" style="background:#f56b6b;box-shadow:0 0 5px #f56b6b88;"></div>Acima de 3h</div>
+  </div>
+
+</div>
+
+<script>
+  var SHEET_ID = '15p2VsETzppsowo68n9PuDyxVyTfiMxkGhvHaGIU0atU';
+  var SHEET_URL = 'https://docs.google.com/spreadsheets/d/' + SHEET_ID + '/gviz/tq?tqx=out:json&sheet=dados';
+
+  var AVATAR_COLORS = [
+    { bg: '#1e0f3a', border: '#4a2a8a', color: '#a78bfa' },
+    { bg: '#0d1f3a', border: '#1a4a8a', color: '#60a5fa' },
+    { bg: '#051818', border: '#0e4a4a', color: '#2dd4bf' },
+    { bg: '#1a0f20', border: '#4a1a5a', color: '#e879f9' },
+    { bg: '#0f1a10', border: '#1a4a20', color: '#4ade80' },
+  ];
+
+  function emailParaNome(email) {
+    var parte = email.split('@')[0];
+    return parte.split('.').map(function(p) {
+      return p.charAt(0).toUpperCase() + p.slice(1);
+    }).join(' ');
+  }
+
+  function iniciaisNome(nome) {
+    var partes = nome.trim().split(' ');
+    if (partes.length === 1) return partes[0].substring(0, 2).toUpperCase();
+    return (partes[0][0] + partes[partes.length - 1][0]).toUpperCase();
+  }
+
+  function tempoStr(min) {
+    min = parseInt(min) || 0;
+    if (min <= 0) return 'agora';
+    var h = Math.floor(min / 60);
+    var m = min % 60;
+    if (h > 0) return h + 'h' + (m > 0 ? ' ' + m + 'm' : '');
+    return m + 'min';
+  }
+
+  function slaClass(min) {
+    min = parseInt(min) || 0;
+    if (min >= 180) return 'crit';
+    if (min >= 90)  return 'warn';
+    return 'ok';
+  }
+
+  function renderAtendentes(deals) {
+    var mapa = {};
+    deals.forEach(function(d) {
+      var nome = d.responsavel;
+      if (!nome) return;
+      if (!mapa[nome]) mapa[nome] = { P1: 0, P2: 0, P3: 0, Critica: 0, total: 0 };
+      mapa[nome][d.pipe] = (mapa[nome][d.pipe] || 0) + 1;
+      mapa[nome].total++;
+    });
+
+    var nomes = Object.keys(mapa).sort();
+    var container = document.getElementById('atendentes-container');
+    container.innerHTML = '';
+
+    nomes.forEach(function(nome, idx) {
+      var cor = AVATAR_COLORS[idx % AVATAR_COLORS.length];
+      var dados = mapa[nome];
+      var iniciais = iniciaisNome(nome);
+
+      var pills = '';
+      if (dados.P1)      pills += '<span class="pill pp1">P1 ×' + dados.P1 + '</span>';
+      if (dados.P2)      pills += '<span class="pill pp2">P2 ×' + dados.P2 + '</span>';
+      if (dados.P3)      pills += '<span class="pill pp3">P3 ×' + dados.P3 + '</span>';
+      if (dados.Critica) pills += '<span class="pill pcrit">Crit ×' + dados.Critica + '</span>';
+
+      container.innerHTML +=
+        '<div class="at-card">' +
+          '<div class="at-avatar" style="background:' + cor.bg + ';border-color:' + cor.border + ';color:' + cor.color + ';">' + iniciais + '</div>' +
+          '<div>' +
+            '<div class="at-nome">' + nome + '</div>' +
+            '<div class="at-ativos">' + dados.total + ' ativo' + (dados.total !== 1 ? 's' : '') + '</div>' +
+            '<div class="at-pills">' + pills + '</div>' +
+          '</div>' +
+        '</div>';
+    });
+  }
+
+  function renderColuna(containerId, deals) {
+    var container = document.getElementById(containerId);
+    container.innerHTML = '';
+    deals.forEach(function(d) {
+      var sla = slaClass(d.minutos);
+      var isCrit = (d.pipe === 'Critica') || sla === 'crit';
+      var tempoClass = sla === 'crit' ? 't-crit' : (sla === 'warn' ? 't-warn' : '');
+
+      container.innerHTML +=
+        '<div class="ticket' + (isCrit ? ' ticket-crit' : '') + '">' +
+          '<div class="ticket-left">' +
+            '<div class="ticket-nome">' + (d.nome || '—') + '</div>' +
+            '<div class="ticket-dono">' + (d.responsavel || '—') + '</div>' +
+          '</div>' +
+          '<div class="ticket-right">' +
+            '<span class="ticket-tempo ' + tempoClass + '">' + tempoStr(d.minutos) + '</span>' +
+            '<div class="sla sla-' + sla + '"></div>' +
+          '</div>' +
+        '</div>';
+    });
+  }
+
+  function renderKPIs(deals) {
+    var total = deals.length;
+    var somaMinutos = deals.reduce(function(acc, d) { return acc + (parseInt(d.minutos) || 0); }, 0);
+    var medio = total > 0 ? Math.floor(somaMinutos / total) : 0;
+    var acimaSLA = deals.filter(function(d) { return (parseInt(d.minutos) || 0) >= 180; }).length;
+
+    document.getElementById('kpi-total').textContent = total;
+    document.getElementById('kpi-medio').textContent = tempoStr(medio);
+    document.getElementById('kpi-sla').textContent = acimaSLA;
+  }
+
+  function processar(rows) {
+    var deals = rows.map(function(r) {
+      return {
+        id:          r[0],
+        nome:        r[1],
+        responsavel: r[2],
+        pipe:        r[3],
+        minutos:     parseInt(r[4]) || 0,
+      };
+    }).filter(function(d) { return d.id && d.pipe; });
+
+    // ordena por minutos desc dentro de cada pipe
+    deals.sort(function(a, b) { return b.minutos - a.minutos; });
+
+    var p1     = deals.filter(function(d) { return d.pipe === 'P1'; });
+    var p2     = deals.filter(function(d) { return d.pipe === 'P2'; });
+    var p3     = deals.filter(function(d) { return d.pipe === 'P3'; });
+    var critica = deals.filter(function(d) { return d.pipe === 'Critica'; });
+
+    document.getElementById('count-p1').textContent   = p1.length;
+    document.getElementById('count-p2').textContent   = p2.length;
+    document.getElementById('count-p3').textContent   = p3.length;
+    document.getElementById('count-crit').textContent = critica.length;
+
+    renderColuna('cards-p1',   p1);
+    renderColuna('cards-p2',   p2);
+    renderColuna('cards-p3',   p3);
+    renderColuna('cards-crit', critica);
+    renderAtendentes(deals);
+    renderKPIs(deals);
+
+    document.getElementById('update-time').textContent =
+      new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+    document.getElementById('loading').classList.add('hidden');
+  }
+
+  function loadData() {
+    fetch(SHEET_URL + '&t=' + Date.now())
+      .then(function(r) { return r.text(); })
+      .then(function(text) {
+        var json = JSON.parse(text.replace(/^[^{]+/, '').replace(/;$/, ''));
+        var rows = [];
+        if (json.table && json.table.rows) {
+          json.table.rows.forEach(function(row) {
+            if (!row.c || !row.c[0] || !row.c[0].v) return;
+            rows.push([
+              row.c[0] ? (row.c[0].v || '') : '',
+              row.c[1] ? (row.c[1].v || '') : '',
+              row.c[2] ? (row.c[2].v || '') : '',
+              row.c[3] ? (row.c[3].v || '') : '',
+              row.c[4] ? (row.c[4].v || 0)  : 0,
+            ]);
+          });
+        }
+        processar(rows);
+      })
+      .catch(function(e) {
+        console.error('Erro ao carregar dados:', e);
+        setTimeout(loadData, 10000);
+      });
+  }
+
+  loadData();
+  setInterval(loadData, 30000);
+
+  // Auto-scale para TV 4K
+  (function() {
+    var BASE_W = 1920, BASE_H = 1080;
+    function fit() {
+      var scale = Math.min(window.innerWidth / BASE_W, window.innerHeight / BASE_H);
+      var tv = document.querySelector('.tv');
+      if (!tv) return;
+      tv.style.width = BASE_W + 'px';
+      tv.style.height = BASE_H + 'px';
+      tv.style.transform = 'scale(' + scale + ')';
+      tv.style.transformOrigin = 'top left';
+      tv.style.marginLeft = Math.max(0, (window.innerWidth - BASE_W * scale) / 2) + 'px';
+      tv.style.marginTop  = Math.max(0, (window.innerHeight - BASE_H * scale) / 2) + 'px';
+    }
+    fit();
+    window.addEventListener('resize', fit);
+  })();
+</script>
+</body>
+</html>
