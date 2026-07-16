@@ -296,23 +296,20 @@
         var raw = Array.isArray(json) ? json[0] : json;
         var items = raw.deals || [];
 
-        // Cada item é { status, data: { contato } } — precisamos cruzar com os deals originais
-        // Como o Agregar perdeu os dados do deal, usamos o que temos do contato
-        // e marcamos stage como desconhecido até o n8n ser ajustado
         _allDeals = items.map(function(item) {
-          var contato = item.data || item;
+          var contato = item.data || {};
           return {
-            id:               contato.id,
-            created_at:       contato.created_at || new Date().toISOString(),
-            updated_stage_at: contato.updated_at || new Date().toISOString(),
-            updated_at:       contato.updated_at || new Date().toISOString(),
-            status:           'OPEN',
-            won_at:           null,
-            stage:            item.stage || '',
-            stage_id:         item.stage_id || '',
-            value:            item.value || 0,
+            id:               item.deal_stage_id || contato.id,
+            created_at:       item.deal_created_at || new Date().toISOString(),
+            updated_stage_at: item.deal_updated_stage_at || new Date().toISOString(),
+            updated_at:       item.deal_updated_stage_at || new Date().toISOString(),
+            status:           item.deal_status || 'OPEN',
+            won_at:           item.deal_won_at || null,
+            stage:            item.deal_stage || '',
+            stage_id:         item.deal_stage_id || '',
+            value:            parseFloat(item.deal_value) || 0,
             contact: {
-              id:                  contato.id,
+              id:                  contato.id    || '',
               name:                contato.name  || '',
               phone:               contato.phone || '',
               motivo_do_reembolso: contato.fields && contato.fields.motivo_do_reembolso || '',
