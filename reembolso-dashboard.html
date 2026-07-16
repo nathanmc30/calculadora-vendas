@@ -9,17 +9,14 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body { width: 100%; min-height: 100%; background: #0d1117; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #e6edf3; }
 
-    /* ── Loading ── */
     #loading { position: fixed; inset: 0; background: #0d1117; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; z-index: 999; transition: opacity .4s; }
     #loading.hidden { opacity: 0; pointer-events: none; }
     .spinner { width: 32px; height: 32px; border: 2px solid rgba(255,255,255,0.08); border-top-color: #4fc3f7; border-radius: 50%; animation: spin .7s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
     .loading-txt { font-size: 13px; color: #4a5568; }
 
-    /* ── Layout ── */
     .page { max-width: 1400px; margin: 0 auto; padding: 28px 32px 48px; }
 
-    /* ── Topbar ── */
     .topbar { display: flex; align-items: center; justify-content: space-between; padding-bottom: 20px; border-bottom: 0.5px solid #1e2d3d; margin-bottom: 28px; }
     .brand-name { font-size: 20px; font-weight: 500; color: #e6edf3; letter-spacing: -0.4px; }
     .brand-sub { font-size: 13px; color: #8b9aaa; margin-top: 4px; }
@@ -30,25 +27,18 @@
     .filter-select { background: #161b22; border: 0.5px solid #1e2d3d; color: #e6edf3; font-size: 13px; padding: 6px 12px; border-radius: 8px; cursor: pointer; outline: none; }
     .filter-select:hover { border-color: #2a3d52; }
 
-    /* ── Section label ── */
     .sec-label { font-size: 10px; font-weight: 500; letter-spacing: 1px; text-transform: uppercase; color: #6e8394; margin-bottom: 12px; }
 
-    /* ── Cards base ── */
     .card { background: #161b22; border: 0.5px solid #1e2d3d; border-radius: 12px; padding: 18px 20px; }
     .card-hero { background: #0d1f2d; border: 0.5px solid #1a3a52; border-radius: 12px; padding: 20px 24px; }
     .lbl { font-size: 11px; font-weight: 500; letter-spacing: 0.7px; text-transform: uppercase; color: #8b9aaa; margin-bottom: 12px; }
     .num-xl { font-size: 64px; font-weight: 500; color: #e6edf3; line-height: 1; letter-spacing: -2px; }
     .num-lg { font-size: 42px; font-weight: 500; color: #e6edf3; line-height: 1; letter-spacing: -1.5px; }
-    .num-md { font-size: 32px; font-weight: 500; color: #e6edf3; line-height: 1; letter-spacing: -1px; }
     .sub { font-size: 12px; color: #5ba3c9; margin-top: 8px; }
 
-    /* ── Row de KPIs ── */
-    .kpi-row { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 1fr; gap: 12px; margin-bottom: 28px; }
-
-    /* ── Seção inferior: duas colunas ── */
+    .kpi-row { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1fr; gap: 12px; margin-bottom: 28px; }
     .bottom-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
 
-    /* ── Tabela de pessoas ── */
     .table-wrap { overflow: auto; margin-top: 4px; }
     table { width: 100%; border-collapse: collapse; font-size: 13px; }
     thead th { font-size: 10px; font-weight: 500; letter-spacing: 0.7px; text-transform: uppercase; color: #6e8394; padding: 0 0 10px; text-align: left; border-bottom: 0.5px solid #1e2d3d; }
@@ -57,44 +47,28 @@
     tbody td { padding: 11px 0; color: #e6edf3; vertical-align: middle; }
     .td-name { font-weight: 500; }
     .td-phone { color: #8b9aaa; font-size: 12px; }
-    .td-valor { font-variant-numeric: tabular-nums; }
     .td-motivo { color: #8b9aaa; font-size: 12px; max-width: 160px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .badge-etapa { display: inline-flex; align-items: center; font-size: 10px; font-weight: 500; padding: 3px 9px; border-radius: 20px; white-space: nowrap; }
-    .badge-reembolsado  { background: #0d2a12; color: #4ade80; border: 0.5px solid #1a5c28; }
-    .badge-analise      { background: #0d2233; color: #4fc3f7; border: 0.5px solid #1a3a52; }
-    .badge-negado       { background: #2a0d0d; color: #f56b6b; border: 0.5px solid #5a1010; }
-    .badge-solicitacao  { background: #1a1500; color: #f5c542; border: 0.5px solid #3d2e00; }
+    .badge-reembolsado { background: #0d2a12; color: #4ade80; border: 0.5px solid #1a5c28; }
+    .badge-analise     { background: #0d2233; color: #4fc3f7; border: 0.5px solid #1a3a52; }
+    .badge-negado      { background: #2a0d0d; color: #f56b6b; border: 0.5px solid #5a1010; }
+    .badge-solicitacao { background: #1a1500; color: #f5c542; border: 0.5px solid #3d2e00; }
 
-    /* ── Motivos ── */
     .motivo-list { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
     .motivo-item { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
     .motivo-nome { font-size: 13px; color: #c9d4e0; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .motivo-bar-wrap { flex: 2; height: 4px; background: #1e2d3d; border-radius: 4px; overflow: hidden; }
-    .motivo-bar { height: 4px; background: #4fc3f7; border-radius: 4px; transition: width .6s ease; }
+    .motivo-bar { height: 4px; background: #4fc3f7; border-radius: 4px; }
     .motivo-count { font-size: 13px; font-weight: 500; color: #e6edf3; min-width: 20px; text-align: right; }
 
-    /* ── Multa ── */
-    .multa-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; }
-    .multa-card { background: #0d1117; border: 0.5px solid #1e2d3d; border-radius: 10px; padding: 14px 16px; }
-    .multa-lbl { font-size: 10px; font-weight: 500; letter-spacing: 0.7px; text-transform: uppercase; color: #6e8394; margin-bottom: 8px; }
-    .multa-val { font-size: 28px; font-weight: 500; color: #f5c542; letter-spacing: -0.5px; line-height: 1; }
-    .multa-sub { font-size: 12px; color: #8b9aaa; margin-top: 6px; }
-
-    /* ── Cores semânticas ── */
     .color-ok     { color: #4ade80; }
     .color-warn   { color: #f5c542; }
     .color-danger { color: #f56b6b; }
     .color-blue   { color: #4fc3f7; }
-
-    /* ── Divider ── */
-    .div { border: none; border-top: 0.5px solid #1e2d3d; margin: 20px 0; }
-
-    /* ── Empty state ── */
-    .empty { font-size: 13px; color: #4a5568; padding: 20px 0; text-align: center; }
-
-    /* ── Valor com destaque ── */
     .valor-reembolso { font-weight: 500; color: #4ade80; }
     .valor-zero { color: #4a5568; }
+    .div { border: none; border-top: 0.5px solid #1e2d3d; margin: 20px 0; }
+    .empty { font-size: 13px; color: #4a5568; padding: 20px 0; text-align: center; }
   </style>
 </head>
 <body>
@@ -105,8 +79,6 @@
 </div>
 
 <div class="page">
-
-  <!-- TOPBAR -->
   <div class="topbar">
     <div>
       <div class="brand-name">Grupo Aspekto</div>
@@ -120,7 +92,6 @@
     </div>
   </div>
 
-  <!-- KPIs PRINCIPAIS -->
   <div class="sec-label">Visão geral do pipe</div>
   <div class="kpi-row">
     <div class="card-hero">
@@ -132,6 +103,11 @@
       <div class="lbl">Reembolsados</div>
       <div class="num-lg color-ok" id="kpi-reembolsados">—</div>
       <div class="sub">etapa concluída</div>
+    </div>
+    <div class="card">
+      <div class="lbl">Valor reembolsado</div>
+      <div class="num-lg color-ok" id="kpi-valor-reembolsado">—</div>
+      <div class="sub">total no período</div>
     </div>
     <div class="card">
       <div class="lbl">Em análise</div>
@@ -150,10 +126,7 @@
     </div>
   </div>
 
-  <!-- SEÇÃO INFERIOR -->
   <div class="bottom-grid">
-
-    <!-- COLUNA ESQUERDA: tabela de pessoas -->
     <div>
       <div class="sec-label">Quem solicitou</div>
       <div class="card" style="padding: 16px 20px;">
@@ -176,10 +149,7 @@
       </div>
     </div>
 
-    <!-- COLUNA DIREITA: motivos + multas -->
     <div style="display: flex; flex-direction: column; gap: 20px;">
-
-      <!-- Motivos -->
       <div>
         <div class="sec-label">Motivos de reembolso</div>
         <div class="card">
@@ -189,7 +159,6 @@
         </div>
       </div>
 
-      <!-- Multas -->
       <div>
         <div class="sec-label">Multas</div>
         <div class="card-hero">
@@ -212,10 +181,7 @@
               <div class="sub">em multas no período</div>
             </div>
           </div>
-
           <hr class="div" style="margin: 16px 0;" />
-
-          <!-- Mini-tabela de multas -->
           <div class="table-wrap">
             <table>
               <thead>
@@ -233,16 +199,12 @@
           </div>
         </div>
       </div>
-
     </div>
   </div>
 </div>
 
 <script>
-  // ── Configuração ─────────────────────────────────────────────────────────────
-  var CLINT_TOKEN   = 'U2FsdGVkX18OOaUeCcD9Ce5xowcbchLXhAkdHLw2NkNOjno+pincfryQ9+N/mYdOSZBtSJj5X0bTiFVzZs8Z5A==';
-  var CLINT_BASE    = 'https://api.clint.digital/v1';
-  var ORIGIN_ID     = '04451b6e-dbc3-44ef-acc1-c132b9bb44e4';
+  var WEBHOOK_URL = 'https://n8n-ai.grupoaspekto.com/webhook/reembolso-dashboard';
 
   var STAGE = {
     SOLICITACAO : '07a81d68-593a-4dca-9789-ff4075e780d9',
@@ -251,74 +213,56 @@
     REEMBOLSADO : '885b21c6-5f0f-41a6-9f07-5c15e3f66536'
   };
 
-  // ── Helpers ──────────────────────────────────────────────────────────────────
-  function clintGet(path) {
-    return fetch(CLINT_BASE + path, {
-      headers: { 'api-token': CLINT_TOKEN },
-      cache: 'no-store'
-    }).then(function(r) { return r.json(); });
-  }
+  var MESES_PT = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho',
+                  'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
+  var _allDeals = [];
 
   function fmtBRL(v) {
     if (!v && v !== 0) return '—';
     return Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   }
 
-  function fmtPct(v) {
-    if (!v && v !== 0) return '—';
-    return Number(v).toFixed(1).replace('.', ',') + '%';
-  }
-
   function set(id, val) {
     var el = document.getElementById(id);
-    if (el) el.textContent = val === null || val === undefined ? '—' : String(val);
+    if (el) el.textContent = (val === null || val === undefined) ? '—' : String(val);
   }
 
-  // ── Filtro dinâmico — gerado a partir dos meses reais nos deals ──────────────
-  var MESES_PT = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho',
-                  'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-
   function gerarOpcoesFiltro(deals) {
-    // Coleta os meses únicos presentes nos deals (usando created_at)
     var mesesSet = {};
     deals.forEach(function(d) {
-      var dt   = new Date(d.created_at);
-      var ano  = dt.getFullYear();
-      var mes  = dt.getMonth(); // 0-based
-      var key  = ano + '-' + String(mes + 1).padStart(2, '0');
+      var dt  = new Date(d.created_at);
+      var ano = dt.getFullYear();
+      var mes = dt.getMonth();
+      var key = ano + '-' + String(mes + 1).padStart(2, '0');
       if (!mesesSet[key]) mesesSet[key] = { ano: ano, mes: mes, key: key };
     });
 
-    // Ordena do mais recente para o mais antigo
     var mesesArr = Object.values(mesesSet).sort(function(a, b) {
       return b.key.localeCompare(a.key);
     });
 
     var select     = document.getElementById('filtro-periodo');
     var valorAtual = select.value;
-
     select.innerHTML = '';
 
-    // Opção "Tudo"
     var optTudo = document.createElement('option');
-    optTudo.value       = 'tudo';
+    optTudo.value = 'tudo';
     optTudo.textContent = 'Todos os meses';
     select.appendChild(optTudo);
 
-    // Uma opção por mês encontrado nos dados
     mesesArr.forEach(function(m) {
-      var opt       = document.createElement('option');
-      opt.value     = m.key; // ex: "2026-07"
+      var opt = document.createElement('option');
+      opt.value = m.key;
       opt.textContent = MESES_PT[m.mes] + ' ' + m.ano;
       select.appendChild(opt);
     });
 
-    // Tenta restaurar seleção anterior; se não existir, seleciona o mês mais recente
     var opcoes = Array.from(select.options).map(function(o) { return o.value; });
     if (valorAtual && opcoes.indexOf(valorAtual) !== -1) {
       select.value = valorAtual;
     } else if (mesesArr.length > 0) {
-      select.value = mesesArr[0].key; // mês mais recente por padrão
+      select.value = mesesArr[0].key;
     } else {
       select.value = 'tudo';
     }
@@ -327,11 +271,9 @@
   function getPeriodo() {
     var v = document.getElementById('filtro-periodo').value;
     if (!v || v === 'tudo') return { inicio: null, fim: null };
-
-    // v está no formato "2026-07"
     var partes = v.split('-');
     var ano    = parseInt(partes[0]);
-    var mes    = parseInt(partes[1]) - 1; // 0-based
+    var mes    = parseInt(partes[1]) - 1;
     var inicio = new Date(ano, mes, 1);
     var fim    = new Date(ano, mes + 1, 0, 23, 59, 59);
     return { inicio: inicio.toISOString(), fim: fim.toISOString() };
@@ -343,110 +285,83 @@
     return d >= new Date(periodo.inicio) && d <= new Date(periodo.fim);
   }
 
-  // ── Busca de dados ────────────────────────────────────────────────────────────
-  var _allDeals    = [];
-  var _allContacts = {};
-
   function carregarDados() {
-    // Busca todos os deals do pipe de Reembolso
-    return clintGet('/deals?origin_id=' + ORIGIN_ID + '&limit=200')
-      .then(function(res) {
-        _allDeals = res.data || [];
-
-        // Busca detalhes do contato de cada deal (para motivo e multa)
-        var ids = [];
-        _allDeals.forEach(function(d) {
-          if (d.contact && d.contact.id && !_allContacts[d.contact.id]) {
-            ids.push(d.contact.id);
-          }
-        });
-
-        // Busca em paralelo, max 10 por vez
-        var chunks = [];
-        for (var i = 0; i < ids.length; i += 10) chunks.push(ids.slice(i, i + 10));
-
-        return chunks.reduce(function(p, chunk) {
-          return p.then(function() {
-            return Promise.all(chunk.map(function(id) {
-              return clintGet('/contacts/' + id).then(function(r) {
-                if (r.data) _allContacts[r.data.id] = r.data;
-              });
-            }));
-          });
-        }, Promise.resolve());
+    return fetch(WEBHOOK_URL, { cache: 'no-store' })
+      .then(function(r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      })
+      .then(function(json) {
+        _allDeals = json.deals || [];
       });
   }
 
-  // ── Render ────────────────────────────────────────────────────────────────────
   function renderDados() {
     gerarOpcoesFiltro(_allDeals);
     var periodo = getPeriodo();
-    var deals   = _allDeals;
 
-    // Filtra por período usando updated_stage_at como referência de etapa
-    // e created_at para solicitações
-    var solicitacoes = deals.filter(function(d) {
+    var solicitacoes = _allDeals.filter(function(d) {
       return dentroDoFiltro(d.created_at, periodo);
     });
 
-    var reembolsados = deals.filter(function(d) {
+    var reembolsados = _allDeals.filter(function(d) {
       return d.stage_id === STAGE.REEMBOLSADO && dentroDoFiltro(d.updated_stage_at, periodo);
     });
 
-    var emAnalise = deals.filter(function(d) {
+    var emAnalise = _allDeals.filter(function(d) {
       return d.stage_id === STAGE.ANALISE && dentroDoFiltro(d.updated_stage_at, periodo);
     });
 
-    var negados = deals.filter(function(d) {
+    var negados = _allDeals.filter(function(d) {
       return d.stage_id === STAGE.NEGADO && dentroDoFiltro(d.updated_stage_at, periodo);
     });
 
-    var revertidos = deals.filter(function(d) {
+    var revertidos = _allDeals.filter(function(d) {
       return d.status === 'WON' && dentroDoFiltro(d.updated_at, periodo);
     });
 
-    // KPIs
-    set('kpi-solicitacoes', solicitacoes.length);
-    set('kpi-reembolsados', reembolsados.length);
-    set('kpi-analise',      emAnalise.length);
-    set('kpi-negados',      negados.length);
-    set('kpi-revertidos',   revertidos.length);
+    var totalReembolsado = reembolsados.reduce(function(s, d) { return s + (d.value || 0); }, 0);
 
-    // ── Tabela de pessoas (todos os deals do período) ──
+    set('kpi-solicitacoes',       solicitacoes.length);
+    set('kpi-reembolsados',       reembolsados.length);
+    set('kpi-valor-reembolsado',  totalReembolsado > 0 ? fmtBRL(totalReembolsado) : '—');
+    set('kpi-analise',            emAnalise.length);
+    set('kpi-negados',            negados.length);
+    set('kpi-revertidos',         revertidos.length);
+
+    // Tabela de pessoas
     var tbody = document.getElementById('tabela-pessoas');
     if (solicitacoes.length === 0) {
       tbody.innerHTML = '<tr><td colspan="5" class="empty">Nenhum dado no período</td></tr>';
     } else {
       tbody.innerHTML = solicitacoes.map(function(d) {
-        var c       = _allContacts[d.contact && d.contact.id] || {};
-        var nome    = (c.name  || d.contact && d.contact.name  || '—');
-        var tel     = (c.phone || d.contact && d.contact.phone || '—');
-        var motivo  = (c.fields && c.fields.motivo_do_reembolso) || '—';
-        var valor   = d.value && d.value > 0
+        var c      = d.contact || {};
+        var nome   = c.name  || '—';
+        var tel    = c.phone || '—';
+        var motivo = c.motivo_do_reembolso || '—';
+        var valor  = d.value && d.value > 0
           ? '<span class="valor-reembolso">' + fmtBRL(d.value) + '</span>'
           : '<span class="valor-zero">—</span>';
 
-        var badgeClass = 'badge-solicitacao';
-        var badgeLabel = 'Solicitação';
-        if (d.stage_id === STAGE.REEMBOLSADO)  { badgeClass = 'badge-reembolsado';  badgeLabel = 'Reembolsado'; }
-        else if (d.stage_id === STAGE.ANALISE) { badgeClass = 'badge-analise';      badgeLabel = 'Análise'; }
-        else if (d.stage_id === STAGE.NEGADO)  { badgeClass = 'badge-negado';       badgeLabel = 'Negado'; }
+        var badgeClass = 'badge-solicitacao', badgeLabel = 'Solicitação';
+        if      (d.stage_id === STAGE.REEMBOLSADO) { badgeClass = 'badge-reembolsado'; badgeLabel = 'Reembolsado'; }
+        else if (d.stage_id === STAGE.ANALISE)     { badgeClass = 'badge-analise';     badgeLabel = 'Análise'; }
+        else if (d.stage_id === STAGE.NEGADO)      { badgeClass = 'badge-negado';      badgeLabel = 'Negado'; }
 
         return '<tr>' +
           '<td><div class="td-name">' + nome + '</div></td>' +
           '<td><div class="td-phone">' + tel + '</div></td>' +
           '<td><span class="badge-etapa ' + badgeClass + '">' + badgeLabel + '</span></td>' +
-          '<td class="td-valor">' + valor + '</td>' +
+          '<td>' + valor + '</td>' +
           '<td><div class="td-motivo" title="' + motivo + '">' + motivo + '</div></td>' +
         '</tr>';
       }).join('');
     }
 
-    // ── Motivos ──
+    // Motivos
     var motivoCount = {};
     solicitacoes.forEach(function(d) {
-      var c      = _allContacts[d.contact && d.contact.id] || {};
-      var motivo = (c.fields && c.fields.motivo_do_reembolso) || null;
+      var motivo = d.contact && d.contact.motivo_do_reembolso;
       if (!motivo) return;
       motivoCount[motivo] = (motivoCount[motivo] || 0) + 1;
     });
@@ -471,15 +386,14 @@
       }).join('');
     }
 
-    // ── Multas ──
+    // Multas
     var comMulta = [];
     solicitacoes.forEach(function(d) {
-      var c         = _allContacts[d.contact && d.contact.id] || {};
-      var multa     = c.fields && c.fields['Valor_da_multa'];
-      var valor     = d.value || 0;
+      var multa = d.contact && d.contact.Valor_da_multa;
+      var valor = d.value || 0;
       if (multa && parseFloat(String(multa).replace(',', '.')) > 0) {
         comMulta.push({
-          nome:  c.name  || d.contact && d.contact.name  || '—',
+          nome:  (d.contact && d.contact.name) || '—',
           valor: valor,
           multa: parseFloat(String(multa).replace(',', '.'))
         });
@@ -488,9 +402,9 @@
 
     set('kpi-com-multa', comMulta.length);
 
-    var totalMulta    = comMulta.reduce(function(s, m) { return s + m.multa; }, 0);
+    var totalMulta      = comMulta.reduce(function(s, m) { return s + m.multa; }, 0);
     var totalFechamento = comMulta.reduce(function(s, m) { return s + m.valor; }, 0);
-    var pctMedia      = comMulta.length && totalFechamento > 0
+    var pctMedia        = comMulta.length && totalFechamento > 0
       ? ((totalMulta / totalFechamento) * 100).toFixed(1).replace('.', ',') + '%'
       : '—';
 
@@ -505,22 +419,20 @@
         var pct = m.valor > 0 ? ((m.multa / m.valor) * 100).toFixed(1).replace('.', ',') + '%' : '—';
         return '<tr>' +
           '<td class="td-name">' + m.nome + '</td>' +
-          '<td class="td-valor">' + fmtBRL(m.valor) + '</td>' +
-          '<td class="td-valor color-warn">' + fmtBRL(m.multa) + '</td>' +
-          '<td class="td-valor color-warn">' + pct + '</td>' +
+          '<td>' + fmtBRL(m.valor) + '</td>' +
+          '<td class="color-warn">' + fmtBRL(m.multa) + '</td>' +
+          '<td class="color-warn">' + pct + '</td>' +
         '</tr>';
       }).join('');
     }
 
-    // Timestamp
     set('update-time', 'atualizado às ' + new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
     document.getElementById('loading').classList.add('hidden');
   }
 
   function aplicarFiltro() { renderDados(); }
 
-  // ── Inicializa ────────────────────────────────────────────────────────────────
-  function init() {
+  function atualizar() {
     carregarDados()
       .then(renderDados)
       .catch(function(e) {
@@ -529,10 +441,8 @@
       });
   }
 
-  init();
-  setInterval(function() {
-    carregarDados().then(renderDados).catch(console.error);
-  }, 60000); // atualiza a cada 1 minuto
+  atualizar();
+  setInterval(atualizar, 60000);
 </script>
 </body>
 </html>
