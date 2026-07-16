@@ -10,7 +10,6 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body { width: 100%; min-height: 100%; background: #0d1117; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #e6edf3; }
 
-    /* ── Navbar ── */
     .nav-tabs {
       display: flex;
       align-items: center;
@@ -45,7 +44,21 @@
     .panel { display: none; }
     .panel.active { display: block; }
 
-    /* ── CSS CS ── */
+    /* loading do reembolso — posição relativa ao painel */
+    #loading-ree {
+      position: fixed;
+      inset: 0;
+      background: #0d1117;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      z-index: 99;
+      transition: opacity .4s;
+    }
+    #loading-ree.hidden { opacity: 0; pointer-events: none; }
+
     
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body { width: 100%; height: 100%; overflow: hidden; background: #0d1117; }
@@ -179,8 +192,6 @@
     .leg-item { display: flex; align-items: center; gap: 5px; font-size: 9px; color: #4a5a6a; }
     .leg-dot { width: 7px; height: 7px; border-radius: 50%; }
   
-
-    /* ── CSS Reembolso ── */
     
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body { width: 100%; min-height: 100%; background: #0d1117; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #e6edf3; }
@@ -565,7 +576,7 @@
   <div id="panel-reembolso" class="panel">
     
 
-<div id="loading">
+<div id="loading-ree">
   <div class="spinner"></div>
   <p class="loading-txt">Buscando dados do Clint...</p>
 </div>
@@ -1174,6 +1185,9 @@
   </script>
 
   <script>
+    // Reembolso — só inicializa quando o painel for aberto pela 1ª vez
+    var _reembolsoIniciado = false;
+
     
   var WEBHOOK_URL = 'https://n8n-ai.grupoaspekto.com/webhook/reembolso-dashboard';
 
@@ -1422,7 +1436,7 @@
     }
 
     set('update-time', 'atualizado às ' + new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
-    document.getElementById('loading').classList.add('hidden');
+    document.getElementById('loading-ree').classList.add('hidden');
   }
 
   function aplicarFiltro() { renderDados(); }
@@ -1432,11 +1446,11 @@
       .then(renderDados)
       .catch(function(e) {
         console.error('Erro ao carregar dados:', e);
-        document.getElementById('loading').classList.add('hidden');
+        document.getElementById('loading-ree').classList.add('hidden');
       });
   }
 
-  atualizar();
+  // atualizar() chamado pelo showPanel
   setInterval(atualizar, 60000);
 
   </script>
@@ -1447,6 +1461,12 @@
       document.querySelectorAll('.nav-tab').forEach(function(t) { t.classList.remove('active'); });
       document.getElementById('panel-' + name).classList.add('active');
       btn.classList.add('active');
+
+      // Inicializa o reembolso na primeira vez que o painel é aberto
+      if (name === 'reembolso' && !_reembolsoIniciado) {
+        _reembolsoIniciado = true;
+        atualizar();
+      }
     }
   </script>
 
