@@ -292,7 +292,34 @@
         return r.json();
       })
       .then(function(json) {
-        _allDeals = json.deals || [];
+        // O n8n retorna array com um objeto { deals: [...] }
+        var raw = Array.isArray(json) ? json[0] : json;
+        var items = raw.deals || [];
+
+        // Cada item é { status, data: { contato } } — precisamos cruzar com os deals originais
+        // Como o Agregar perdeu os dados do deal, usamos o que temos do contato
+        // e marcamos stage como desconhecido até o n8n ser ajustado
+        _allDeals = items.map(function(item) {
+          var contato = item.data || item;
+          return {
+            id:               contato.id,
+            created_at:       contato.created_at || new Date().toISOString(),
+            updated_stage_at: contato.updated_at || new Date().toISOString(),
+            updated_at:       contato.updated_at || new Date().toISOString(),
+            status:           'OPEN',
+            won_at:           null,
+            stage:            item.stage || '',
+            stage_id:         item.stage_id || '',
+            value:            item.value || 0,
+            contact: {
+              id:                  contato.id,
+              name:                contato.name  || '',
+              phone:               contato.phone || '',
+              motivo_do_reembolso: contato.fields && contato.fields.motivo_do_reembolso || '',
+              Valor_da_multa:      contato.fields && contato.fields.Valor_da_multa      || null
+            }
+          };
+        });
       });
   }
 
