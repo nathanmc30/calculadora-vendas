@@ -313,7 +313,7 @@
               name:                contato.name  || '',
               phone:               contato.phone || '',
               motivo_do_reembolso: contato.fields && contato.fields.motivo_do_reembolso || '',
-              Valor_da_multa:      contato.fields && contato.fields.Valor_da_multa      || null
+              valor_da_multa:      contato.fields && contato.fields.valor_da_multa      || null
             }
           };
         });
@@ -413,7 +413,7 @@
     // Multas
     var comMulta = [];
     solicitacoes.forEach(function(d) {
-      var multa = d.contact && d.contact.Valor_da_multa;
+      var multa = d.contact && d.contact.valor_da_multa;
       var valor = d.value || 0;
       if (multa && parseFloat(String(multa).replace(',', '.')) > 0) {
         comMulta.push({
