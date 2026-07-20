@@ -255,7 +255,6 @@
   // ─── Endpoints n8n ───────────────────────────────────────────────────────────
   var N8N_LEADS          = 'https://n8n-ai.grupoaspekto.com/webhook/dashboard-leads';
   var N8N_PIPE           = 'https://n8n-ai.grupoaspekto.com/webhook/dashboard-pipe';
-  var WEBHOOK_ALMOCO     = 'https://n8n-ai.grupoaspekto.com/webhook/666eb501-2044-47e7-91cc-c9f1fe48f11a';
   var N8N_LEADS_VENDEDOR = 'https://n8n-ai.grupoaspekto.com/webhook/dashboard-leads-vendedor';
 
   // ─── Mapa nome → email ───────────────────────────────────────────────────────
@@ -287,84 +286,20 @@
     return 'há ' + min + ' min';
   }
 
-  // ─── Almoço ──────────────────────────────────────────────────────────────────
-  var almocoState = {};
-  function almocoKey(nome) { return 'almoco_' + nome + '_' + new Date().toLocaleDateString('pt-BR'); }
-  function carregarAlmoco(nome) {
-    try { var raw = localStorage.getItem(almocoKey(nome)); if (raw) almocoState[nome] = JSON.parse(raw); } catch(e) {}
-  }
-  function salvarAlmoco(nome, obj) {
-    almocoState[nome] = obj;
-    try { localStorage.setItem(almocoKey(nome), JSON.stringify(obj)); } catch(e) {}
-  }
-  function acionarAlmoco(nome) {
-    var agora = new Date();
-    var volta = new Date(agora.getTime() + 60 * 60 * 1000);
-    var voltaStr = volta.getHours() + 'h' + String(volta.getMinutes()).padStart(2, '0');
-    almocoState[nome] = { ativo: true, volta: voltaStr, fim: volta.getTime(), acionadoHoje: true };
-    salvarAlmoco(nome, almocoState[nome]);
-    var container = document.getElementById('vendedores-container');
-    container._lastHash = '';
-    renderVendedores(window._lastRows || []);
-    fetch(WEBHOOK_ALMOCO, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ vendedor: nome, almoco_ate: voltaStr }) }).catch(function(e) {});
-  }
-  function checarAlmocos() {
-    var agora = Date.now();
-    Object.keys(almocoState).forEach(function(nome) {
-      if (almocoState[nome].ativo && agora >= almocoState[nome].fim) {
-        almocoState[nome].ativo = false;
-        try { localStorage.setItem(almocoKey(nome), JSON.stringify(almocoState[nome])); } catch(e) {}
-        fetch(WEBHOOK_ALMOCO, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ vendedor: nome, almoco_ate: '' }) }).catch(function(e) {});
-      }
-    });
-  }
-  setInterval(function() { checarAlmocos(); renderVendedores(window._lastRows || []); }, 5000);
-
   // ─── Render termômetro ───────────────────────────────────────────────────────
   function renderVendedores(rows) {
     window._lastRows = rows;
-    checarAlmocos();
     var container = document.getElementById('vendedores-container');
-    var novoHash = JSON.stringify(rows) + JSON.stringify(almocoState);
+    var novoHash = JSON.stringify(rows);
     if (container._lastHash === novoHash) return;
     container._lastHash = novoHash;
     container.innerHTML = '';
 
     rows.forEach(function(row) {
-      var nome     = row['vendedor']       || '—';
+      var nome     = row['vendedor'] || '—';
       var negocios = num(row['negocios']);
       var minutos  = num(row['minutos_parado']);
       var status   = (row['status'] || '').toLowerCase().trim();
-
-      carregarAlmoco(nome);
-      var almoco    = almocoState[nome] || {};
-      var almocoAte = row['almoco_ate'] || '';
-      var emAlmoco  = false;
-      var jaAcionou = almoco.acionadoHoje === true;
-
-      if (!almocoAte && almocoState[nome] && almocoState[nome].ativo) almocoAte = almocoState[nome].volta;
-
-      if (almocoAte) {
-        var partes = almocoAte.replace('h', ':').split(':');
-        var voltaHoje = new Date();
-        voltaHoje.setHours(parseInt(partes[0]), parseInt(partes[1] || 0), 0, 0);
-        if (new Date() < voltaHoje) {
-          emAlmoco = true;
-          almocoState[nome] = { ativo: true, volta: almocoAte, fim: voltaHoje.getTime(), acionadoHoje: true };
-          salvarAlmoco(nome, almocoState[nome]);
-          jaAcionou = true;
-        } else {
-          almocoState[nome] = {};
-          try { localStorage.removeItem(almocoKey(nome)); } catch(e) {}
-          jaAcionou = false;
-        }
-      } else {
-        almocoState[nome] = {};
-        try { localStorage.removeItem(almocoKey(nome)); } catch(e) {}
-        jaAcionou = false;
-      }
-
-      if (emAlmoco) status = 'atualizado';
 
       var estado;
       if (status === 'alerta') { estado = 'alerta'; }
@@ -391,13 +326,6 @@
         descTexto = 'no pipe agora'; tempoColor = 'color-ok'; subtexto = 'dentro do prazo';
       }
 
-      var btnAlmoco;
-      if (jaAcionou) {
-        btnAlmoco = '<div style="font-size:11px;font-weight:500;padding:4px 12px;border-radius:20px;border:0.5px solid #1e2d3d;background:#161b22;color:#3a4a5a;cursor:not-allowed;white-space:nowrap;flex-shrink:0;">☕ Almoço</div>';
-      } else {
-        btnAlmoco = '<button onclick="acionarAlmoco(\'' + nome.replace(/'/g, "\\'") + '\')" style="font-size:11px;font-weight:500;padding:4px 12px;border-radius:20px;border:1px solid #c97a00;background:#7a4500;color:#ffb84d;cursor:pointer;white-space:nowrap;flex-shrink:0;">☕ Almoço</button>';
-      }
-
       var barraHTML = '';
       if (estado === 'atencao') {
         barraHTML = '<div class="barra-wrap"><div class="barra-atencao" style="width:' + Math.min((minutos / 180) * 100, 99) + '%"></div></div>';
@@ -405,33 +333,21 @@
         barraHTML = '<div class="barra-wrap"><div class="barra-alerta" style="width:100%"></div></div>';
       }
 
-      var centroHTML;
-      if (emAlmoco) {
-        centroHTML =
-          '<div style="display:flex;align-items:center;gap:12px;padding:4px 0;">' +
-            '<div style="font-size:28px;">☕</div>' +
-            '<div>' +
-              '<div style="font-size:20px;font-weight:500;color:#4fc3f7;letter-spacing:-0.5px;">Almoço</div>' +
-              '<div style="font-size:11px;color:#5ba3c9;margin-top:3px;">volta às ' + almocoAte + '</div>' +
-            '</div>' +
-          '</div>';
-      } else {
-        centroHTML =
-          '<div class="v-info">' +
-            '<div class="v-stat">' +
-              '<div class="v-stat-lbl">Negócios p/ ganhar</div>' +
-              '<div class="v-stat-val">' + (negocios > 0 ? negocios : '—') + '</div>' +
-              '<div class="v-stat-desc ' + (estado === 'ok' ? 'color-ok' : tempoColor) + '">' + descTexto + '</div>' +
-            '</div>' +
-            '<div class="sep"></div>' +
-            '<div class="v-stat">' +
-              '<div class="v-stat-lbl">Última atualização</div>' +
-              '<div class="v-stat-val ' + (estado !== 'ok' ? tempoColor : '') + '" style="font-size:18px;">' + tempoStr(minutos) + '</div>' +
-              '<div class="v-stat-desc ' + tempoColor + '">' + subtexto + '</div>' +
-            '</div>' +
+      var centroHTML =
+        '<div class="v-info">' +
+          '<div class="v-stat">' +
+            '<div class="v-stat-lbl">Negócios p/ ganhar</div>' +
+            '<div class="v-stat-val">' + (negocios > 0 ? negocios : '—') + '</div>' +
+            '<div class="v-stat-desc ' + (estado === 'ok' ? 'color-ok' : tempoColor) + '">' + descTexto + '</div>' +
           '</div>' +
-          barraHTML;
-      }
+          '<div class="sep"></div>' +
+          '<div class="v-stat">' +
+            '<div class="v-stat-lbl">Última atualização</div>' +
+            '<div class="v-stat-val ' + (estado !== 'ok' ? tempoColor : '') + '" style="font-size:18px;">' + tempoStr(minutos) + '</div>' +
+            '<div class="v-stat-desc ' + tempoColor + '">' + subtexto + '</div>' +
+          '</div>' +
+        '</div>' +
+        barraHTML;
 
       var btnVerLeads = '';
       if (negocios > 0) {
@@ -439,19 +355,17 @@
       }
 
       var card = document.createElement('div');
-      card.className = 'vendedor ' + (emAlmoco ? 'almoco-estado' : estado);
-      if (emAlmoco) { card.style.background = '#0d1a2d'; card.style.borderColor = '#1a3a52'; }
+      card.className = 'vendedor ' + estado;
 
       card.innerHTML =
         '<div class="v-top">' +
           '<div class="v-nome-wrap">' +
-            '<i class="ti ti-user ' + (emAlmoco ? '' : iconColor) + '" style="font-size:16px;' + (emAlmoco ? 'color:#4fc3f7;' : '') + '"></i>' +
-            '<span class="v-nome"' + (emAlmoco ? ' style="color:#4fc3f7;"' : '') + '>' + nome + '</span>' +
+            '<i class="ti ti-user ' + iconColor + '" style="font-size:16px;"></i>' +
+            '<span class="v-nome">' + nome + '</span>' +
           '</div>' +
           '<div style="display:flex;align-items:center;gap:6px;">' +
             btnVerLeads +
-            btnAlmoco +
-            '<div class="v-badge ' + (emAlmoco ? 'badge-ok' : badgeClass) + '"><i class="ti ' + (emAlmoco ? 'ti-check' : badgeIcon) + '"></i>' + (emAlmoco ? 'Atualizado' : badgeTexto) + '</div>' +
+            '<div class="v-badge ' + badgeClass + '"><i class="ti ' + badgeIcon + '"></i>' + badgeTexto + '</div>' +
           '</div>' +
         '</div>' +
         centroHTML;
