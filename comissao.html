@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calculadora de Comissionamento</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0f0f10;
+    --surface: #18181b;
+    --surface-2: #1f1f23;
+    --surface-3: #27272c;
+    --border: rgba(255,255,255,0.07);
+    --border-strong: rgba(255,255,255,0.14);
+    --text: #f4f4f5;
+    --text-2: #a1a1aa;
+    --text-3: #71717a;
+    --accent: #6366f1;
+    --green: #22c55e;
+    --green-bg: rgba(34,197,94,0.08);
+    --green-border: rgba(34,197,94,0.2);
+    --amber: #f59e0b;
+    --amber-bg: rgba(245,158,11,0.08);
+    --amber-border: rgba(245,158,11,0.2);
+    --blue: #3b82f6;
+    --blue-bg: rgba(59,130,246,0.08);
+    --blue-border: rgba(59,130,246,0.2);
+    --red: #ef4444;
+    --red-bg: rgba(239,68,68,0.07);
+  }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 40px 24px 80px;
+  }
+
+  .container { max-width: 1140px; margin: 0 auto; }
+
+  .page-header { margin-bottom: 28px; }
+  .page-header h1 { font-size: 22px; font-weight: 600; letter-spacing: -0.3px; margin-bottom: 5px; }
+  .page-header p { font-size: 14px; color: var(--text-3); }
+
+  .controls {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+
+  .field label {
+    display: block;
+    font-size: 11px; font-weight: 500;
+    color: var(--text-3);
+    text-transform: uppercase; letter-spacing: 0.06em;
+    margin-bottom: 7px;
+  }
+
+  .input-wrap { position: relative; }
+  .input-wrap .prefix {
+    position: absolute; left: 11px; top: 50%;
+    transform: translateY(-50%);
+    font-size: 13px; color: var(--text-3);
+    font-family: 'JetBrains Mono', monospace;
+    pointer-events: none;
+  }
+
+  input[type=number] {
+    width: 100%;
+    background: var(--surface-2);
+    border: 1px solid var(--border-strong);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px; font-weight: 600;
+    padding: 10px 12px 10px 30px;
+    outline: none;
+    transition: border-color 0.15s;
+    -moz-appearance: textfield;
+  }
+  input[type=number]::-webkit-inner-spin-button,
+  input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; }
+  input[type=number]:focus { border-color: var(--accent); }
+  input[type=number][readonly] { color: var(--text-3); background: var(--surface-3); cursor: default; }
+
+  .field-hint { font-size: 11px; color: var(--text-3); margin-top: 5px; }
+
+  .ating-bar {
+    display: flex; align-items: center; gap: 12px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 14px 18px; margin-bottom: 20px;
+  }
+  .ating-bar-label { font-size: 12px; color: var(--text-3); white-space: nowrap; }
+  .bar-track { flex: 1; height: 6px; background: var(--surface-3); border-radius: 3px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 3px; transition: width 0.35s, background 0.35s; width: 0%; }
+  .bar-pct { font-family: 'JetBrains Mono', monospace; font-weight: 600; font-size: 14px; min-width: 46px; text-align: right; color: var(--text-3); }
+  .bar-pill { font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px; letter-spacing: 0.04em; white-space: nowrap; background: var(--surface-3); color: var(--text-3); }
+
+  .summary { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-bottom: 20px; }
+  .scard { border-radius: 12px; padding: 15px 16px; border: 1px solid; }
+  .scard-label { font-size: 11px; font-weight: 500; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 7px; }
+  .scard-val { font-family: 'JetBrains Mono', monospace; font-size: 18px; font-weight: 600; }
+  .scard-sub { font-size: 11px; margin-top: 3px; }
+
+  .scard.s0 { background: var(--amber-bg); border-color: var(--amber-border); }
+  .scard.s0 .scard-label, .scard.s0 .scard-val { color: var(--amber); }
+  .scard.s0 .scard-sub { color: rgba(245,158,11,0.5); }
+
+  .scard.s1 { background: var(--blue-bg); border-color: var(--blue-border); }
+  .scard.s1 .scard-label, .scard.s1 .scard-val { color: var(--blue); }
+  .scard.s1 .scard-sub { color: rgba(59,130,246,0.5); }
+
+  .scard.s2 { background: var(--green-bg); border-color: var(--green-border); }
+  .scard.s2 .scard-label, .scard.s2 .scard-val { color: var(--green); }
+  .scard.s2 .scard-sub { color: rgba(34,197,94,0.5); }
+
+  .table-wrap { border-radius: 14px; overflow: hidden; border: 1px solid var(--border); }
+  table { width: 100%; border-collapse: collapse; }
+
+  thead th {
+    background: var(--surface);
+    font-size: 11px; font-weight: 500;
+    color: var(--text-3);
+    text-transform: uppercase; letter-spacing: 0.07em;
+    padding: 11px 14px; text-align: right;
+    border-bottom: 1px solid var(--border);
+  }
+  thead th:first-child { text-align: left; }
+
+  tbody tr { background: var(--surface-2); transition: background 0.12s; }
+  tbody tr:nth-child(even) { background: var(--surface); }
+  tbody tr:hover { background: var(--surface-3); }
+
+  tbody td {
+    padding: 12px 14px;
+    font-size: 13px; text-align: right;
+    border-bottom: 1px solid var(--border);
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--text-2);
+    vertical-align: top;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody td:first-child { text-align: left; font-family: 'Inter', sans-serif; }
+
+  .nivel-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 28px; height: 28px; border-radius: 7px;
+    background: var(--surface-3); border: 1px solid var(--border-strong);
+    font-size: 11px; font-weight: 600; color: var(--text-3);
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .nivel-info { display: flex; flex-direction: column; gap: 2px; }
+  .nivel-name { font-size: 13px; font-weight: 500; color: var(--text); }
+  .nivel-fixo { font-size: 11px; color: var(--text-3); font-family: 'JetBrains Mono', monospace; }
+  .nivel-meta { font-size: 11px; color: var(--text-3); margin-top: 1px; }
+
+  .ote-block { display: flex; flex-direction: column; gap: 3px; }
+  .ote-val { font-size: 14px; font-weight: 600; }
+  .ote-var { font-size: 11px; color: var(--text-3); }
+  .ote-vendas { font-size: 11px; }
+  .ote-pct { font-size: 11px; margin-top: 1px; }
+
+  .ating-row { display: flex; flex-direction: column; gap: 3px; }
+  .ating-row-pct { font-size: 12px; font-weight: 600; }
+  .mini-bar { width: 52px; height: 3px; background: var(--surface-3); border-radius: 2px; overflow: hidden; }
+  .mini-fill { height: 100%; border-radius: 2px; transition: width 0.3s, background 0.3s; }
+
+  tr.ga0 td { background: rgba(245,158,11,0.05) !important; }
+  tr.ga1 td { background: rgba(59,130,246,0.06) !important; }
+  tr.ga2 td { background: rgba(34,197,94,0.06) !important; }
+
+  .pct-low  { color: var(--green); }
+  .pct-mid  { color: var(--amber); }
+  .pct-high { color: var(--red); }
+
+  .custo-section {
+    margin-top: 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+  }
+  .custo-title { font-size: 13px; font-weight: 600; color: var(--text-2); margin-bottom: 16px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .custo-title span { font-size: 11px; font-weight: 400; color: var(--text-3); }
+  .custo-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; }
+  .custo-card {
+    background: var(--surface-2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 13px 15px;
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .custo-card-label { font-size: 11px; color: var(--text-3); }
+  .custo-card-nivel { font-size: 12px; font-weight: 500; color: var(--text-2); margin-bottom: 2px; }
+  .custo-card-pct { font-family: 'JetBrains Mono', monospace; font-size: 22px; font-weight: 600; }
+  .custo-card-detail { font-size: 11px; color: var(--text-3); font-family: 'JetBrains Mono', monospace; }
+
+  @media (max-width: 700px) {
+    .summary { grid-template-columns: 1fr; }
+    body { padding: 20px 12px 60px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="page-header">
+    <h1>Calculadora de comissionamento</h1>
+    <p>Meta do N1 = 37 vendas, crescendo de 3 em 3. Ticket padrão: R$ 4.600.</p>
+  </div>
+
+  <div class="controls">
+    <div class="field">
+      <label>Meta N1 (vendas)</label>
+      <div class="input-wrap">
+        <span class="prefix">#</span>
+        <input type="number" id="meta-n1" value="37" min="1" step="1">
+      </div>
+      <div class="field-hint" id="hint-metas"></div>
+    </div>
+    <div class="field">
+      <label>Ticket médio</label>
+      <div class="input-wrap">
+        <span class="prefix">R$</span>
+        <input type="number" id="ticket" value="4600" min="1" step="100">
+      </div>
+    </div>
+    <div class="field">
+      <label>Vendas realizadas</label>
+      <div class="input-wrap">
+        <span class="prefix">#</span>
+        <input type="number" id="vendas" value="0" min="0" step="1">
+      </div>
+    </div>
+    <div class="field">
+      <label>Volume gerado</label>
+      <div class="input-wrap">
+        <span class="prefix">R$</span>
+        <input type="number" id="volume-out" readonly style="padding-left:30px;">
+      </div>
+    </div>
+  </div>
+
+  <div class="ating-bar">
+    <span class="ating-bar-label">Atingimento (ref. N1)</span>
+    <div class="bar-track"><div class="bar-fill" id="bar-fill"></div></div>
+    <div class="bar-pct" id="bar-pct">—</div>
+    <div class="bar-pill" id="bar-pill">sem meta</div>
+  </div>
+
+  <div class="summary" id="summary"></div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr id="thead-row">
+          <th style="width:170px">Nível</th>
+          <th style="text-align:right">Ating.</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+
+  <div class="custo-section">
+    <div class="custo-title">
+      Custo sobre faturamento — cenário ativo
+      <span id="custo-cenario-label">preencha as vendas para calcular</span>
+    </div>
+    <div class="custo-grid" id="custo-grid"></div>
+  </div>
+
+</div>
+
+<script>
+  // Fixos calculados para % alvo no gatilho 100%
+  // N1-N3: 3,1% | N4-N6: 3,3%
+  const NIVEIS = [
+    { n: 1, fixo: 2650 },
+    { n: 2, fixo: 2850 },
+    { n: 3, fixo: 3050 },
+    { n: 4, fixo: 3500 },
+    { n: 5, fixo: 3750 },
+    { n: 6, fixo: 3950 },
+  ];
+
+  // Multiplicadores: 80% / 100% / 120%
+  const MULTS = [
+    { idx: 0, pct: 80,  m: 1.4,  color: '#f59e0b' },
+    { idx: 1, pct: 100, m: 2.0,  color: '#3b82f6' },
+    { idx: 2, pct: 120, m: 2.55, color: '#22c55e' },
+  ];
+
+  const fmtBRL   = v => 'R$ ' + Math.round(v).toLocaleString('pt-BR');
+  const fmtShort = v => v >= 1000 ? 'R$ ' + Math.round(v / 1000) + 'k' : 'R$ ' + Math.round(v);
+  const fmtPct   = v => v.toFixed(1) + '%';
+
+  function getMetas(meta1) {
+    return NIVEIS.map((_, i) => meta1 + i * 3);
+  }
+
+  function getScenario(ating) {
+    if (ating >= MULTS[2].pct) return MULTS[2];
+    if (ating >= MULTS[1].pct) return MULTS[1];
+    if (ating >= MULTS[0].pct) return MULTS[0];
+    return null;
+  }
+
+  function pctClass(pct) {
+    if (pct <= 10) return 'pct-low';
+    if (pct <= 18) return 'pct-mid';
+    return 'pct-high';
+  }
+
+  function buildSummary() {
+    const summary = document.getElementById('summary');
+    summary.innerHTML = '';
+    MULTS.forEach((mult, i) => {
+      const otes = NIVEIS.map(({ fixo }) => fixo * mult.m);
+      const card = document.createElement('div');
+      card.className = 'scard s' + i;
+      card.innerHTML = `
+        <div class="scard-label">${mult.pct}% — mult. ${mult.m.toFixed(2).replace('.', ',')}×</div>
+        <div class="scard-val">${fmtShort(Math.min(...otes))} → ${fmtShort(Math.max(...otes))}</div>
+        <div class="scard-sub">OTE N1 → N6</div>
+      `;
+      summary.appendChild(card);
+    });
+  }
+
+  function buildTableHeader() {
+    const tr = document.getElementById('thead-row');
+    while (tr.children.length > 2) tr.removeChild(tr.lastChild);
+    MULTS.forEach(mult => {
+      const th = document.createElement('th');
+      th.style.textAlign = 'right';
+      th.style.color = mult.color;
+      th.innerHTML = `OTE ${mult.pct}%<br><span style="font-weight:400;opacity:.5;font-size:10px">var · meta · % fat.</span>`;
+      tr.appendChild(th);
+    });
+  }
+
+  function buildTableRows() {
+    const tbody = document.getElementById('tbody');
+    tbody.innerHTML = '';
+    NIVEIS.forEach(({ n, fixo }) => {
+      const tr = document.createElement('tr');
+      tr.id = 'row-' + n;
+
+      const tdNivel = document.createElement('td');
+      tdNivel.innerHTML = `
+        <div style="display:flex;align-items:center;gap:10px">
+          <span class="nivel-badge">N${n}</span>
+          <div class="nivel-info">
+            <span class="nivel-name">Nível ${n}</span>
+            <span class="nivel-fixo">${fmtBRL(fixo)} fixo</span>
+            <span class="nivel-meta" id="meta-label-${n}">meta: —</span>
+          </div>
+        </div>`;
+      tr.appendChild(tdNivel);
+
+      const tdAting = document.createElement('td');
+      tdAting.innerHTML = `
+        <div class="ating-row">
+          <span class="ating-row-pct" id="ating-pct-${n}" style="color:var(--text-3)">—</span>
+          <div class="mini-bar"><div class="mini-fill" id="ating-bar-${n}"></div></div>
+        </div>`;
+      tr.appendChild(tdAting);
+
+      MULTS.forEach(mult => {
+        const td = document.createElement('td');
+        td.id = 'ote-' + mult.idx + '-' + n;
+        tr.appendChild(td);
+      });
+
+      tbody.appendChild(tr);
+    });
+  }
+
+  function renderOteCell(fixo, mult, meta, volume) {
+    const ote  = fixo * mult.m;
+    const varv = ote - fixo;
+    const metaVendas = meta ? Math.ceil(meta * (mult.pct / 100)) : null;
+    const pctFat = volume > 0 ? (ote / volume) * 100 : null;
+
+    const metaLine = metaVendas != null
+      ? `<span style="color:${mult.color};opacity:.8">${metaVendas} vendas p/ ${mult.pct}%</span>`
+      : `<span style="color:var(--text-3)">meta: —</span>`;
+
+    const pctLine = pctFat != null
+      ? `<span class="${pctClass(pctFat)}">${fmtPct(pctFat)} do fat.</span>`
+      : `<span style="color:var(--text-3)">—% do fat.</span>`;
+
+    return `
+      <div class="ote-block">
+        <span class="ote-val" style="color:${mult.color}">${fmtBRL(ote)}</span>
+        <span class="ote-var">+${fmtBRL(varv)} variável</span>
+        <span class="ote-vendas" style="margin-top:2px">${metaLine}</span>
+        <span class="ote-pct">${pctLine}</span>
+      </div>`;
+  }
+
+  function update() {
+    const meta1  = parseFloat(document.getElementById('meta-n1').value);
+    const ticket = parseFloat(document.getElementById('ticket').value) || 0;
+    const vendas = parseFloat(document.getElementById('vendas').value) || 0;
+    const volume = vendas * ticket;
+
+    document.getElementById('volume-out').value = volume > 0
+      ? Math.round(volume).toLocaleString('pt-BR') : '';
+
+    const metas = isNaN(meta1) ? [] : getMetas(meta1);
+
+    if (metas.length) {
+      document.getElementById('hint-metas').textContent =
+        'N2: ' + metas[1] + ' · N3: ' + metas[2] + ' · N4: ' + metas[3] + ' · N5: ' + metas[4] + ' · N6: ' + metas[5];
+    } else {
+      document.getElementById('hint-metas').textContent = '';
+    }
+
+    // Bar global ref N1
+    const meta1Val = metas[0];
+    const atingN1  = meta1Val && vendas > 0 ? (vendas / meta1Val) * 100 : null;
+    const barFill  = document.getElementById('bar-fill');
+    const barPct   = document.getElementById('bar-pct');
+    const barPill  = document.getElementById('bar-pill');
+
+    if (atingN1 != null) {
+      const sc = getScenario(atingN1);
+      const color = sc ? sc.color : '#ef4444';
+      barFill.style.width = Math.min(atingN1, 135) + '%';
+      barFill.style.background = color;
+      barPct.style.color = color;
+      barPct.textContent = Math.round(atingN1) + '%';
+      barPill.textContent = sc ? 'Gatilho ' + sc.pct + '%' : '< 80%';
+      barPill.style.background = sc ? sc.color + '20' : 'var(--red-bg)';
+      barPill.style.color = sc ? sc.color : 'var(--red)';
+    } else {
+      barFill.style.width = '0%';
+      barPct.textContent = '—';
+      barPct.style.color = 'var(--text-3)';
+      barPill.textContent = 'sem meta';
+      barPill.style.background = 'var(--surface-3)';
+      barPill.style.color = 'var(--text-3)';
+    }
+
+    // Rows
+    NIVEIS.forEach(({ n, fixo }, i) => {
+      const meta  = metas[i] || null;
+      const ating = meta && vendas > 0 ? (vendas / meta) * 100 : null;
+      const sc    = ating != null ? getScenario(ating) : null;
+
+      document.getElementById('row-' + n).className = sc ? 'ga' + sc.idx : '';
+      document.getElementById('meta-label-' + n).textContent = meta ? 'meta: ' + meta + ' vendas' : 'meta: —';
+
+      const pctEl = document.getElementById('ating-pct-' + n);
+      const barEl = document.getElementById('ating-bar-' + n);
+      if (ating != null) {
+        const c = sc ? sc.color : '#ef4444';
+        pctEl.textContent = Math.round(ating) + '%';
+        pctEl.style.color = c;
+        barEl.style.width = Math.min(ating, 135) + '%';
+        barEl.style.background = c;
+      } else {
+        pctEl.textContent = '—';
+        pctEl.style.color = 'var(--text-3)';
+        barEl.style.width = '0%';
+      }
+
+      MULTS.forEach(mult => {
+        const el = document.getElementById('ote-' + mult.idx + '-' + n);
+        if (el) el.innerHTML = renderOteCell(fixo, mult, meta, volume);
+      });
+    });
+
+    buildCusto(metas, vendas, volume);
+  }
+
+  function buildCusto(metas, vendas, volume) {
+    const grid  = document.getElementById('custo-grid');
+    const label = document.getElementById('custo-cenario-label');
+    grid.innerHTML = '';
+
+    if (!metas.length || vendas === 0 || volume === 0) {
+      label.textContent = 'preencha as vendas para calcular';
+      return;
+    }
+
+    let hasSc = false;
+    NIVEIS.forEach(({ n, fixo }, i) => {
+      const meta   = metas[i];
+      const ating  = meta ? (vendas / meta) * 100 : 0;
+      const sc     = getScenario(ating);
+      if (sc) hasSc = true;
+
+      const ote    = sc ? fixo * sc.m : fixo;
+      const pctFat = (ote / volume) * 100;
+
+      const card = document.createElement('div');
+      card.className = 'custo-card';
+      card.innerHTML = `
+        <div class="custo-card-label">custo / faturamento</div>
+        <div class="custo-card-nivel">N${n} · ${sc ? 'gatilho ' + sc.pct + '%' : 'sem gatilho'}</div>
+        <div class="custo-card-pct ${pctClass(pctFat)}" style="color:${sc ? sc.color : 'var(--text-3)'}">${fmtPct(pctFat)}</div>
+        <div class="custo-card-detail">${fmtBRL(ote)} ÷ ${fmtBRL(volume)}</div>
+      `;
+      grid.appendChild(card);
+    });
+
+    label.textContent = hasSc
+      ? '— ' + vendas + ' vendas · R$ ' + Math.round(volume).toLocaleString('pt-BR') + ' gerados'
+      : 'abaixo de 80% da meta — sem gatilho ativo';
+  }
+
+  buildSummary();
+  buildTableHeader();
+  buildTableRows();
+  update();
+
+  ['meta-n1', 'ticket', 'vendas'].forEach(id => {
+    document.getElementById(id).addEventListener('input', update);
+  });
+</script>
+</body>
+</html>
