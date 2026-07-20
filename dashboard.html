@@ -72,6 +72,29 @@
     .color-warn   { color: #f5c542 !important; }
     .color-danger { color: #f56b6b !important; }
     .color-ok     { color: #4ade80 !important; }
+
+    /* ── Modal de leads ── */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.7); z-index: 1000; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity .2s; }
+    .modal-overlay.open { opacity: 1; pointer-events: all; }
+    .modal { background: #161b22; border: 0.5px solid #1e2d3d; border-radius: 16px; width: 420px; max-height: 70vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 24px 64px rgba(0,0,0,.6); }
+    .modal-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 0.5px solid #1e2d3d; flex-shrink: 0; }
+    .modal-title { font-size: 14px; font-weight: 500; color: #e6edf3; }
+    .modal-sub { font-size: 11px; color: #5ba3c9; margin-top: 2px; }
+    .modal-close { background: none; border: none; color: #6e8394; cursor: pointer; font-size: 20px; line-height: 1; padding: 2px 6px; border-radius: 6px; }
+    .modal-close:hover { background: #1e2d3d; color: #e6edf3; }
+    .modal-body { overflow-y: auto; flex: 1; padding: 10px 12px; }
+    .modal-body::-webkit-scrollbar { width: 4px; }
+    .modal-body::-webkit-scrollbar-track { background: transparent; }
+    .modal-body::-webkit-scrollbar-thumb { background: #1e2d3d; border-radius: 4px; }
+    .lead-row { display: flex; align-items: center; gap: 12px; padding: 10px 10px; border-radius: 10px; border-bottom: 0.5px solid #1e2d3d; }
+    .lead-row:last-child { border-bottom: none; }
+    .lead-row:hover { background: #0d1117; }
+    .lead-idx { font-size: 10px; font-weight: 500; color: #3a4a5a; width: 18px; flex-shrink: 0; text-align: right; }
+    .lead-info { flex: 1; min-width: 0; }
+    .lead-nome { font-size: 13px; font-weight: 500; color: #e6edf3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .lead-tel { font-size: 11px; color: #5ba3c9; margin-top: 2px; letter-spacing: 0.3px; }
+    .btn-leads { font-size: 11px; font-weight: 500; padding: 4px 10px; border-radius: 20px; border: 0.5px solid #1a3a52; background: #0d2233; color: #4fc3f7; cursor: pointer; white-space: nowrap; flex-shrink: 0; }
+    .btn-leads:hover { background: #0d3048; }
   </style>
 </head>
 <body>
@@ -79,6 +102,20 @@
 <div id="loading">
   <div class="spinner"></div>
   <p class="loading-txt">Carregando dados...</p>
+</div>
+
+<!-- Modal de leads -->
+<div class="modal-overlay" id="modal-overlay" onclick="fecharModal(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="modal-vendedor-nome">—</div>
+        <div class="modal-sub" id="modal-vendedor-sub">leads para abordar</div>
+      </div>
+      <button class="modal-close" onclick="fecharModalBtn()"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="modal-body" id="modal-leads-lista"></div>
+  </div>
 </div>
 
 <div class="tv">
@@ -380,6 +417,15 @@
         card.style.background = '#0d1a2d';
         card.style.borderColor = '#1a3a52';
       }
+      var btnVerLeads = '';
+      if (negocios > 0) {
+        var cardLeads = row.leads || [];
+        var btnVerLeads = '<button class="btn-leads" id="btn-leads-' + nome.replace(/\s/g,'_') + '"><i class="ti ti-list"></i> Ver leads</button>';
+        // armazena leads no objeto global para acesso via click
+        window._leadsMap = window._leadsMap || {};
+        window._leadsMap[nome] = cardLeads;
+      }
+
       card.innerHTML =
         '<div class="v-top">' +
           '<div class="v-nome-wrap">' +
@@ -387,6 +433,7 @@
             '<span class="v-nome"' + (emAlmoco ? ' style="color:#4fc3f7;"' : '') + '>' + nome + '</span>' +
           '</div>' +
           '<div style="display:flex;align-items:center;gap:8px;">' +
+            btnVerLeads +
             btnAlmoco +
             '<div class="v-badge ' + (emAlmoco ? 'badge-ok' : badgeClass) + '"><i class="ti ' + (emAlmoco ? 'ti-check' : badgeIcon) + '"></i>' + (emAlmoco ? 'Atualizado' : badgeTexto) + '</div>' +
           '</div>' +
@@ -394,8 +441,62 @@
         centroHTML;
 
       container.appendChild(card);
+
+      // Bind botão de leads após inserir no DOM
+      if (negocios > 0) {
+        var btnEl = card.querySelector('#btn-leads-' + nome.replace(/\s/g,'_'));
+        if (btnEl) {
+          btnEl.addEventListener('click', (function(n, total) {
+            return function() { abrirModal(n, total); };
+          })(nome, negocios));
+        }
+      }
     });
   }
+
+  // ─── Modal de leads ──────────────────────────────────────────────────────────
+  function abrirModal(nome, total) {
+    var leads = (window._leadsMap && window._leadsMap[nome]) || [];
+
+    document.getElementById('modal-vendedor-nome').textContent = nome;
+    document.getElementById('modal-vendedor-sub').textContent = total + ' lead' + (total !== 1 ? 's' : '') + ' para abordar';
+
+    var lista = document.getElementById('modal-leads-lista');
+    lista.innerHTML = '';
+
+    if (!leads.length) {
+      lista.innerHTML = '<div style="padding:20px;text-align:center;color:#3a4a5a;font-size:13px;">Nenhum lead encontrado</div>';
+    } else {
+      leads.forEach(function(lead, i) {
+        var row = document.createElement('div');
+        row.className = 'lead-row';
+        var nomeLead = lead.nome || '—';
+        var tel = lead.telefone || '—';
+        var telFmt = tel !== '—' ? '(' + tel.slice(0,2) + ') ' + tel.slice(2,7) + '-' + tel.slice(7) : '—';
+        row.innerHTML =
+          '<span class="lead-idx">' + (i + 1) + '</span>' +
+          '<div class="lead-info">' +
+            '<div class="lead-nome">' + nomeLead + '</div>' +
+            '<div class="lead-tel"><i class="ti ti-phone" style="font-size:10px;margin-right:3px;"></i>' + telFmt + '</div>' +
+          '</div>';
+        lista.appendChild(row);
+      });
+    }
+
+    document.getElementById('modal-overlay').classList.add('open');
+  }
+
+  function fecharModalBtn() {
+    document.getElementById('modal-overlay').classList.remove('open');
+  }
+
+  function fecharModal(e) {
+    if (e.target === document.getElementById('modal-overlay')) fecharModalBtn();
+  }
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') fecharModalBtn();
+  });
 
   // ─── Render métricas de leads ────────────────────────────────────────────────
   // Formata porcentagem — aceita decimal (0.0425), texto (4,25%) ou número (4.25)
