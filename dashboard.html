@@ -454,36 +454,63 @@
     });
   }
 
+  // ─── Mapa nome → email dos vendedores ────────────────────────────────────────
+  var EMAIL_MAP = {
+    'Guilherme Jesuino': 'guilherme.jesuino@grupoaspekto.com',
+    'Davi Matos':        'davi.matos@grupoaspekto.com',
+    'Marcos Brant':      'marcos.brant@grupoaspekto.com',
+    'Davi Guimaraes':    'davi.guimaraes@grupoaspekto.com',
+    'Breno Goncalves':   'breno.goncalves@grupoaspekto.com'
+  };
+
+  var N8N_LEADS_VENDEDOR = 'https://n8n-ai.grupoaspekto.com/webhook/dashboard-leads-vendedor';
+
   // ─── Modal de leads ──────────────────────────────────────────────────────────
   function abrirModal(nome, total) {
-    var leads = (window._leadsMap && window._leadsMap[nome]) || [];
-
     document.getElementById('modal-vendedor-nome').textContent = nome;
     document.getElementById('modal-vendedor-sub').textContent = total + ' lead' + (total !== 1 ? 's' : '') + ' para abordar';
 
     var lista = document.getElementById('modal-leads-lista');
-    lista.innerHTML = '';
-
-    if (!leads.length) {
-      lista.innerHTML = '<div style="padding:20px;text-align:center;color:#3a4a5a;font-size:13px;">Nenhum lead encontrado</div>';
-    } else {
-      leads.forEach(function(lead, i) {
-        var row = document.createElement('div');
-        row.className = 'lead-row';
-        var nomeLead = lead.nome || '—';
-        var tel = lead.telefone || '—';
-        var telFmt = tel !== '—' ? '(' + tel.slice(0,2) + ') ' + tel.slice(2,7) + '-' + tel.slice(7) : '—';
-        row.innerHTML =
-          '<span class="lead-idx">' + (i + 1) + '</span>' +
-          '<div class="lead-info">' +
-            '<div class="lead-nome">' + nomeLead + '</div>' +
-            '<div class="lead-tel"><i class="ti ti-phone" style="font-size:10px;margin-right:3px;"></i>' + telFmt + '</div>' +
-          '</div>';
-        lista.appendChild(row);
-      });
-    }
+    lista.innerHTML = '<div style="padding:20px;text-align:center;color:#3a4a5a;font-size:13px;"><div class="spinner" style="margin:0 auto 8px;"></div>Buscando leads...</div>';
 
     document.getElementById('modal-overlay').classList.add('open');
+
+    var email = EMAIL_MAP[nome] || '';
+    if (!email) {
+      lista.innerHTML = '<div style="padding:20px;text-align:center;color:#3a4a5a;font-size:13px;">Vendedor não encontrado</div>';
+      return;
+    }
+
+    fetch(N8N_LEADS_VENDEDOR + '?email=' + encodeURIComponent(email), { cache: 'no-store' })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        var leads = data.leads || [];
+        lista.innerHTML = '';
+
+        if (!leads.length) {
+          lista.innerHTML = '<div style="padding:20px;text-align:center;color:#3a4a5a;font-size:13px;">Nenhum lead encontrado</div>';
+          return;
+        }
+
+        leads.forEach(function(lead, i) {
+          var row = document.createElement('div');
+          row.className = 'lead-row';
+          var nomeLead = lead.nome || '—';
+          var tel = lead.telefone || '—';
+          var telFmt = tel !== '—' ? '(' + tel.slice(0,2) + ') ' + tel.slice(2,7) + '-' + tel.slice(7) : '—';
+          row.innerHTML =
+            '<span class="lead-idx">' + (i + 1) + '</span>' +
+            '<div class="lead-info">' +
+              '<div class="lead-nome">' + nomeLead + '</div>' +
+              '<div class="lead-tel"><i class="ti ti-phone" style="font-size:10px;margin-right:3px;"></i>' + telFmt + '</div>' +
+            '</div>';
+          lista.appendChild(row);
+        });
+      })
+      .catch(function(e) {
+        lista.innerHTML = '<div style="padding:20px;text-align:center;color:#f56b6b;font-size:13px;">Erro ao buscar leads</div>';
+        console.error('Erro modal leads:', e);
+      });
   }
 
   function fecharModalBtn() {
